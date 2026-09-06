@@ -10,15 +10,14 @@
 | ----- | ------ | --- |
 | Desktop shell | **Tauri v2** | Native RPM and Flatpak output for the Fedora-first target; uses the system webview instead of bundling a browser, so installs are single-digit megabytes; the same project builds Windows and macOS later without a rewrite |
 | Engine | **Rust** | Tauri's native side is Rust already, so no third runtime; the correctness-critical work (file writes, conflict detection, citation formatting) benefits from a type system that makes invalid states hard to express; single static binary is trivial to package |
-| Interface | **TypeScript**, web UI | Fast iteration on a UI with panes, drag-and-drop, and a graph view; large ecosystem for the editor and map components |
+| Interface | **TypeScript** + **React** | Fast iteration on a UI with panes, drag-and-drop, and a graph view; the deepest ecosystem for the editor and for the M4 map (React Flow). See [ADR 0005](adr/0005-react-tiptap-interface.md) |
+| Editor | **TipTap** (ProseMirror) | Citations and document links are first-class inline nodes with their own rendering and serialisation, while the file on disk stays plain Markdown. See [ADR 0005](adr/0005-react-tiptap-interface.md) |
+| Type bindings | **tauri-specta** | TypeScript generated from the engine's Rust types, so a contract change is a compile error rather than a runtime surprise |
 | Derived index | **SQLite** with full-text search | Embedded, no service to run, mature full-text search. Used only as a derived cache — see [Search index](search-index.md) |
 | Library files | **Markdown with a metadata header**, plus small structured files for sources and works | Readable in any editor, diffable, survives us. See [Storage format](storage-format.md) |
 
-The interface framework and editor component are **not yet fixed**. They are interface-local
-decisions with no effect on the storage format or the engine contract, so they can be settled
-when M0 starts rather than now. Record the choice as an ADR when it is made.
-
-See [ADR 0001](adr/0001-tauri-rust-stack.md) for the alternatives weighed.
+See [ADR 0001](adr/0001-tauri-rust-stack.md) for the shell and engine alternatives, and
+[ADR 0005](adr/0005-react-tiptap-interface.md) for the interface and editor.
 
 ## Versions
 
@@ -29,6 +28,8 @@ Pinned when M0 begins; this table is filled in then, not guessed now.
 | Rust | | |
 | Tauri | 2.x | |
 | Node.js (build only) | | |
+| React | 18.x | |
+| TipTap | 2.x | |
 | Fedora | 42 | |
 
 ## Deliberately excluded

@@ -20,6 +20,8 @@ reason it was made are the useful part of the history.
 | [0002](0002-separate-backend-repository.md) | The engine is a separate repository | Accepted |
 | [0003](0003-files-as-source-of-truth.md) | Files are the source of truth; the index is derived | Accepted |
 | [0004](0004-milestone-one-scope.md) | Documents and citations before parallel texts and maps | Accepted |
+| [0005](0005-react-tiptap-interface.md) | React and TipTap for the interface | Accepted |
+| [0006](0006-engine-dependency-pinning.md) | The engine is pinned by git tag | Accepted |
 
 ## Template
 

@@ -44,11 +44,19 @@ Doing this in any other order produces two components that each believe the othe
 
 ## Versioning
 
-The engine is a Rust crate depended on by this repository, pinned to an exact version.
+The engine is a Rust crate depended on by this repository, pinned to an immutable git tag —
+both repositories are private, so no registry is available. See
+[ADR 0006](adr/0006-engine-dependency-pinning.md).
+
+```toml
+[dependencies]
+plc-engine = { git = "https://github.com/Tuominen04/personal-learning-corner-engine", tag = "v0.1.0" }
+```
 
 - **Engine** uses semantic versioning against the contract: a breaking contract change is a
   major bump, a new operation is a minor bump, a fix that changes no documented behaviour is
-  a patch.
+  a patch. Each release is a tag, and **tags are immutable** — never moved, never deleted,
+  never reused. A version bump is a one-line diff naming the old tag and the new one.
 - **This repository** carries the product's user-facing version. It is the version on the
   installer and the one a user quotes in a bug report.
 - **The library's storage format** has its own version, independent of both, recorded in the
@@ -61,8 +69,23 @@ format version is separate.
 
 ## Development against an unreleased engine
 
-Point the dependency at a local path while working on both at once. Never commit that: CI
-must build against the pinned published version, or the pin means nothing.
+Point the dependency at a local path while working on both at once:
+
+```toml
+plc-engine = { path = "../personal-learning-corner-engine/crates/plc-engine" }
+```
+
+**Never commit that.** CI asserts the manifest carries a `tag` key, so a path dependency
+cannot reach `main` — otherwise the pin means nothing and the build stops being reproducible
+on any machine but yours.
+
+## Type bindings across the boundary
+
+Engine domain types derive `specta::Type`. The `#[tauri::command]` wrappers live in this
+repository's `src-tauri` and generate `src/lib/bindings.ts` from those types at build time, so
+there is no generated file to synchronise between repositories. A contract change therefore
+surfaces twice: as a compile error in the shell, and as a diff in the committed bindings. CI
+fails if the committed bindings are stale.
 
 ## Related
 
