@@ -1,0 +1,106 @@
+# Sources and citations
+
+> **Audience:** People using Personal Learning Corner
+> **Status:** Planned
+> **Last reviewed:** 2026-09-06
+
+This is the part of the app that answers the question it was built around: *how do I know
+this is true?* You cannot answer it for everything you read. You can answer it for
+everything you keep.
+
+## Saving a source
+
+A **source** is anything you learned from — a book, a journal article, a web page, a video,
+a lecture, a podcast, a chapter someone wrote in someone else's book.
+
+Choose **New source**, pick what kind of thing it is, and fill in the form. The form changes
+with the kind: a book asks for a publisher, an article asks for the journal and the volume,
+a web page asks for the site and the date you read it. You are only ever asked for what a
+correct citation genuinely needs, which is usually fewer fields than you expect.
+
+Two habits worth having:
+
+- **Save the source when you find it, not when you need to cite it.** The web page you meant
+  to come back to has a way of not being there.
+- **Fill in the page numbers.** Later, a citation with a page number takes you back to the
+  exact paragraph; one without takes you back to a 400-page book.
+
+Sources live in the library, not in a document. Save a book once and cite it from fifty
+documents.
+
+### If you cannot find all the details
+
+Fill in what you have and save it. The app marks the source as **incomplete** and tells you
+what is missing, so you can find it later rather than losing the source entirely. An
+incomplete source still cites — the reference list just shows the gap plainly instead of
+inventing something.
+
+### Rating what you trust
+
+Each source can carry your own note about how much you trust it, and why. This is your
+judgement, not a score the app calculated: *peer-reviewed*, *a company selling the thing it
+is describing*, *someone's blog but they cite their sources*, *I could not verify this
+anywhere else.*
+
+It matters more than it sounds. When a document is built on six sources and one of them is a
+supplement manufacturer's landing page, you want that visible on the page — not something
+you have to remember.
+
+## Citing while you write
+
+Select what you wrote, choose **Cite**, and pick the source. Add a page number if you have
+one.
+
+The citation appears in your text in proper APA 7 form, and you choose which shape fits the
+sentence:
+
+| Shape | Looks like | Use it when |
+| ----- | ---------- | ----------- |
+| In brackets | …repairs muscle tissue (Nieminen, 2021, p. 44). | The fact matters, not who said it |
+| In the sentence | Nieminen (2021) found that… | Who said it is part of your point |
+
+The app handles the fiddly parts of APA 7 without you having to remember them: two authors
+joined correctly, three or more shortened to *et al.*, two different authors with the same
+surname kept apart, and two works by the same author in the same year marked *2021a* and
+*2021b* consistently everywhere they appear.
+
+## The reference list
+
+Every document builds its own reference list at the bottom, from the sources it actually
+cites. You never type it and you never maintain it.
+
+- Alphabetical by author, as APA 7 requires.
+- Correctly punctuated and correctly indented for each kind of source.
+- Updates itself when you add a citation, remove one, or correct a source's details.
+- Fix a typo in a source once, and every document citing it is right immediately.
+
+## Exporting
+
+Choose **Export** to take a document out of the app — as a formatted document for reading or
+printing, or as plain text.
+
+The reference list comes with it, properly formatted, with the hanging indent APA 7 asks
+for. Citations stay in the text as text. What you hand to someone else is a finished piece
+of writing, not something that needs this app to make sense.
+
+## Working backwards from a source
+
+Open any source to see **every document that cites it**.
+
+This is the feature you will be glad of on a bad day. A study gets retracted, or you realise
+a site you trusted is not reliable, or you simply find something better. Open the source, see
+the eleven places you leaned on it, and go fix them. Without this list, a bad source quietly
+poisons everything you built on it and you never find out.
+
+## Does it need the internet?
+
+No. Every part of this works offline: sources are typed in and stored by you, citations and
+reference lists are worked out on your own machine, and nothing is ever sent anywhere.
+
+Looking a source up automatically from a code on the back of a book, so you type less, is
+planned as an optional convenience for later. It will always be optional, and the app will
+always work fully without it.
+
+---
+
+*Building the app rather than using it? See the [technical documentation](../technical/).*

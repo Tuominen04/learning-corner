@@ -1,32 +1,74 @@
 # Personal Learning Corner
-Locally running software that use local storage to store date that user want to learn. Backupable to the hardware.
 
-## Purpose
+A local-first application for learning things properly: your notes, the sources behind them,
+and the texts you are working through — all stored as ordinary files on your own machine,
+backed up to your own drive, and readable without ever asking anyone's permission.
 
-As a user I want learn punch of things. In the internet era, a lot of information is available and you don't know what is true and what's not.
-That's why this application let you create [APA 7](https://owl.purdue.edu/owl/research_and_citation/apa_style/apa_formatting_and_style_guide/index.html) style documents where the user can refer saved documents.
-User might want to learn new languages or translate historical texts where the user can see original text and translates, or spelling style.
+## Why
 
-## Examples
+The internet has more information than anyone can read, and no reliable way to tell what in
+it is true. Personal Learning Corner takes the opposite approach to a search box:
 
-1. User might want learn what is protein. Then the user starts going deeper and learn different types of protein and end up compearing those how they act in the body and so on.
-    - This scenario have a feature that user can create multiple documents for different topics, protein, protein sources, human organs, the effect of protein in the body.
-    - User can create mindmaps around the topics and view it on different window.
-1. User is learning Russian. User original language is Finnish. User have to view the original text. As option user can view the spelling under the each row or own page next to the original text. And second/third page would be the Finnish
-    - User will have multiple files for different languages.
-    - User can select what pages will be shown. For example Russian, English, and Finnish.
-1. Songs, goes to the same category than second point.
+> **Nothing is recorded as fact without a source you chose.**
 
-## Usage
+Every claim you write down can be anchored to a source you saved and decided to trust. The
+app builds the [APA 7](https://owl.purdue.edu/owl/research_and_citation/apa_style/apa_formatting_and_style_guide/index.html)
+reference list for you, so citing properly costs you nothing and skipping it is the thing
+that feels wrong.
 
-User will install the app for local machine and can be run based on OS.
-Backend must be on it's own project.
-The OS will be selected by user given information, based on installed package, regonized from system etc.
+## What it does
 
-At first as a master user I want first UI build to the Fedora.
-In the future for Windows, MacOS etc.
+**Topics and documents.** You start with one question and end up with ten. Say you want to
+know what a protein is — soon you have separate documents for protein types, protein
+sources, human organs, and how protein behaves in the body, each citing its own sources and
+linked to the others.
 
-## Storage
+**Parallel texts.** Read a text in its original language with the pronunciation underneath
+and a translation beside it — Russian original, transliteration, Finnish and English, and
+you choose which of those are on screen. Song lyrics and historical documents work the same
+way.
 
-Files will be saved locally. User can backup the files wanted hardware when connected. User will choose the source where the app is installed and then the file tree will start grow there.
-Importing from, for example, hardware must confirm if the source of truth is correct (local or hardware), default local
+**Mind maps.** See how your topics actually connect, in a window of its own, built from the
+documents you already wrote rather than a second copy of them.
+
+**Your files, your drive.** You choose the folder your library grows in. Back it up to an
+external drive whenever it is plugged in. If the two copies ever disagree, the app asks you
+which one is right rather than guessing — and never throws the other one away.
+
+## Status
+
+**Planning.** No code yet. The documentation below is the specification we are building
+towards; every page is marked `Planned`, `In progress`, or `Implemented` so it is always
+clear which is which.
+
+The first release targets **Fedora**, packaged natively. Windows and macOS come after the
+Linux build is solid — the application is built so that adding them is packaging work, not
+a rewrite.
+
+## Documentation
+
+| If you want to…              | Read                                                       |
+| ---------------------------- | ---------------------------------------------------------- |
+| Use the app                  | **[User guide](docs/user/)** — start at [Getting started](docs/user/getting-started.md) |
+| Build or change the app      | **[Technical docs](docs/technical/)** — start at [Architecture](docs/technical/architecture.md) |
+| Know why it is built this way | **[Decision records](docs/technical/adr/)**                |
+| Write documentation for it   | **[Conventions](docs/CONVENTIONS.md)**                     |
+
+The two documentation trees are kept strictly apart: the user guide never mentions how the
+app is built, and the technical docs never repeat the tutorial. See
+[CONVENTIONS.md](docs/CONVENTIONS.md) for the rule and the check that enforces it.
+
+## Design principles
+
+1. **Local first, and local only.** No account, no server, no telemetry, no network
+   dependency for anything that matters. The app must work on a machine that has never been
+   online.
+2. **Plain files are the truth.** Everything you write is a readable file in a folder you
+   picked. Any index the app keeps is a convenience it can rebuild from those files — delete
+   it and nothing is lost.
+3. **Never lose the user's data.** No operation silently overwrites or discards anything you
+   wrote. When two copies disagree, you decide, and the copy you did not pick is kept.
+4. **Sources are first-class.** A citation is structured information, not a line of text you
+   typed at the bottom of a page.
+5. **Your library outlives the app.** If this project stopped tomorrow, your folder would
+   still open in any text editor.
