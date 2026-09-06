@@ -1,7 +1,7 @@
 # Roadmap
 
 > **Audience:** People building Personal Learning Corner
-> **Status:** Planned
+> **Status:** In progress — M0 implemented
 > **Last reviewed:** 2026-09-06
 
 Milestones in order. Each is shippable on its own — a person could install it, use it, and get
@@ -16,19 +16,29 @@ No dates. This is one person's project; the order is the commitment, not a sched
 
 The skeleton, with nothing interesting on top of it.
 
-- The engine repository exists, with the contract's shape and its test harness.
-- A Tauri window that opens, with the interface framework and editor component chosen and
-  [recorded as an ADR](adr/).
-- Library create, open, and close. `library.toml`, format version 1, the version checks.
-- Atomic writes, exactly as [specified](storage-format.md#writing-files).
-- Topic tree; document create, read, write, rename, move.
-- The index, and the rebuild-equivalence test from day one — retrofitting that property later
-  means discovering everything that already violates it.
-- CI: tests, lints, `docs/check-docs.sh`.
+**Engine — done.**
+
+- [x] The engine repository exists, with the contract's shape and its test harness.
+- [x] Library create, open, and close. `library.toml`, format version 1, the version checks.
+- [x] Atomic writes, exactly as [specified](storage-format.md#writing-files).
+- [x] Topic tree; document create, read, write, rename, move, delete.
+- [x] The index, with the rebuild-equivalence property asserted from the first commit rather
+      than retrofitted.
+- [x] Engine CI: tests, `clippy -D warnings`, `rustfmt --check`.
+
+**Shell and interface — not started.**
+
+- [ ] A Tauri window that opens. Framework and editor chosen and recorded in
+      [ADR 0005](adr/0005-react-tiptap-interface.md).
+- [ ] Library picker, topic tree, document editor.
+- [ ] Interface CI: lint, typecheck, bindings freshness, `docs/check-docs.sh`.
 
 **Done when:** a library can be created, documents written and read back, the application
 restarted with everything intact, `.plc/` deleted and rebuilt with no observable difference,
 and every file readable in a text editor.
+
+The engine half of that is provable today — `cargo run --example walkthrough` in the engine
+repository runs it end to end. The rest waits on the shell.
 
 ---
 

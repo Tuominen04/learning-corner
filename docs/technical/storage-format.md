@@ -1,7 +1,7 @@
 # Storage format
 
 > **Audience:** People building Personal Learning Corner
-> **Status:** Planned
+> **Status:** In progress — M0 implemented
 > **Last reviewed:** 2026-09-06
 
 The library on disk is the source of truth ([ADR 0003](adr/0003-files-as-source-of-truth.md)).
@@ -79,9 +79,13 @@ lexicographically sortable by creation time, generated locally without coordinat
 - Resolving an ID to a path is the [index](search-index.md)'s job, and a full scan of the
   library rebuilds that mapping — the ID→path relation is derived, never stored.
 
-If two files somehow carry the same ID (a user copied a file to duplicate it), the engine
-reports it as a library error and offers to assign a new ID to the newer file. It does not
-pick silently.
+If two files carry the same ID — a user copied a document in a file manager to duplicate it —
+the engine reports it as a library problem naming both files, and offers to assign a new ID to
+the later one. It does not pick silently.
+
+**The library still opens.** The first occurrence in a sorted walk wins, the rest are skipped,
+and the clash appears in `library.status`. A duplicated file is a routine accident; refusing to
+open the library over it would turn a copied file into a lockout.
 
 ## `library.toml`
 

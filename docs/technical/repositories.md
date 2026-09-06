@@ -1,7 +1,7 @@
 # Repositories
 
 > **Audience:** People building Personal Learning Corner
-> **Status:** Planned
+> **Status:** In progress — M0 implemented
 > **Last reviewed:** 2026-09-06
 
 Two repositories, one product.
