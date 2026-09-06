@@ -22,6 +22,8 @@ reason it was made are the useful part of the history.
 | [0004](0004-milestone-one-scope.md) | Documents and citations before parallel texts and maps | Accepted |
 | [0005](0005-react-tiptap-interface.md) | React and TipTap for the interface | Accepted |
 | [0006](0006-engine-dependency-pinning.md) | The engine is pinned by git tag | Accepted |
+| [0007](0007-bindings-with-ts-rs.md) | TypeScript bindings generated with ts-rs | Accepted |
+| [0008](0008-narrow-editor-schema.md) | A narrow editor schema until Markdown serialisation exists | Accepted |
 
 ## Template
 

@@ -1,0 +1,148 @@
+/* Deliberately quiet. This is a place to read and write for a long time, so contrast is
+   comfortable rather than maximal and nothing moves unless the user moved it. */
+
+:root {
+  --ground: #14151a;
+  --panel: #1b1d24;
+  --page: #f4f1ea;
+  --ink: #23242a;
+  --ink-soft: #5d6070;
+  --line: #2b2e38;
+  --accent: #c68a4a;
+  --warning: #d8a24a;
+  --error: #e06c6c;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: #e6e4de;
+  font: 15px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: inherit;
+  padding: 0.5rem 0.9rem;
+}
+button:hover { border-color: var(--accent); }
+button:disabled { opacity: 0.5; cursor: default; }
+button.secondary { background: transparent; }
+button.ghost {
+  border: none;
+  background: none;
+  color: var(--ink-soft);
+  padding: 0.1rem 0.35rem;
+  font-size: 0.8em;
+}
+button.ghost:hover { color: var(--accent); }
+
+/* ---- library picker ---- */
+
+.picker {
+  max-width: 34rem;
+  margin: 12vh auto;
+  padding: 0 1.5rem;
+}
+.picker h1 { font-size: 1.6rem; margin-bottom: 0.4rem; }
+.lede { color: #b4b1a9; margin-top: 0; }
+.field { display: block; margin: 1.5rem 0 1rem; }
+.field span { display: block; font-size: 0.85em; color: var(--ink-soft); margin-bottom: 0.3rem; }
+.field input {
+  width: 100%;
+  font: inherit;
+  padding: 0.5rem 0.7rem;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: inherit;
+}
+.row { display: flex; gap: 0.6rem; }
+
+/* ---- layout ---- */
+
+.app { display: grid; grid-template-columns: 20rem 1fr; height: 100vh; }
+
+aside {
+  border-right: 1px solid var(--line);
+  overflow-y: auto;
+  padding: 1rem;
+  background: var(--panel);
+}
+.library { margin-bottom: 1.2rem; }
+.library strong { display: block; }
+.counts { font-size: 0.82em; color: var(--ink-soft); }
+
+main { overflow-y: auto; padding: 1.5rem 2rem; }
+
+/* ---- tree ---- */
+
+.tree-head { display: flex; justify-content: space-between; align-items: center; }
+.tree h2 { font-size: 0.78em; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-soft); }
+.tree ul { list-style: none; margin: 0; padding-left: 0.7rem; }
+.tree > ul { padding-left: 0; }
+.branch-head { display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; }
+.topic-name { font-weight: 600; font-size: 0.92em; }
+.branch-actions { display: flex; gap: 0.1rem; opacity: 0; }
+.branch-head:hover .branch-actions { opacity: 1; }
+
+button.doc {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: none;
+  padding: 0.22rem 0.4rem;
+  border-radius: 4px;
+  color: #c9c6be;
+}
+button.doc:hover { background: #23262f; }
+button.doc.selected { background: #2a2d38; color: #fff; }
+
+/* ---- editor ---- */
+
+.editor header { display: flex; align-items: baseline; gap: 1rem; }
+.editor h2 { margin: 0 0 0.8rem; }
+.state { font-size: 0.78em; color: var(--ink-soft); }
+.state.saving { color: var(--warning); }
+.state.conflict, .state.error { color: var(--error); }
+
+.prose {
+  background: var(--page);
+  color: var(--ink);
+  border-radius: 8px;
+  padding: 1.6rem 1.9rem;
+  min-height: 24rem;
+  max-width: 42rem;
+}
+.prose .ProseMirror { outline: none; }
+.prose p { margin: 0 0 1rem; }
+
+.citation, .doc-link {
+  font-size: 0.82em;
+  padding: 0.05rem 0.3rem;
+  border-radius: 3px;
+  vertical-align: baseline;
+}
+.citation { background: #ecdcc6; color: #7a5220; }
+.doc-link { background: #dbe3ec; color: #35506e; }
+
+/* ---- messages ---- */
+
+.empty, .note { color: var(--ink-soft); font-size: 0.88em; max-width: 42rem; }
+.note { margin-top: 1.2rem; }
+.warning { color: var(--warning); }
+.error { color: var(--error); }
+
+.problems { margin-top: 1.5rem; border-top: 1px solid var(--line); padding-top: 0.8rem; }
+.problems h3 { font-size: 0.78em; text-transform: uppercase; letter-spacing: 0.08em; color: var(--warning); }
+.problems ul { list-style: none; margin: 0; padding: 0; font-size: 0.82em; }
+.problems li { margin-bottom: 0.6rem; }
+.problems code { display: block; color: var(--ink-soft); }

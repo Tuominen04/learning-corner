@@ -111,7 +111,7 @@ Markdown with a TOML front matter block delimited by `+++`:
 
 ```markdown
 +++
-id       = "01J8ZQ7B2N4Q6S8U0W2Y4A6C8E"
+id       = "01J8ZQ7B2N4Q6S8W0W2Y4A6C8E"
 title    = "Types of protein"
 created  = 2026-09-06T10:22:00Z
 modified = 2026-09-06T11:03:00Z
@@ -142,7 +142,7 @@ scanning `[[…]]` references into the index.
 One file per source in `sources/`, named from a slug of author and year.
 
 ```toml
-id      = "01J8ZQ8D4Q6S8U0W2Y4A6C8E0G"
+id      = "01J8ZQ8D4Q6S8W0W2Y4A6C8E0G"
 type    = "journal-article"
 title   = "Protein requirements in adults"
 year    = 2021
