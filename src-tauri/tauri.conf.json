@@ -1,0 +1,34 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Personal Learning Corner",
+  "version": "0.1.0",
+  "identifier": "com.personallearningcorner.app",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:5173",
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Personal Learning Corner",
+        "width": 1100,
+        "height": 750,
+        "minWidth": 640,
+        "minHeight": 480
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; style-src 'self' 'unsafe-inline'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["rpm", "deb", "appimage"],
+    "icon": ["icons/icon.png"],
+    "category": "Education",
+    "shortDescription": "Local-first learning, with every claim anchored to a source you chose.",
+    "longDescription": "Your notes, the sources behind them, and the texts you are working through - stored as ordinary files on your own machine and backed up to your own drive."
+  }
+}

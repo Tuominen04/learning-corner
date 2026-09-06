@@ -81,11 +81,16 @@ on any machine but yours.
 
 ## Type bindings across the boundary
 
-Engine domain types derive `specta::Type`. The `#[tauri::command]` wrappers live in this
-repository's `src-tauri` and generate `src/lib/bindings.ts` from those types at build time, so
-there is no generated file to synchronise between repositories. A contract change therefore
-surfaces twice: as a compile error in the shell, and as a diff in the committed bindings. CI
-fails if the committed bindings are stale.
+The shell defines its own wire types in `src-tauri/src/dto.rs` and converts the engine's
+types into them. `ts-rs` generates `src/lib/bindings/` from those, and regeneration is a test —
+so `cargo test` in `src-tauri` keeps the bindings current and CI fails on a stale committed
+copy.
+
+There is therefore no generated file to synchronise between repositories, and a contract change
+surfaces twice: as a Rust compile error in the shell, and as a diff in the committed bindings.
+
+See [ADR 0007](adr/0007-bindings-with-ts-rs.md) for why `ts-rs` rather than the `tauri-specta`
+originally intended.
 
 ## Related
 
