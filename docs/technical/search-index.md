@@ -1,7 +1,7 @@
 # Search index
 
 > **Audience:** People building Personal Learning Corner
-> **Status:** Planned
+> **Status:** In progress — M0 implemented
 > **Last reviewed:** 2026-09-06
 
 A SQLite database at `.plc/index.sqlite` inside the library. It is a **cache**. Everything in
@@ -42,15 +42,20 @@ nothing to compare. See [ADR 0003](adr/0003-files-as-source-of-truth.md).
 
 | Table | Holds |
 | ----- | ----- |
-| `entity` | id, kind, path, title, modified, content digest |
+| `entity` | id, kind, path, title, modified, content digest, source file, file revision |
 | `entity_fts` | full-text index over document text, source fields, and work editions |
 | `link` | from-entity, to-entity, derived from `[[…]]` |
 | `citation` | document, source, locator, position, derived from `[^cite:…]` |
-| `problem` | incomplete sources, misaligned works, duplicate identifiers, unresolved citations |
+| `problem` | incomplete sources, misaligned works, duplicate identifiers, unresolved citations — each with the revision of the offending file |
 | `meta` | index format version, the library format version it was built from, last full scan |
 
 Full-text search uses SQLite's FTS5 with the `unicode61` tokeniser and diacritic folding —
 non-negotiable for an application whose users search Finnish and Russian text.
+
+**A user's words are quoted before they reach FTS5.** Its match syntax treats bare punctuation
+and bare `AND` as operators, so a search for `protein (2021)` is a syntax error rather than a
+search. Every term is wrapped in quotes and embedded quotes doubled, so what a person types is
+always treated as words to find.
 
 ## Staying current
 
@@ -58,8 +63,15 @@ non-negotiable for an application whose users search Finnish and Russian text.
   is never behind after a write the application made.
 - **On external change.** The engine watches the library folder. A changed file is re-read
   and its rows refreshed.
-- **On open.** A quick pass comparing recorded modification times and sizes against the
-  filesystem catches anything changed while the application was closed.
+- **On open.** A **stat-only walk** of the library, comparing each file's modification time
+  and size against the revision recorded beside the entity it produced. Any difference at all —
+  a changed file, a new one, a deleted one — triggers a full rebuild. It costs a directory walk
+  rather than a read of every document, and it is what catches an edit made in a text editor
+  while the application was closed.
+
+  A file that **failed to parse** records its revision on its `problem` row, for the same
+  comparison. Without that, a library containing one broken document would look stale on every
+  single open and rebuild its whole index every time.
 - **On demand.** `library.rebuildIndex` discards and rebuilds from scratch.
 
 ## Rebuilding

@@ -1,7 +1,7 @@
 # Testing
 
 > **Audience:** People building Personal Learning Corner
-> **Status:** Planned
+> **Status:** In progress — M0 implemented
 > **Last reviewed:** 2026-09-06
 
 There is no server, no network, and one user. That removes whole categories of testing and
@@ -54,7 +54,12 @@ violated somewhere:
 
 **Rebuild equivalence.** For a library fixture: record the result of every read operation,
 delete `.plc/`, rebuild, and assert every result is identical. This is what keeps the index
-derived ([Search index](search-index.md)).
+derived ([Search index](search-index.md)). Two companions belong with it: that **incremental
+writes agree with a full rebuild** — the incremental path is the one that runs constantly, so a
+divergence there is the one that bites — and that a **corrupt index is discarded and rebuilt**
+rather than surfaced as an error.
+
+*Implemented in the engine repository as `tests/rebuild_equivalence.rs`.*
 
 **Backup round-trip.** For a library fixture: back up, restore into a fresh location, and
 assert the two libraries are byte-identical outside `.plc/`. Then the harder variant —

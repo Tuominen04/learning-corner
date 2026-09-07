@@ -58,6 +58,11 @@ The two documentation trees are kept strictly apart: the user guide never mentio
 app is built, and the technical docs never repeat the tutorial. See
 [CONVENTIONS.md](docs/CONVENTIONS.md) for the rule and the check that enforces it.
 
+## Licence
+
+Dual licensed under [MIT](LICENSE-MIT) or [Apache 2.0](LICENSE-APACHE), at your option — the
+Rust ecosystem convention, chosen so the engine is ordinary to depend on.
+
 ## Design principles
 
 1. **Local first, and local only.** No account, no server, no telemetry, no network

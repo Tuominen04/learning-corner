@@ -1,7 +1,7 @@
 # Engine contract
 
 > **Audience:** People building Personal Learning Corner
-> **Status:** Planned
+> **Status:** In progress — M0 implemented
 > **Last reviewed:** 2026-09-06
 
 Every operation the interface may ask of the engine. This document is normative for both
@@ -39,6 +39,12 @@ future mobile client without redefining anything.
 | `Invalid` | Rejected; names the field and the reason | Show it against the field |
 | `LibraryError` | The library on disk is inconsistent | Show the diagnostic; do not retry |
 | `Io` | Disk full, permissions, drive removed | Show it plainly; never claim success |
+| `Unimplemented` | Named in this contract, not yet built | Hide or disable the control; never present it as a failure |
+
+`Unimplemented` exists because the whole operation surface is fixed before the whole of it is
+built. An operation from a later milestone is present, named, and returns this — so the
+interface can be written against the entire contract now, and filling one in later is a body
+change rather than a shape change.
 
 `Incomplete` is not an error path. A source that is missing its publisher is saved, is
 citable, and is reported as incomplete — because the alternative is that a user in a hurry
@@ -66,17 +72,23 @@ loses the source altogether. See [Citation model](citation-model.md).
 | `topic.tree` | — | the full topic tree |
 | `document.create` | topic id, title | document |
 | `document.read` | id | document, with resolved citations and links |
-| `document.write` | id, content, expected modification time | document, or `Conflict` |
+| `document.write` | id, content, expected revision | document, or `Conflict` |
 | `document.split` | id, range, new title | both documents; citations in the range move; a link is left behind |
 | `document.rename` | id, title | document |
 | `document.move` | id, topic id | document |
 | `document.delete` | id | `plan` / `apply` |
 | `document.backlinks` | id | documents linking here |
 
-`document.write` takes the modification time the interface last saw. If the file changed
-underneath — the user edited it externally, as they are
-[explicitly allowed to](../user/libraries-and-files.md) — the engine returns `Conflict` with
-both versions rather than overwriting.
+`document.write` takes the **revision** the interface received from the last read: an opaque
+token the interface stores and passes back, never interprets. If the file changed underneath —
+the user edited it externally, as they are
+[explicitly allowed to](../user/libraries-and-files.md) — the engine returns `Conflict` rather
+than overwriting.
+
+The revision is derived from the file on disk (its modification time and size), **not** from
+the document's own `modified` field. That distinction is the whole point: an external editor
+changes the body without touching the front matter, so a check against `modified` would miss
+precisely the case this exists to catch.
 
 ## Sources and citations
 
