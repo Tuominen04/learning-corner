@@ -41,6 +41,17 @@ function looksLikeEngineError(value: unknown): value is EngineError {
   );
 }
 
+/**
+ * Is the desktop runtime present?
+ *
+ * Every call below needs it. Opening the Vite dev server in an ordinary browser gives you the
+ * page but no engine and no native dialogs, so the interface must say so rather than looking
+ * broken — which is exactly how it looks when a button does nothing.
+ */
+export function isDesktopRuntime(): boolean {
+  return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+}
+
 async function call<T>(command: string, args?: Record<string, unknown>): Promise<T> {
   try {
     return await invoke<T>(command, args);

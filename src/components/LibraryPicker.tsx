@@ -12,11 +12,14 @@ export function LibraryPicker({ onOpened }: { onOpened: (status: LibraryStatus) 
 
   async function choose(mode: "create" | "open") {
     setError(null);
-    const picked = await openFolder({ directory: true, multiple: false });
-    if (typeof picked !== "string") return;
-
     setBusy(true);
     try {
+      // The folder dialog belongs inside the try. It can fail — a missing permission, no
+      // desktop runtime — and a failure outside here escapes as an unhandled rejection, which
+      // the person experiences as a button that does nothing at all.
+      const picked = await openFolder({ directory: true, multiple: false });
+      if (typeof picked !== "string") return; // dismissed the dialog
+
       const status =
         mode === "create"
           ? await engine.library.create(picked, name.trim() || "Learning")

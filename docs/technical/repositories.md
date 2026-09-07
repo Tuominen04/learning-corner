@@ -79,6 +79,38 @@ plc-engine = { path = "../personal-learning-corner-engine/crates/plc-engine" }
 cannot reach `main` — otherwise the pin means nothing and the build stops being reproducible
 on any machine but yours.
 
+## Building in CI
+
+The engine is a **private** repository, so fetching it needs a credential. `actions/checkout`
+issues a token scoped to the repository it checked out and nothing else, so `cargo` fetching the
+engine has nothing to authenticate with and the build fails with
+`failed to acquire username/password from local configuration`.
+
+This is a direct consequence of the two-repository split
+([ADR 0002](adr/0002-separate-backend-repository.md)) meeting two private repositories, and it
+does not show up locally, where a developer's own credential covers both.
+
+The fix is a fine-grained personal access token with **read access to the engine repository
+only**, stored as a secret in this repository, and a step before any `cargo` invocation:
+
+```yaml
+      - name: Authenticate cargo for the private engine repository
+        env:
+          ENGINE_TOKEN: ${{ secrets.ENGINE_READ_TOKEN }}
+        run: |
+          git config --global \
+            url."https://x-access-token:${ENGINE_TOKEN}@github.com/".insteadOf \
+            "https://github.com/"
+          echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> "$GITHUB_ENV"
+```
+
+`CARGO_NET_GIT_FETCH_WITH_CLI` matters as much as the token: without it `cargo` uses its own git
+implementation, which does not read the `insteadOf` rewrite, and the token is ignored.
+
+Making the engine repository public removes this entirely, and would also reopen crates.io as an
+option — see [ADR 0006](adr/0006-engine-dependency-pinning.md), whose *Revisit if* covers exactly
+that case.
+
 ## Type bindings across the boundary
 
 The shell defines its own wire types in `src-tauri/src/dto.rs` and converts the engine's

@@ -137,6 +137,13 @@ button.doc.selected { background: #2a2d38; color: #fff; }
 /* ---- messages ---- */
 
 .empty, .note { color: var(--ink-soft); font-size: 0.88em; max-width: 42rem; }
+.note code {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0.1rem 0.35rem;
+  font-size: 0.95em;
+}
 .note { margin-top: 1.2rem; }
 .warning { color: var(--warning); }
 .error { color: var(--error); }

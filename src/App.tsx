@@ -6,6 +6,7 @@ import { TopicTree } from "./components/TopicTree";
 import {
   engine,
   EngineFailure,
+  isDesktopRuntime,
   type Document,
   type LibraryStatus,
   type Topic,
@@ -29,6 +30,25 @@ export function App() {
       setError(thrown instanceof EngineFailure ? thrown.message : String(thrown));
     }
   }, []);
+
+  if (!isDesktopRuntime()) {
+    // Opening http://localhost:5173 in a browser gives you the page and nothing behind it:
+    // no engine, no folder dialog. Every button would silently do nothing, which reads as a
+    // broken application rather than as the wrong window.
+    return (
+      <main className="picker">
+        <h1>Open the desktop window</h1>
+        <p className="lede">
+          This page is being served to a browser, which has no access to your files. The
+          interface only works inside the application window.
+        </p>
+        <p className="note">
+          Run <code>npm run tauri dev</code> and use the window it opens. The address bar you
+          can see above is the giveaway — the real window has none.
+        </p>
+      </main>
+    );
+  }
 
   if (!library) {
     // Loading the tree happens here rather than in an effect keyed on the library. An effect
