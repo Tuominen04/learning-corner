@@ -36,12 +36,13 @@ Start at **[Getting started](user/getting-started.md)**.
 
 ## Technical documentation
 
-Start at **[Architecture](technical/architecture.md)**, then
-**[Roadmap](technical/roadmap.md)**.
+Start at **[Architecture](technical/architecture.md)** for the shape of it, or
+**[Development](technical/development.md)** if you just want it running.
 
 | Page                                                        | What it covers                                                     |
 | ----------------------------------------------------------- | ------------------------------------------------------------------ |
 | [Architecture](technical/architecture.md)                   | The shape of the system and the principles behind it               |
+| [Development](technical/development.md)                     | Prerequisites, running it, and the checks CI runs                  |
 | [Stack](technical/stack.md)                                 | What we build with, and what we deliberately leave out             |
 | [Repositories](technical/repositories.md)                   | The interface repo, the engine repo, and how they stay in step     |
 | [Engine contract](technical/backend-contract.md)            | Every operation the interface may ask the engine to perform        |
