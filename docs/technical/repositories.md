@@ -25,11 +25,29 @@ See [ADR 0002](adr/0002-separate-backend-repository.md) for why the split, and w
 | changes what the user sees, clicks, or arranges | this repository |
 | changes packaging, installers, or the window | this repository |
 | changes an operation across the boundary | **both**, contract first — see below |
-| is documentation | this repository, always |
+| specifies what the engine must *do* | this repository |
+| documents how the engine *is built* | engine repository |
 
-Documentation lives here even when it documents the engine. One place for docs, one place to
-look, one check script. The engine repository carries only a README pointing back here, plus
-Rust API documentation generated from its own source.
+## Which repository does documentation belong in?
+
+Both carry documentation, split by whether it is normative.
+
+**This repository holds the specification** — what the engine is required to do. The contract,
+the storage format, the index's guarantees, the citation model, the alignment rules. It lives
+with the product it describes rather than with one implementation of it, so a second client would
+implement the same contract instead of copying the first client's behaviour. Where the engine and
+these documents disagree, **these documents are right and the engine is wrong.**
+
+**The engine repository holds its own implementation documentation** — its module layout, its
+layering rules, how to build and test it, and how to call its API. None of that is a property of
+the product; all of it would be noise in a specification. It is also the documentation a person
+looks for while inside that repository, which is where it should be.
+
+Neither duplicates the other. If a page in the engine repository starts describing what the
+engine *must* do, it belongs here instead; if a page here starts describing how a particular
+crate is organised internally, it belongs there.
+
+Both trees follow the same conventions and each has its own `docs/check-docs.sh`.
 
 ## The contract is the interface between them
 
