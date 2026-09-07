@@ -20,10 +20,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 ts-rs = "12"
 
-# Pinned to an immutable revision of the engine repository.
-#
-# ADR 0006 calls for a git *tag*, and this becomes `tag = "v0.1.0"` the moment the engine's
-# M0 pull request merges and that tag exists on its main branch. A revision is the same
-# immutability with worse legibility, which is the documented interim rather than a silent
-# deviation.
-plc-engine = { git = "https://github.com/Tuominen04/personal-learning-corner-engine", rev = "fdc999d62f6ae21538944ae6deb7b975f09d42c0" }
+# Pinned to an immutable tag on the engine's main branch, per ADR 0006. Tags are never moved,
+# deleted, or reused, so this resolves to the same code forever; a version bump is a one-line
+# diff naming the old tag and the new one.
+plc-engine = { git = "https://github.com/Tuominen04/personal-learning-corner-engine", tag = "v0.1.0" }
