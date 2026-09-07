@@ -35,6 +35,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # The engine is a private repository. actions/checkout's token covers only the
+      # repository it checked out, so cargo has nothing to authenticate a fetch of the
+      # engine with. CARGO_NET_GIT_FETCH_WITH_CLI matters as much as the token: without
+      # it cargo uses its own git implementation, which ignores the rewrite below.
+      - name: Authenticate cargo for the private engine repository
+        env:
+          ENGINE_TOKEN: ${{ secrets.ENGINE_READ_TOKEN }}
+        run: |
+          git config --global \
+            url."https://x-access-token:${ENGINE_TOKEN}@github.com/".insteadOf \
+            "https://github.com/"
+          echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> "$GITHUB_ENV"
+
       - name: Tauri's Linux dependencies
         run: |
           sudo apt-get update
