@@ -32,13 +32,13 @@
     "@tauri-apps/cli": "^2",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "@vitejs/plugin-react": "^4",
-    "eslint": "^9",
-    "eslint-plugin-react-hooks": "^5",
+    "@vitejs/plugin-react": "^6",
+    "eslint": "^10",
+    "eslint-plugin-react-hooks": "^7",
     "globals": "^15",
-    "typescript": "^5",
+    "typescript": "^7",
     "typescript-eslint": "^8",
-    "vite": "^6.4.3",
-    "vitest": "^3.2.7"
+    "vite": "^8.2.2",
+    "vitest": "^5.0.0"
   }
 }
