@@ -5,8 +5,9 @@ export type Document = { id: string, title: string, body: string, topic: string,
  * Opaque. Hand it back to `document_write` unchanged; a mismatch means the file changed
  * underneath and the write is refused rather than overwriting someone's edit.
  *
- * Typed as a branded object in TypeScript rather than as its actual shape, so the
- * interface cannot read a field out of it, compare two of them, or construct one. It is a
- * token to carry, and the type says so.
+ * A branded string in TypeScript. Branded so the interface cannot construct one from an
+ * arbitrary string or compare two of them; a string because a revision carries nanoseconds
+ * since the epoch, and any number that large is silently rounded by a JavaScript client.
+ * Sending it as a number is what made every write fail its conflict check.
  */
-revision: { readonly __opaque: "Revision" }, };
+revision: string & { readonly __opaque: "Revision" }, };

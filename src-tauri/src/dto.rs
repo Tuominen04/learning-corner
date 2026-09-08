@@ -61,10 +61,11 @@ pub struct Document {
     /// Opaque. Hand it back to `document_write` unchanged; a mismatch means the file changed
     /// underneath and the write is refused rather than overwriting someone's edit.
     ///
-    /// Typed as a branded object in TypeScript rather than as its actual shape, so the
-    /// interface cannot read a field out of it, compare two of them, or construct one. It is a
-    /// token to carry, and the type says so.
-    #[ts(type = "{ readonly __opaque: \"Revision\" }")]
+    /// A branded string in TypeScript. Branded so the interface cannot construct one from an
+    /// arbitrary string or compare two of them; a string because a revision carries nanoseconds
+    /// since the epoch, and any number that large is silently rounded by a JavaScript client.
+    /// Sending it as a number is what made every write fail its conflict check.
+    #[ts(type = "string & { readonly __opaque: \"Revision\" }")]
     pub revision: Revision,
 }
 
@@ -176,5 +177,66 @@ mod export_bindings {
         Document::export_all(&config).unwrap();
         SearchHit::export_all(&config).unwrap();
         EngineError::export_all(&config).unwrap();
+    }
+}
+
+/// The wire, tested where the wire actually is.
+///
+/// The engine has its own JSON tests, but this crate is the boundary a JavaScript client
+/// crosses, and it had no coverage of it at all. That gap shipped a product in which no
+/// document could be saved: a revision serialised as a number came back rounded by a
+/// JavaScript client, every conflict check failed, and both the engine and the interface were
+/// individually correct the whole time.
+#[cfg(test)]
+mod wire {
+    use super::*;
+    use plc_engine::api::Engine;
+
+    fn library() -> (tempfile::TempDir, Engine) {
+        let dir = tempfile::tempdir().unwrap();
+        let engine = Engine::create(dir.path(), "Learning").unwrap();
+        (dir, engine)
+    }
+
+    #[test]
+    fn a_document_written_with_a_round_tripped_revision_saves() {
+        // Exactly what happens in the application: read a document, hand the revision to a
+        // client as JSON, take it back from that client, write with it.
+        let (_dir, mut engine) = library();
+        let topic = engine.topic_create(None, "Protein").unwrap();
+        let id = engine.document_create(topic, "What protein is").unwrap();
+
+        let read: Document = engine.document_read(id).unwrap().into();
+
+        let as_sent = serde_json::to_string(&read).unwrap();
+        let as_returned: Document = serde_json::from_str(&as_sent).unwrap();
+
+        assert_eq!(read.revision, as_returned.revision);
+
+        engine
+            .document_write(
+                id,
+                "Protein is built from amino acids.",
+                as_returned.revision,
+            )
+            .expect("a revision that crossed the wire must still be accepted");
+    }
+
+    #[test]
+    fn a_revision_crosses_as_a_string_not_a_number() {
+        // The guard. A JavaScript number holds integers exactly only to 2^53, and a revision
+        // carries nanoseconds since the epoch — roughly two hundred times larger.
+        let (_dir, mut engine) = library();
+        let topic = engine.topic_create(None, "Protein").unwrap();
+        let id = engine.document_create(topic, "What protein is").unwrap();
+        let read: Document = engine.document_read(id).unwrap().into();
+
+        let value = serde_json::to_value(&read).unwrap();
+        let revision = &value["revision"];
+
+        assert!(
+            revision.is_string(),
+            "a revision must cross as a string; as a number it is silently rounded: {revision}"
+        );
     }
 }
