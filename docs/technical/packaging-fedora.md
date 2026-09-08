@@ -1,7 +1,7 @@
 # Packaging for Fedora
 
 > **Audience:** People building and releasing Personal Learning Corner
-> **Status:** Planned
+> **Status:** In progress — M0 implemented
 > **Last reviewed:** 2026-09-06
 
 Fedora is the first target ([ADR 0001](adr/0001-tauri-rust-stack.md)). Windows and macOS come
@@ -17,12 +17,24 @@ after the Linux build is solid, and are packaging work rather than a rewrite.
 Tauri produces both. The RPM is the primary artefact because it is what a Fedora user
 expects; the Flatpak is what makes "Linux" mean more than "Fedora" without more work.
 
-## Runtime dependencies
+## Dependencies
 
-Tauri uses the system webview rather than bundling a browser, so the RPM depends on
-`webkit2gtk` and `libappindicator`. Exact package names and minimum versions are pinned when
-M0 establishes the build, and CI must install the same versions the RPM declares — a
-dependency that only exists on the build machine is a bug the maintainer never sees.
+Tauri uses the system webview rather than bundling a browser, so both building and running link
+against GTK and WebKitGTK. **Build and runtime are different lists**, and conflating them is how
+a package installs and then fails to start.
+
+**Building** needs the `-devel` packages, and is documented for contributors in
+[Development](development.md#system-libraries):
+`webkit2gtk4.1-devel`, `libsoup3-devel`, `libappindicator-gtk3-devel`, `librsvg2-devel`,
+`openssl-devel`.
+
+**Running** needs only the libraries themselves — `webkit2gtk4.1`, `libappindicator-gtk3`,
+`librsvg2` — which the RPM declares as requires. Tauri generates most of this; the declared set
+must be checked against a clean Fedora install rather than assumed, which is what step 1 of
+[Verifying a build](#verifying-a-build) is for.
+
+CI installs the build list. A dependency present on the build machine but absent from the RPM's
+requires is a bug the maintainer never sees and every user hits.
 
 ## Directories
 

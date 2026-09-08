@@ -26,19 +26,26 @@ The skeleton, with nothing interesting on top of it.
       than retrofitted.
 - [x] Engine CI: tests, `clippy -D warnings`, `rustfmt --check`.
 
-**Shell and interface — not started.**
+**Shell and interface — built, not yet seen running.**
 
-- [ ] A Tauri window that opens. Framework and editor chosen and recorded in
-      [ADR 0005](adr/0005-react-tiptap-interface.md).
-- [ ] Library picker, topic tree, document editor.
-- [ ] Interface CI: lint, typecheck, bindings freshness, `docs/check-docs.sh`.
+- [x] A Tauri window that opens, pinning the engine immutably
+      ([ADR 0006](adr/0006-engine-dependency-pinning.md)).
+- [x] Framework and editor chosen ([ADR 0005](adr/0005-react-tiptap-interface.md)); bindings
+      generated ([ADR 0007](adr/0007-bindings-with-ts-rs.md)); editor schema narrowed for
+      round-trip fidelity ([ADR 0008](adr/0008-narrow-editor-schema.md)).
+- [x] Library picker, topic tree, document editor with continuous saving and conflict handling.
+- [x] Interface CI: lint, typecheck, round-trip tests, bindings freshness, `docs/check-docs.sh`.
+- [ ] **Seen running by a person.** The release binary builds (15 MB) and stays up under a
+      virtual display, but the webview renders nothing in a container with no GPU, so nobody
+      has yet watched the interface work. This is the one item M0 cannot close by itself.
 
 **Done when:** a library can be created, documents written and read back, the application
 restarted with everything intact, `.plc/` deleted and rebuilt with no observable difference,
 and every file readable in a text editor.
 
-The engine half of that is provable today — `cargo run --example walkthrough` in the engine
-repository runs it end to end. The rest waits on the shell.
+The engine half is provable today — `cargo run --example walkthrough` in the engine repository
+runs it end to end. The interface half is built and every automated check passes; what remains
+is running it on a desktop and using it.
 
 ---
 
