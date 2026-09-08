@@ -1,0 +1,12 @@
+# Pin the compiler, so "clean here" and "clean in CI" mean the same thing.
+#
+# See docs/technical/development.md. Kept identical to the engine repository's pin: the shell
+# links against that crate, and two different compilers building one product is a source of
+# differences nobody wants to debug.
+#
+# rustup installs this, with the components below, on the first cargo command — no workflow
+# change is needed for CI to honour it.
+[toolchain]
+channel = "1.98.0"
+components = ["clippy", "rustfmt"]
+profile = "minimal"

@@ -10,12 +10,22 @@ Getting from a fresh clone to a running window.
 
 ### Rust
 
-1.82 or newer. **`clippy` and `rustfmt` ship separately from `cargo`** and CI runs both:
+**Pinned.** `rust-toolchain.toml` fixes the version, and rustup installs it — with clippy and
+rustfmt — on your first `cargo` command. Nothing to do.
 
-```sh
-rustup component add clippy rustfmt          # with rustup
-sudo dnf install clippy rustfmt              # Fedora, without rustup
-```
+It exists because clippy gains lints with every release, and a lint that does not exist in your
+local version cannot warn you. Unpinned, CI ran whatever stable was that week while a
+contributor might be several releases behind, and a change passed every check on one machine
+and failed on the other over a lint nobody could see locally. The engine repository carries the
+same pin, since two compilers building one product is a difference nobody wants to debug.
+
+**Bumping it is its own change**, never a line inside somebody else's: edit the channel, run
+the checks, fix whatever the newer clippy has learned to notice, push that alone. Dependabot
+does not track it — no ecosystem covers a Rust toolchain — which is the right shape for
+something that can turn every check red at once.
+
+If you are not using rustup, install the matching version and its components by hand
+(`sudo dnf install clippy rustfmt` on Fedora), and expect to meet this problem again.
 
 ### Node
 
@@ -64,6 +74,16 @@ opening that address in an ordinary browser gives you the page with nothing behi
 engine, no native file dialogs. The interface detects this and says so rather than presenting
 buttons that cannot work, but the time to lose is the first five minutes, so: the real window
 has no address bar.
+
+## Dependencies
+
+Dependabot opens updates weekly, Monday morning: npm, the `src-tauri` crates, and the GitHub
+Actions. Minor and patch are grouped so the routine bumps arrive as one thing to read, and the
+interface's build tooling is grouped separately because it breaks differently from what ships.
+
+The **engine is excluded**. It is pinned to an immutable tag and bumped when a release is cut
+([ADR 0006](adr/0006-engine-dependency-pinning.md)) — an automatic bump would defeat the point
+of pinning it, and Dependabot cannot see a private git dependency in any case.
 
 ## Checks
 
