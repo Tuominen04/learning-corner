@@ -28,8 +28,8 @@ Pinned when M0 begins; this table is filled in then, not guessed now.
 | Rust | 1.82 | 1.94.1 |
 | Tauri | 2.x | 2.11 |
 | Node.js (build only) | 22 | |
-| React | 18.x | |
-| TipTap | 2.x | |
+| React | 19.x | |
+| TipTap | 3.x | |
 | Fedora | 42 | |
 
 A release build of the shell is **15 MB**, against the 50 MB constraint below.
