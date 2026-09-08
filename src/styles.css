@@ -118,11 +118,18 @@ button.doc.selected { background: #2a2d38; color: #fff; }
   background: var(--page);
   color: var(--ink);
   border-radius: 8px;
-  padding: 1.6rem 1.9rem;
-  min-height: 24rem;
   max-width: 42rem;
 }
-.prose .ProseMirror { outline: none; }
+
+/* The padding and the height belong to the editable element, not to the card around it.
+   With them on the card, the whole area below the last line was wrapper rather than editor,
+   so clicking there hit nothing and you had to aim at a line of text to start typing. */
+.prose .ProseMirror {
+  outline: none;
+  padding: 1.6rem 1.9rem;
+  min-height: 24rem;
+  cursor: text;
+}
 .prose p { margin: 0 0 1rem; }
 
 .citation, .doc-link {
