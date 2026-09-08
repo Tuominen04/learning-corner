@@ -12,11 +12,11 @@ No dates. This is one person's project; the order is the commitment, not a sched
 
 ---
 
-## M0 · Foundations
+## M0 · Foundations — **complete**
 
 The skeleton, with nothing interesting on top of it.
 
-**Engine — done.**
+**Engine.**
 
 - [x] The engine repository exists, with the contract's shape and its test harness.
 - [x] Library create, open, and close. `library.toml`, format version 1, the version checks.
@@ -26,7 +26,7 @@ The skeleton, with nothing interesting on top of it.
       than retrofitted.
 - [x] Engine CI: tests, `clippy -D warnings`, `rustfmt --check`.
 
-**Shell and interface — built, not yet seen running.**
+**Shell and interface.**
 
 - [x] A Tauri window that opens, pinning the engine immutably
       ([ADR 0006](adr/0006-engine-dependency-pinning.md)).
@@ -35,19 +35,31 @@ The skeleton, with nothing interesting on top of it.
       round-trip fidelity ([ADR 0008](adr/0008-narrow-editor-schema.md)).
 - [x] Library picker, topic tree, document editor with continuous saving and conflict handling.
 - [x] Interface CI: lint, typecheck, round-trip tests, bindings freshness, `docs/check-docs.sh`.
-- [ ] **Seen running by a person.** The release binary builds (15 MB) and stays up under a
-      virtual display, but the webview renders nothing in a container with no GPU, so nobody
-      has yet watched the interface work. This is the one item M0 cannot close by itself.
+- [x] **Seen running by a person**, on Fedora: a library created, topics and documents made,
+      text written and saved, and the files read back in a text editor.
 
 **Done when:** a library can be created, documents written and read back, the application
 restarted with everything intact, `.plc/` deleted and rebuilt with no observable difference,
-and every file readable in a text editor.
+and every file readable in a text editor. All of it, met.
 
-The engine half is provable today — `cargo run --example walkthrough` in the engine repository
-runs it end to end. The interface half is built and every automated check passes; what remains
-is running it on a desktop and using it.
+### What the last item was worth
 
----
+Two defects survived 82 passing tests, a green pipeline, and every automated check in this
+list. Both were found within minutes of a person actually using the application.
+
+**No document could be saved.** A revision carried nanoseconds since the epoch as a number, and
+a JavaScript client rounds anything above 2^53 — so every revision came back different from the
+one issued and every conflict check failed. The engine was correct. The interface was correct.
+Nothing exercised the boundary between them, and that gap was invisible to both test suites.
+Fixed in engine v0.1.1; both repositories now assert that nothing crossing the wire is a number
+JavaScript cannot hold.
+
+**Half the editor did not accept clicks.** The padding sat on the card rather than the editable
+element, so anywhere below the last line of text was decoration. Nothing could have caught this
+except using it.
+
+The lesson is cheap to state and easy to forget: **the automated checks in this list can all
+pass while the product does not work.** Keep the last item on every milestone.
 
 ## M1 · Documents and sources ← *the first release*
 

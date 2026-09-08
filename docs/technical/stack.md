@@ -1,7 +1,7 @@
 # Stack
 
 > **Audience:** People building Personal Learning Corner
-> **Status:** In progress — M0 implemented
+> **Status:** Implemented
 > **Last reviewed:** 2026-09-06
 
 ## Chosen
