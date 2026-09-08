@@ -14,6 +14,14 @@ updates:
     open-pull-requests-limit: 5
     commit-message:
       prefix: "deps"
+    ignore:
+      # TypeScript 7 exists, but typescript-eslint caps at <6.1 and there is no release that
+      # supports it — taking 7 would mean dropping TypeScript linting altogether. Minor and
+      # patch updates still arrive; only the jump past what the linter understands is held.
+      #
+      # Remove this the moment typescript-eslint declares support for 7.
+      - dependency-name: "typescript"
+        versions: [">=7"]
     groups:
       # One pull request for the routine bumps, and a second for the build tooling, which
       # breaks differently from what ships and is worth reading separately.

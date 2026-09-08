@@ -19,6 +19,12 @@ export function Editor({ document, onSaved }: { document: Doc; onSaved: (d: Doc)
 
   // The revision travels from the last successful read or write into the next write. Kept in a
   // ref rather than state so a save in flight always sees the current one.
+  //
+  // Nothing synchronises it back from the `document` prop, and nothing needs to. Switching
+  // documents remounts this component — App keys it by document id — so the ref and the saved
+  // indicator start fresh. Staying on the same document and saving updates both in `save`
+  // below, before the new prop even arrives. An effect doing it again was redundant, and
+  // react-hooks 7 was right to object to setting state in one.
   const revision = useRef(document.revision);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -34,12 +40,6 @@ export function Editor({ document, onSaved }: { document: Doc; onSaved: (d: Doc)
     },
     [document.id],
   );
-
-  useEffect(() => {
-    revision.current = document.revision;
-    setState("clean");
-    setMessage(null);
-  }, [document.id, document.revision]);
 
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
 
