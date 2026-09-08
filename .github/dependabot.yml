@@ -1,0 +1,75 @@
+# Weekly dependency updates.
+#
+# Monday morning, so a week's worth is waiting at the start of the week rather than trickling
+# in and interrupting.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Helsinki
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps"
+    groups:
+      # One pull request for the routine bumps, and a second for the build tooling, which
+      # breaks differently from what ships and is worth reading separately.
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+        exclude-patterns:
+          - "vite"
+          - "vitest"
+          - "@vitejs/*"
+          - "typescript"
+          - "eslint*"
+          - "typescript-eslint"
+      tooling:
+        patterns:
+          - "vite"
+          - "vitest"
+          - "@vitejs/*"
+          - "typescript"
+          - "eslint*"
+          - "typescript-eslint"
+
+  - package-ecosystem: cargo
+    directory: /src-tauri
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Helsinki
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps"
+    ignore:
+      # The engine is pinned to an immutable tag and bumped deliberately when a release is
+      # cut (ADR 0006). Dependabot cannot see a private git dependency anyway, and an
+      # automatic bump here would defeat the point of pinning it.
+      - dependency-name: "plc-engine"
+    groups:
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Helsinki
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "ci"
+    groups:
+      actions:
+        update-types:
+          - minor
+          - patch
