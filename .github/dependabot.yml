@@ -15,9 +15,10 @@ updates:
     commit-message:
       prefix: "deps"
     ignore:
-      # TypeScript 7 exists, but typescript-eslint caps at <6.1 and there is no release that
-      # supports it — taking 7 would mean dropping TypeScript linting altogether. Minor and
-      # patch updates still arrive; only the jump past what the linter understands is held.
+      # typescript-eslint accepts >=4.8.4 <6.1.0, so TypeScript 6 is fine and is what we are
+      # on. 7 is not: no typescript-eslint release supports it, and taking it would mean
+      # linting TypeScript with nothing that understands it. Only that jump is held — this
+      # bound is deliberately >=7 rather than a pin, so 6.x updates still arrive.
       #
       # Remove this the moment typescript-eslint declares support for 7.
       - dependency-name: "typescript"
