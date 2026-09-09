@@ -11,7 +11,10 @@ use plc_engine::store::Revision;
 use plc_engine::{Error, Id};
 use tauri::State;
 
-use crate::dto::{Document, EngineError, LibraryStatus, SearchHit, Topic};
+use crate::dto::{
+    Document, DocumentRef, EngineError, Field, Form, LibraryStatus, Locator, SavedSource,
+    SearchHit, Source, SourceType, Topic,
+};
 
 /// The open library, or none. The interface holds no durable state of its own.
 #[derive(Default)]
@@ -163,4 +166,122 @@ pub fn search(state: State<'_, OpenLibrary>, query: String) -> Answer<Vec<Search
             })
             .collect())
     })
+}
+
+// ---- sources -------------------------------------------------------------------
+
+/// Save a new source.
+///
+/// Returns its identifier **and** whatever required fields it still lacks. A source short of a
+/// field is stored, not refused: somebody who cannot find a publisher should end up with an
+/// incomplete source rather than with no source at all.
+#[tauri::command]
+pub fn source_create(state: State<'_, OpenLibrary>, source: Source) -> Answer<SavedSource> {
+    with(&state, |e| {
+        let (id, missing) = e.source_create(source.into_engine()?)?;
+        Ok(SavedSource {
+            id: id.to_string(),
+            missing: missing.into_iter().map(Field::from).collect(),
+        })
+    })
+}
+
+#[tauri::command]
+pub fn source_read(state: State<'_, OpenLibrary>, source: String) -> Answer<Source> {
+    with(&state, |e| e.source_read(id(&source)?).map(Source::from))
+}
+
+#[tauri::command]
+pub fn source_update(state: State<'_, OpenLibrary>, source: Source) -> Answer<Vec<Field>> {
+    with(&state, |e| {
+        Ok(e.source_update(source.into_engine()?)?
+            .into_iter()
+            .map(Field::from)
+            .collect())
+    })
+}
+
+/// Every source in the library, already in reference-list order.
+#[tauri::command]
+pub fn source_list(state: State<'_, OpenLibrary>) -> Answer<Vec<Source>> {
+    with(&state, |e| {
+        Ok(e.source_list()?.into_iter().map(Source::from).collect())
+    })
+}
+
+/// What would break if this source were deleted.
+///
+/// Two-phase without exception: deleting a source orphans every citation of it, so the
+/// interface must show this list and be told to go ahead before `source_delete` may run.
+#[tauri::command]
+pub fn source_delete_plan(
+    state: State<'_, OpenLibrary>,
+    source: String,
+) -> Answer<Vec<DocumentRef>> {
+    with(&state, |e| {
+        Ok(e.source_delete_plan(id(&source)?)?
+            .into_iter()
+            .map(DocumentRef::from)
+            .collect())
+    })
+}
+
+#[tauri::command]
+pub fn source_delete(state: State<'_, OpenLibrary>, source: String) -> Answer<()> {
+    with(&state, |e| e.source_delete(id(&source)?))
+}
+
+/// The documents citing this source.
+///
+/// The thing you are glad of on a bad day: a study is retracted, and this is how you find the
+/// eleven places you leaned on it.
+#[tauri::command]
+pub fn source_citing_documents(
+    state: State<'_, OpenLibrary>,
+    source: String,
+) -> Answer<Vec<DocumentRef>> {
+    with(&state, |e| {
+        Ok(e.source_citing_documents(id(&source)?)?
+            .into_iter()
+            .map(DocumentRef::from)
+            .collect())
+    })
+}
+
+/// Which fields APA 7 requires for a given type, so the form can ask for those and no others.
+#[tauri::command]
+pub fn source_required_fields(
+    state: State<'_, OpenLibrary>,
+    source_type: SourceType,
+) -> Answer<Vec<Field>> {
+    with(&state, |e| {
+        Ok(e.source_required_fields(source_type.into())
+            .into_iter()
+            .map(Field::from)
+            .collect())
+    })
+}
+
+// ---- citations -----------------------------------------------------------------
+
+/// The in-text citation for one source, disambiguated against the whole library.
+#[tauri::command]
+pub fn citation_format(
+    state: State<'_, OpenLibrary>,
+    source: String,
+    form: Form,
+    locator: Option<Locator>,
+) -> Answer<String> {
+    with(&state, |e| {
+        e.citation_format(id(&source)?, form.into(), locator.map(Into::into))
+    })
+}
+
+/// The reference list for one document, built from the sources it actually cites.
+#[tauri::command]
+pub fn citation_reference_list(
+    state: State<'_, OpenLibrary>,
+    document: String,
+) -> Answer<Vec<String>> {
+    with(&state, |e| e.citation_reference_list(id(&document)?))
 }

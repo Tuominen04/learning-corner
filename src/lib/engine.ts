@@ -6,13 +6,41 @@
 
 import { invoke } from "@tauri-apps/api/core";
 
+import type { Appraisal } from "./bindings/Appraisal";
+import type { Contributor } from "./bindings/Contributor";
 import type { Document } from "./bindings/Document";
+import type { DocumentRef } from "./bindings/DocumentRef";
 import type { EngineError } from "./bindings/EngineError";
+import type { Field } from "./bindings/Field";
+import type { Form } from "./bindings/Form";
 import type { LibraryStatus } from "./bindings/LibraryStatus";
+import type { Locator } from "./bindings/Locator";
+import type { Role } from "./bindings/Role";
+import type { SavedSource } from "./bindings/SavedSource";
 import type { SearchHit } from "./bindings/SearchHit";
+import type { Source } from "./bindings/Source";
+import type { SourceDate } from "./bindings/SourceDate";
+import type { SourceType } from "./bindings/SourceType";
 import type { Topic } from "./bindings/Topic";
 
-export type { Document, EngineError, LibraryStatus, SearchHit, Topic };
+export type {
+  Appraisal,
+  Contributor,
+  Document,
+  DocumentRef,
+  EngineError,
+  Field,
+  Form,
+  LibraryStatus,
+  Locator,
+  Role,
+  SavedSource,
+  SearchHit,
+  Source,
+  SourceDate,
+  SourceType,
+  Topic,
+};
 
 /** The opaque token carried between a read and a write. Never inspected. */
 export type Revision = Document["revision"];
@@ -91,6 +119,27 @@ export const engine = {
     rename: (document: string, title: string) =>
       call<Document>("document_rename", { document, title }),
     delete: (document: string) => call<void>("document_delete", { document }),
+  },
+  source: {
+    create: (source: Source) => call<SavedSource>("source_create", { source }),
+    read: (source: string) => call<Source>("source_read", { source }),
+    /** Returns whatever required fields the saved source still lacks — not an error. */
+    update: (source: Source) => call<Field[]>("source_update", { source }),
+    list: () => call<Source[]>("source_list"),
+    /** What deleting this source would orphan. Ask before `delete`, never after. */
+    deletePlan: (source: string) =>
+      call<DocumentRef[]>("source_delete_plan", { source }),
+    delete: (source: string) => call<void>("source_delete", { source }),
+    citingDocuments: (source: string) =>
+      call<DocumentRef[]>("source_citing_documents", { source }),
+    requiredFields: (sourceType: SourceType) =>
+      call<Field[]>("source_required_fields", { sourceType }),
+  },
+  citation: {
+    format: (source: string, form: Form, locator: Locator | null = null) =>
+      call<string>("citation_format", { source, form, locator }),
+    referenceList: (document: string) =>
+      call<string[]>("citation_reference_list", { document }),
   },
   search: (query: string) => call<SearchHit[]>("search", { query }),
 };

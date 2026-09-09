@@ -26,6 +26,16 @@ pub fn run() {
             commands::document_rename,
             commands::document_delete,
             commands::search,
+            commands::source_create,
+            commands::source_read,
+            commands::source_update,
+            commands::source_list,
+            commands::source_delete_plan,
+            commands::source_delete,
+            commands::source_citing_documents,
+            commands::source_required_fields,
+            commands::citation_format,
+            commands::citation_reference_list,
         ])
         .run(tauri::generate_context!())
         .expect("the application failed to start");
