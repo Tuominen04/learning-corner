@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 
 import { Editor } from "./components/Editor";
 import { LibraryPicker } from "./components/LibraryPicker";
+import { Sources } from "./components/Sources";
 import { TopicTree } from "./components/TopicTree";
 import {
   engine,
@@ -17,6 +18,10 @@ export function App() {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [open, setOpen] = useState<Document | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Sources are library-wide rather than living under a topic, so they are a place you go
+  // rather than something you select in the tree.
+  const [view, setView] = useState<"documents" | "sources">("documents");
 
   const refresh = useCallback(async () => {
     try {
@@ -88,17 +93,36 @@ export function App() {
           )}
         </div>
 
+        <nav className="views">
+          <button
+            className={view === "documents" ? "view selected" : "view"}
+            onClick={() => setView("documents")}
+          >
+            Documents
+          </button>
+          <button
+            className={view === "sources" ? "view selected" : "view"}
+            onClick={() => setView("sources")}
+          >
+            Sources
+          </button>
+        </nav>
+
         <TopicTree
           topics={topics}
-          selected={open?.id ?? null}
+          selected={view === "documents" ? (open?.id ?? null) : null}
           onSelectDocument={(id) =>
-            void guard(async () => setOpen(await engine.document.read(id)))
+            void guard(async () => {
+              setOpen(await engine.document.read(id));
+              setView("documents");
+            })
           }
           onAddDocument={(topicId) =>
             void guard(async () => {
               const id = await engine.document.create(topicId, "Untitled");
               await refresh();
               setOpen(await engine.document.read(id));
+              setView("documents");
             })
           }
           onAddTopic={(parent) =>
@@ -126,7 +150,16 @@ export function App() {
 
       <main>
         {error && <p className="error">{error}</p>}
-        {open ? (
+        {view === "sources" ? (
+          <Sources
+            onOpenDocument={(id) =>
+              void guard(async () => {
+                setOpen(await engine.document.read(id));
+                setView("documents");
+              })
+            }
+          />
+        ) : open ? (
           <Editor
             key={open.id}
             document={open}

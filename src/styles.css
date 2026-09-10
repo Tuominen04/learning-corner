@@ -160,3 +160,111 @@ button.doc.selected { background: #2a2d38; color: #fff; }
 .problems ul { list-style: none; margin: 0; padding: 0; font-size: 0.82em; }
 .problems li { margin-bottom: 0.6rem; }
 .problems code { display: block; color: var(--ink-soft); }
+
+/* ---- sources ------------------------------------------------------------- */
+
+.views { display: flex; gap: 0.3rem; margin-bottom: 1rem; }
+button.view {
+  flex: 1;
+  background: transparent;
+  border: 1px solid var(--line);
+  font-size: 0.85em;
+  padding: 0.35rem 0.5rem;
+}
+button.view.selected { background: #2a2d38; color: #fff; border-color: var(--accent); }
+
+.sources header, .source-form header { display: flex; justify-content: space-between; align-items: center; }
+.sources h2, .source-form h2 { margin: 0 0 1rem; }
+.sources header h2 { margin-bottom: 0; }
+
+.source-list { list-style: none; margin: 1.2rem 0; padding: 0; }
+.source-list li { border-bottom: 1px solid var(--line); }
+.source-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.7rem 0;
+}
+.source-row strong { display: block; }
+.source-meta { font-size: 0.82em; color: var(--ink-soft); }
+.source-actions { display: flex; gap: 0.2rem; opacity: 0; white-space: nowrap; }
+.source-row:hover .source-actions { opacity: 1; }
+
+.saved-note {
+  border-left: 2px solid var(--accent);
+  padding-left: 0.7rem;
+  font-size: 0.9em;
+  color: var(--ink-soft);
+}
+
+/* The form. Fields are the same shape as the library picker's, so the two read as one app. */
+.source-form { max-width: 42rem; }
+.source-form select, .contributor select, .date-field select {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: inherit;
+  padding: 0.45rem 0.5rem;
+  font: inherit;
+  width: 100%;
+}
+.contributor select, .date-field select { width: auto; }
+.field-label {
+  display: block;
+  font-size: 0.85em;
+  color: var(--ink-soft);
+  margin: 1.5rem 0 0.3rem;
+}
+.field em { font-style: normal; color: var(--warning); }
+.hint { font-size: 0.8em; color: var(--ink-soft); margin: 0.25rem 0 0; }
+.field .hint { margin-top: 0.3rem; }
+
+.contributors { margin-bottom: 0.5rem; }
+.contributor { display: flex; gap: 0.4rem; margin-bottom: 0.4rem; align-items: center; }
+.contributor input {
+  flex: 1;
+  min-width: 0;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: inherit;
+  padding: 0.45rem 0.5rem;
+  font: inherit;
+}
+.contributor input.short, .date-field input.short { flex: 0 0 6rem; }
+
+.date-field .row { align-items: center; }
+.date-field input {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: inherit;
+  padding: 0.45rem 0.5rem;
+  font: inherit;
+}
+
+.appraisal { margin: 1.5rem 0; }
+.appraisal summary { cursor: pointer; font-size: 0.85em; color: var(--ink-soft); }
+.appraisal summary:hover { color: var(--accent); }
+
+.confirm {
+  border: 1px solid var(--warning);
+  border-radius: 6px;
+  padding: 1rem 1.2rem;
+  margin: 1rem 0;
+}
+.confirm h3 { margin-top: 0; }
+.confirm ul { list-style: none; margin: 0.5rem 0 1rem; padding: 0; }
+
+/* These are the documents about to break. A ghost button is too quiet for something you are
+   being asked to go and look at before deciding. */
+.confirm li button {
+  border: none;
+  background: none;
+  color: var(--accent);
+  padding: 0.15rem 0;
+  font-size: inherit;
+  text-align: left;
+}
+.confirm li button:hover { text-decoration: underline; }
