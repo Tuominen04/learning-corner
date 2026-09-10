@@ -12,6 +12,8 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use plc_engine::api::{DocumentSummary, DocumentView, Status, TopicNode};
+use plc_engine::citation as engine_src;
+use plc_engine::citation::format as engine_fmt;
 use plc_engine::store::Revision;
 
 /// An entity identifier. Opaque: the interface stores it and passes it back, never parses it.
@@ -75,6 +77,164 @@ pub struct SearchHit {
     pub id: Id,
     pub title: String,
     pub excerpt: String,
+}
+
+// ---- sources -------------------------------------------------------------------
+//
+// The engine's `Source` is not sent directly, for the reason at the top of this file: its `id`
+// is an `Id`, and an identifier crosses as an opaque string or not at all. The rest of the
+// shape is deliberately the same, field for field, so a reader comparing the two files can
+// see at a glance that nothing was dropped in translation.
+
+/// What kind of thing a source is. The type decides which fields APA 7 requires.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+#[serde(rename_all = "kebab-case")]
+pub enum SourceType {
+    Book,
+    BookChapter,
+    JournalArticle,
+    WebPage,
+    Video,
+    Audio,
+    Report,
+}
+
+/// A field a type can require.
+///
+/// Named rather than stringly-typed on both sides of the wire, so "this source is missing its
+/// publisher" arrives as something a form can highlight rather than a sentence to display.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+#[serde(rename_all = "kebab-case")]
+pub enum Field {
+    Authors,
+    Editors,
+    Date,
+    Title,
+    Container,
+    Publisher,
+    Site,
+    Volume,
+    Pages,
+}
+
+/// What a contributor did.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+#[serde(rename_all = "kebab-case")]
+pub enum Role {
+    Author,
+    Editor,
+    Translator,
+    Director,
+    Host,
+}
+
+/// One contributor: `family` plus `given`, **or** `literal`.
+///
+/// The literal form carries group authors and names that do not split into two Western parts.
+/// Both shapes cross the wire because assuming every name in the world decomposes is a bug,
+/// not a simplification the interface may make.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub struct Contributor {
+    pub role: Role,
+    pub family: Option<String>,
+    pub given: Option<String>,
+    pub literal: Option<String>,
+    /// The short form a group author is known by after first use: `WHO`.
+    pub abbreviation: Option<String>,
+}
+
+/// When a source was published.
+///
+/// A tagged union rather than three nullable numbers, because `no-date` is a **value**: APA 7
+/// prints `n.d.` for it. Three nulls would mean "the user has not filled this in yet", which is
+/// a different thing, and flattening the two is how `n.d.` turns into an empty string.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+#[serde(tag = "kind", rename_all = "kebab-case")]
+pub enum SourceDate {
+    NoDate,
+    Year {
+        year: i32,
+    },
+    /// Year, month and day — for web pages, videos, and anything where the day matters.
+    Full {
+        year: i32,
+        month: u8,
+        day: u8,
+    },
+}
+
+/// The user's own judgement of a source. Not a score the application computed.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub struct Appraisal {
+    pub trust: Option<String>,
+    pub note: Option<String>,
+}
+
+/// A source: something you learned from.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub struct Source {
+    /// Empty when the interface is proposing a new source; the engine assigns the real one.
+    pub id: Option<Id>,
+    #[serde(rename = "type")]
+    pub source_type: SourceType,
+    pub title: String,
+    pub date: SourceDate,
+    pub contributors: Vec<Contributor>,
+    /// The journal, book or collection this sits inside.
+    pub container: Option<String>,
+    pub publisher: Option<String>,
+    pub site: Option<String>,
+    pub volume: Option<String>,
+    pub issue: Option<String>,
+    pub pages: Option<String>,
+    pub edition: Option<String>,
+    pub doi: Option<String>,
+    pub url: Option<String>,
+    /// Only where content is designed to change and is not archived — not on every web page.
+    pub retrieved: Option<SourceDate>,
+    pub appraisal: Option<Appraisal>,
+}
+
+/// What came back from saving a source.
+///
+/// `missing` is not an error. A source short of a required field is **saved** and reported, so
+/// somebody who cannot find a publisher ends up with an incomplete source rather than none.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub struct SavedSource {
+    pub id: Id,
+    pub missing: Vec<Field>,
+}
+
+// ---- citations -----------------------------------------------------------------
+
+/// Where the citation sits in the sentence, which decides `&` versus `and`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+#[serde(rename_all = "kebab-case")]
+pub enum Form {
+    /// `(Nieminen, 2021, p. 44)` — the fact matters, not who said it.
+    Parenthetical,
+    /// `Nieminen (2021)` — who said it is part of the point.
+    Narrative,
+}
+
+/// A page, paragraph, chapter or timestamp, as the user typed it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+#[serde(tag = "kind", content = "value", rename_all = "kebab-case")]
+pub enum Locator {
+    Page(String),
+    Paragraph(String),
+    Chapter(String),
+    Timestamp(String),
 }
 
 /// A failure the interface is expected to handle, rather than a string to show raw.
@@ -162,6 +322,224 @@ impl From<DocumentView> for Document {
     }
 }
 
+// ---- source conversions ---------------------------------------------------------
+//
+// Written out rather than derived. The two shapes are close enough that a macro would hide the
+// one place they genuinely differ — the identifier — and that is the difference worth seeing.
+
+impl From<engine_src::SourceType> for SourceType {
+    fn from(t: engine_src::SourceType) -> Self {
+        use engine_src::SourceType as E;
+        match t {
+            E::Book => SourceType::Book,
+            E::BookChapter => SourceType::BookChapter,
+            E::JournalArticle => SourceType::JournalArticle,
+            E::WebPage => SourceType::WebPage,
+            E::Video => SourceType::Video,
+            E::Audio => SourceType::Audio,
+            E::Report => SourceType::Report,
+        }
+    }
+}
+
+impl From<SourceType> for engine_src::SourceType {
+    fn from(t: SourceType) -> Self {
+        use engine_src::SourceType as E;
+        match t {
+            SourceType::Book => E::Book,
+            SourceType::BookChapter => E::BookChapter,
+            SourceType::JournalArticle => E::JournalArticle,
+            SourceType::WebPage => E::WebPage,
+            SourceType::Video => E::Video,
+            SourceType::Audio => E::Audio,
+            SourceType::Report => E::Report,
+        }
+    }
+}
+
+impl From<engine_src::Field> for Field {
+    fn from(f: engine_src::Field) -> Self {
+        use engine_src::Field as E;
+        match f {
+            E::Authors => Field::Authors,
+            E::Editors => Field::Editors,
+            E::Date => Field::Date,
+            E::Title => Field::Title,
+            E::Container => Field::Container,
+            E::Publisher => Field::Publisher,
+            E::Site => Field::Site,
+            E::Volume => Field::Volume,
+            E::Pages => Field::Pages,
+        }
+    }
+}
+
+impl From<engine_src::Role> for Role {
+    fn from(r: engine_src::Role) -> Self {
+        use engine_src::Role as E;
+        match r {
+            E::Author => Role::Author,
+            E::Editor => Role::Editor,
+            E::Translator => Role::Translator,
+            E::Director => Role::Director,
+            E::Host => Role::Host,
+        }
+    }
+}
+
+impl From<Role> for engine_src::Role {
+    fn from(r: Role) -> Self {
+        use engine_src::Role as E;
+        match r {
+            Role::Author => E::Author,
+            Role::Editor => E::Editor,
+            Role::Translator => E::Translator,
+            Role::Director => E::Director,
+            Role::Host => E::Host,
+        }
+    }
+}
+
+impl From<engine_src::Contributor> for Contributor {
+    fn from(c: engine_src::Contributor) -> Self {
+        Contributor {
+            role: c.role.into(),
+            family: c.family,
+            given: c.given,
+            literal: c.literal,
+            abbreviation: c.abbreviation,
+        }
+    }
+}
+
+impl From<Contributor> for engine_src::Contributor {
+    fn from(c: Contributor) -> Self {
+        engine_src::Contributor {
+            role: c.role.into(),
+            family: c.family,
+            given: c.given,
+            literal: c.literal,
+            abbreviation: c.abbreviation,
+        }
+    }
+}
+
+impl From<engine_src::Date> for SourceDate {
+    fn from(d: engine_src::Date) -> Self {
+        match d {
+            engine_src::Date::NoDate => SourceDate::NoDate,
+            engine_src::Date::Year(year) => SourceDate::Year { year },
+            engine_src::Date::Full(year, month, day) => SourceDate::Full { year, month, day },
+        }
+    }
+}
+
+impl From<SourceDate> for engine_src::Date {
+    fn from(d: SourceDate) -> Self {
+        match d {
+            SourceDate::NoDate => engine_src::Date::NoDate,
+            SourceDate::Year { year } => engine_src::Date::Year(year),
+            SourceDate::Full { year, month, day } => engine_src::Date::Full(year, month, day),
+        }
+    }
+}
+
+impl From<engine_src::Appraisal> for Appraisal {
+    fn from(a: engine_src::Appraisal) -> Self {
+        Appraisal {
+            trust: a.trust,
+            note: a.note,
+        }
+    }
+}
+
+impl From<Appraisal> for engine_src::Appraisal {
+    fn from(a: Appraisal) -> Self {
+        engine_src::Appraisal {
+            trust: a.trust,
+            note: a.note,
+        }
+    }
+}
+
+impl From<engine_src::Source> for Source {
+    fn from(s: engine_src::Source) -> Self {
+        Source {
+            id: Some(s.id.to_string()),
+            source_type: s.source_type.into(),
+            title: s.title,
+            date: s.date.into(),
+            contributors: s.contributors.into_iter().map(Contributor::from).collect(),
+            container: s.container,
+            publisher: s.publisher,
+            site: s.site,
+            volume: s.volume,
+            issue: s.issue,
+            pages: s.pages,
+            edition: s.edition,
+            doi: s.doi,
+            url: s.url,
+            retrieved: s.retrieved.map(SourceDate::from),
+            appraisal: s.appraisal.map(Appraisal::from),
+        }
+    }
+}
+
+impl Source {
+    /// Into the engine's own type, minting an identifier when the interface did not carry one.
+    ///
+    /// A new source arrives with `id: null`, because identifiers are the engine's to assign —
+    /// letting the interface invent one is how two entities end up sharing an identity.
+    pub fn into_engine(self) -> Result<engine_src::Source, plc_engine::Error> {
+        let id = match self.id {
+            Some(raw) => raw.parse()?,
+            None => plc_engine::Id::new(),
+        };
+        Ok(engine_src::Source {
+            id,
+            source_type: self.source_type.into(),
+            title: self.title,
+            date: self.date.into(),
+            contributors: self
+                .contributors
+                .into_iter()
+                .map(engine_src::Contributor::from)
+                .collect(),
+            container: self.container,
+            publisher: self.publisher,
+            site: self.site,
+            volume: self.volume,
+            issue: self.issue,
+            pages: self.pages,
+            edition: self.edition,
+            doi: self.doi,
+            url: self.url,
+            retrieved: self.retrieved.map(engine_src::Date::from),
+            appraisal: self.appraisal.map(engine_src::Appraisal::from),
+        })
+    }
+}
+
+impl From<Form> for engine_fmt::Form {
+    fn from(f: Form) -> Self {
+        match f {
+            Form::Parenthetical => engine_fmt::Form::Parenthetical,
+            Form::Narrative => engine_fmt::Form::Narrative,
+        }
+    }
+}
+
+impl From<Locator> for engine_fmt::Locator {
+    fn from(l: Locator) -> Self {
+        match l {
+            Locator::Page(v) => engine_fmt::Locator::Page(v),
+            Locator::Paragraph(v) => engine_fmt::Locator::Paragraph(v),
+            Locator::Chapter(v) => engine_fmt::Locator::Chapter(v),
+            Locator::Timestamp(v) => engine_fmt::Locator::Timestamp(v),
+        }
+    }
+}
+
 /// Regenerating the bindings is a test, so `cargo test` keeps `src/lib/bindings/` current and
 /// CI fails on a stale committed copy. Written explicitly rather than relying on the derive's
 /// own export hook, so it is obvious what runs and when.
@@ -177,6 +555,10 @@ mod export_bindings {
         Document::export_all(&config).unwrap();
         SearchHit::export_all(&config).unwrap();
         EngineError::export_all(&config).unwrap();
+        Source::export_all(&config).unwrap();
+        SavedSource::export_all(&config).unwrap();
+        Form::export_all(&config).unwrap();
+        Locator::export_all(&config).unwrap();
     }
 }
 
@@ -220,6 +602,165 @@ mod wire {
                 as_returned.revision,
             )
             .expect("a revision that crossed the wire must still be accepted");
+    }
+
+    // ---- sources ---------------------------------------------------------------
+    //
+    // The same discipline as the revision tests above, for the same reason. A source is the
+    // one thing in this application the user cannot reconstruct from memory, and every field
+    // of it crosses this boundary twice on the way to a citation.
+
+    fn a_book() -> Source {
+        Source {
+            id: None,
+            source_type: SourceType::Book,
+            title: "Ravinto ja terveys".into(),
+            date: SourceDate::Year { year: 2021 },
+            contributors: vec![Contributor {
+                role: Role::Author,
+                family: Some("Nieminen".into()),
+                given: Some("Anna Maria".into()),
+                literal: None,
+                abbreviation: None,
+            }],
+            container: None,
+            publisher: Some("Otava".into()),
+            site: None,
+            volume: None,
+            issue: None,
+            pages: None,
+            edition: None,
+            doi: None,
+            url: None,
+            retrieved: None,
+            appraisal: None,
+        }
+    }
+
+    #[test]
+    fn a_source_survives_the_round_trip_a_client_puts_it_through() {
+        // Saved, listed back, serialised to the client, returned by the client, saved again.
+        // Anything lost in that loop is lost from the user's library.
+        let (_dir, mut engine) = library();
+
+        let sent = serde_json::to_string(&a_book()).unwrap();
+        let received: Source = serde_json::from_str(&sent).unwrap();
+        let (id, _) = engine
+            .source_create(received.into_engine().unwrap())
+            .unwrap();
+
+        let listed: Source = engine.source_read(id).unwrap().into();
+        let round_tripped: Source =
+            serde_json::from_str(&serde_json::to_string(&listed).unwrap()).unwrap();
+
+        assert_eq!(listed, round_tripped);
+        assert_eq!(round_tripped.title, "Ravinto ja terveys");
+        assert_eq!(round_tripped.publisher.as_deref(), Some("Otava"));
+        assert_eq!(round_tripped.date, SourceDate::Year { year: 2021 });
+        assert_eq!(round_tripped.contributors.len(), 1);
+        assert_eq!(
+            round_tripped.contributors[0].given.as_deref(),
+            Some("Anna Maria"),
+            "given names carry the initials APA prints; losing them silently degrades every \
+             citation of this source"
+        );
+    }
+
+    #[test]
+    fn a_new_source_arrives_without_an_identifier_and_leaves_with_one() {
+        // Identifiers are the engine's to assign. If the interface could mint one, two entities
+        // could be given the same identity and the library would have no way to tell them apart.
+        let (_dir, mut engine) = library();
+
+        let proposed = a_book();
+        assert!(proposed.id.is_none());
+
+        let (id, _) = engine
+            .source_create(proposed.into_engine().unwrap())
+            .unwrap();
+        let saved: Source = engine.source_read(id).unwrap().into();
+
+        assert_eq!(saved.id.as_deref(), Some(id.to_string().as_str()));
+    }
+
+    #[test]
+    fn an_incomplete_source_is_saved_and_its_gaps_reported() {
+        // Not an error. Somebody who cannot find the publisher must end up with an incomplete
+        // source, never with no source — the whole point of `missing` crossing the wire.
+        let (_dir, mut engine) = library();
+
+        let mut book = a_book();
+        book.publisher = None;
+
+        let (id, missing) = engine.source_create(book.into_engine().unwrap()).unwrap();
+        let missing: Vec<Field> = missing.into_iter().map(Field::from).collect();
+
+        assert!(
+            missing.contains(&Field::Publisher),
+            "a book without a publisher is incomplete, and the form needs to know which field"
+        );
+        engine
+            .source_read(id)
+            .expect("the incomplete source must still have been saved");
+
+        let saved = SavedSource {
+            id: id.to_string(),
+            missing,
+        };
+        let value = serde_json::to_value(&saved).unwrap();
+        assert_eq!(value["missing"][0], "publisher");
+    }
+
+    #[test]
+    fn no_date_crosses_as_a_value_not_as_an_absence() {
+        // APA 7 prints `n.d.` for this. Were it flattened to null on the wire it would come back
+        // as "the user has not filled this in", and the citation would print an empty year.
+        let value = serde_json::to_value(SourceDate::NoDate).unwrap();
+        assert_eq!(value, serde_json::json!({ "kind": "no-date" }));
+
+        let back: SourceDate = serde_json::from_value(value).unwrap();
+        assert_eq!(back, SourceDate::NoDate);
+        assert_eq!(engine_src::Date::from(back), engine_src::Date::NoDate);
+    }
+
+    #[test]
+    fn a_group_author_keeps_its_one_part_name() {
+        // "World Health Organization" is not a family name plus a given name, and any wire that
+        // assumes two Western parts turns it into something else on the way through.
+        let (_dir, mut engine) = library();
+
+        let mut report = a_book();
+        report.source_type = SourceType::Report;
+        report.contributors = vec![Contributor {
+            role: Role::Author,
+            family: None,
+            given: None,
+            literal: Some("World Health Organization".into()),
+            abbreviation: Some("WHO".into()),
+        }];
+
+        let (id, _) = engine.source_create(report.into_engine().unwrap()).unwrap();
+        let saved: Source = engine.source_read(id).unwrap().into();
+        let back: Source = serde_json::from_str(&serde_json::to_string(&saved).unwrap()).unwrap();
+
+        assert_eq!(
+            back.contributors[0].literal.as_deref(),
+            Some("World Health Organization")
+        );
+        assert_eq!(back.contributors[0].abbreviation.as_deref(), Some("WHO"));
+        assert!(back.contributors[0].family.is_none());
+    }
+
+    #[test]
+    fn a_locator_crosses_with_its_kind_intact() {
+        // A page and a timestamp render differently — "p. 44" against "1:04:22". Collapsing them
+        // to a bare string on the wire is how a video citation starts claiming a page number.
+        let page = Locator::Page("44".into());
+        let value = serde_json::to_value(&page).unwrap();
+        assert_eq!(value, serde_json::json!({ "kind": "page", "value": "44" }));
+
+        let back: Locator = serde_json::from_value(value).unwrap();
+        assert_eq!(back, page);
     }
 
     #[test]
