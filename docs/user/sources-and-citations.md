@@ -1,8 +1,8 @@
 # Sources and citations
 
 > **Audience:** People using Personal Learning Corner
-> **Status:** Planned
-> **Last reviewed:** 2026-09-06
+> **Status:** In progress
+> **Last reviewed:** 2026-09-10
 
 This is the part of the app that answers the question it was built around: *how do I know
 this is true?* You cannot answer it for everything you read. You can answer it for
