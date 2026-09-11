@@ -18,7 +18,10 @@ export const Citation = Node.create({
   addAttributes() {
     return {
       source: { default: "" },
+      /** Exactly as written on disk: `44-46`, or `time:1:04:22`. Never reassembled. */
       locator: { default: null },
+      /** `parenthetical` or `narrative` — which shape the sentence around it needs. */
+      form: { default: "parenthetical" },
     };
   },
 
@@ -28,10 +31,12 @@ export const Citation = Node.create({
 
   renderHTML({ node }) {
     const locator = node.attrs["locator"] as string | null;
+    const narrative = node.attrs["form"] === "narrative";
     return [
       "span",
       {
         "data-citation": node.attrs["source"] as string,
+        "data-form": narrative ? "narrative" : "parenthetical",
         class: "citation",
         title: "A claim anchored to a source",
       },

@@ -127,8 +127,40 @@ extensions, both chosen so that a file remains readable when the syntax is not u
 
 | Syntax | Means |
 | ------ | ----- |
-| `[^cite:<source-id>]` or `[^cite:<source-id>@44-46]` | A citation, optionally with a locator (page, chapter, timestamp) |
+| `[^cite:<source-id>]` | A citation of a source |
 | `[[<document-id>]]` | A link to another document |
+
+### What a citation can say
+
+A citation names a source, and may also say **where** in it and **how** the sentence uses it.
+
+| Written | Renders as |
+| ------- | ---------- |
+| `[^cite:<id>]` | `(Nieminen, 2021)` |
+| `[^cite:<id>@44]` | `(Nieminen, 2021, p. 44)` |
+| `[^cite:<id>@44-46]` | `(Nieminen, 2021, pp. 44–46)` |
+| `[^cite:<id>@para:7]` | `(Nieminen, 2021, para. 7)` |
+| `[^cite:<id>@chapter:3]` | `(Nieminen, 2021, Chapter 3)` |
+| `[^cite:<id>@time:1:04:22]` | `(Nieminen, 2021, 1:04:22)` |
+| `[^cite:<id>!narrative]` | `Nieminen (2021)` |
+| `[^cite:<id>@44!narrative]` | `Nieminen (2021, p. 44)` |
+
+Three rules decide the shape, and each one is paying for something:
+
+**A page is written bare.** It is what almost every citation carries, and it is what this
+format already meant by `@44-46` before locator kinds existed. Every file written before the
+syntax grew reads identically afterwards — no migration and no `format_version` change.
+
+**Parenthetical is never written.** It is the default. Writing it out would add five redundant
+characters to the great majority of citations in every document.
+
+**Exactly one spelling per value.** `@page:44` is refused rather than accepted as a synonym for
+`@44`. Two spellings for one value means a document cannot be opened and saved without its
+bytes changing, and that guarantee is worth more than the convenience of a second spelling.
+
+A locator kind nobody recognises — `@section:2` — stays ordinary text rather than being read as
+a page. Citing a chapter as though it were a page number is wrong output; unrecognised text is
+merely unrecognised, and the person can see it and fix it.
 
 Rendering a citation into APA 7 form is done at display and export time from the source
 record, never stored in the document. A source corrected once is correct everywhere it is
