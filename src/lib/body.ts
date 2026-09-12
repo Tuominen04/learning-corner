@@ -118,3 +118,34 @@ function serializeInline(node: JSONContent): string {
       return "";
   }
 }
+
+/** One citation found in the editor's document, and where to look its rendering up. */
+export type FoundCitation = { source: string; locator: string | null; form: string };
+
+/**
+ * Every citation in the editor's current document, in order, keeping repeats.
+ *
+ * Repeats are kept because each is a place in the text that has to be drawn. Deduplicating is
+ * the caller's job, and it deduplicates by key rather than by source: two citations of one
+ * source can render differently.
+ */
+export function collectCitations(doc: JSONContent): FoundCitation[] {
+  const found: FoundCitation[] = [];
+  walk(doc, (node) => {
+    if (node.type !== CITATION) return;
+    const source = String(node.attrs?.["source"] ?? "");
+    if (source === "") return;
+    const locator = node.attrs?.["locator"];
+    found.push({
+      source,
+      locator: typeof locator === "string" && locator !== "" ? locator : null,
+      form: node.attrs?.["form"] === "narrative" ? "narrative" : "parenthetical",
+    });
+  });
+  return found;
+}
+
+function walk(node: JSONContent, visit: (node: JSONContent) => void) {
+  visit(node);
+  for (const child of node.content ?? []) walk(child, visit);
+}

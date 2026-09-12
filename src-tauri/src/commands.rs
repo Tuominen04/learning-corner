@@ -12,8 +12,8 @@ use plc_engine::{Error, Id};
 use tauri::State;
 
 use crate::dto::{
-    Document, DocumentRef, EngineError, Field, Form, LibraryStatus, Locator, SavedSource,
-    SearchHit, Source, SourceType, Topic,
+    CitationRequest, Document, DocumentRef, EngineError, Field, Form, LibraryStatus, Locator,
+    SavedSource, SearchHit, Source, SourceType, Topic,
 };
 
 /// The open library, or none. The interface holds no durable state of its own.
@@ -274,6 +274,26 @@ pub fn citation_format(
 ) -> Answer<String> {
     with(&state, |e| {
         e.citation_format(id(&source)?, form.into(), locator.map(Into::into))
+    })
+}
+
+/// In-text citations for many at once, disambiguated against the whole library.
+///
+/// What the editor calls to render a document: one round trip, one pass over the library. A
+/// request naming a source that no longer exists comes back as `null` in its place rather than
+/// failing the batch — one citation pointing nowhere must not blank the other fourteen, and the
+/// hole is what the reader needs to see.
+#[tauri::command]
+pub fn citation_format_many(
+    state: State<'_, OpenLibrary>,
+    requests: Vec<CitationRequest>,
+) -> Answer<Vec<Option<String>>> {
+    with(&state, |e| {
+        let converted = requests
+            .into_iter()
+            .map(|r| Ok((id(&r.source)?, r.form.into(), r.locator.map(Into::into))))
+            .collect::<Result<Vec<_>, Error>>()?;
+        e.citation_format_many(&converted)
     })
 }
 

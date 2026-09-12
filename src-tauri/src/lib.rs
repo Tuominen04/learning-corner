@@ -35,6 +35,7 @@ pub fn run() {
             commands::source_citing_documents,
             commands::source_required_fields,
             commands::citation_format,
+            commands::citation_format_many,
             commands::citation_reference_list,
         ])
         .run(tauri::generate_context!())

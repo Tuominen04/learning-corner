@@ -6,8 +6,10 @@
 // text on disk does not change.
 
 import { Node } from "@tiptap/core";
+import { ReactNodeViewRenderer } from "@tiptap/react";
 
 import { CITATION, DOCUMENT_LINK } from "../lib/body";
+import { CitationView } from "./CitationView";
 
 export const Citation = Node.create({
   name: CITATION,
@@ -29,6 +31,9 @@ export const Citation = Node.create({
     return [{ tag: "span[data-citation]" }];
   },
 
+  // The plain form, used when the editor renders to HTML without a React tree — copying to the
+  // clipboard, for instance. What the reader sees in the editor comes from the node view below,
+  // which can wait for the engine's answer; this cannot.
   renderHTML({ node }) {
     const locator = node.attrs["locator"] as string | null;
     const narrative = node.attrs["form"] === "narrative";
@@ -42,6 +47,13 @@ export const Citation = Node.create({
       },
       locator ? `[cite @${locator}]` : "[cite]",
     ];
+  },
+
+  // Where `(Nieminen, 2021a, p. 44)` comes from. It has to be a node view rather than
+  // `renderHTML` because the text is the engine's answer and arrives asynchronously — the
+  // disambiguating `a` is a fact about the whole library, not about this citation.
+  addNodeView() {
+    return ReactNodeViewRenderer(CitationView);
   },
 });
 

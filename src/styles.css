@@ -268,3 +268,92 @@ button.view.selected { background: #2a2d38; color: #fff; border-color: var(--acc
   text-align: left;
 }
 .confirm li button:hover { text-decoration: underline; }
+
+/* ---- citing ---------------------------------------------------------------- */
+
+.editor header { gap: 1rem; }
+button.cite-action { margin-left: auto; padding: 0.35rem 0.8rem; font-size: 0.9em; }
+
+/* The three states a citation can be in are genuinely different things to a reader: rendered,
+   still being worked out, and pointing at a source that is gone. */
+.citation.pending { opacity: 0.55; }
+.citation.narrative { background: #e4e7d9; color: #4a5533; }
+.citation.orphan {
+  background: #f0d4d4;
+  color: #8a3030;
+  text-decoration: underline wavy currentColor;
+}
+
+.cite-picker {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  padding: 1rem 1.2rem;
+  margin-bottom: 1rem;
+  max-width: 42rem;
+}
+.cite-picker header { display: flex; justify-content: space-between; align-items: center; }
+.cite-picker h3 { margin: 0 0 0.6rem; }
+
+input.cite-search {
+  width: 100%;
+  font: inherit;
+  padding: 0.5rem 0.7rem;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--ground);
+  color: inherit;
+  margin-bottom: 0.6rem;
+}
+
+.cite-list {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+  max-height: 14rem;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+button.cite-option {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  border-radius: 0;
+  background: none;
+  padding: 0.5rem 0.7rem;
+}
+button.cite-option strong { display: block; font-weight: 600; }
+button.cite-option:hover { background: #23262f; }
+button.cite-option.chosen { background: #2a2d38; color: #fff; }
+
+.cite-where input {
+  flex: 1;
+  font: inherit;
+  padding: 0.45rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--ground);
+  color: inherit;
+}
+.cite-where select {
+  background: var(--ground);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: inherit;
+  padding: 0.45rem 0.5rem;
+  font: inherit;
+}
+
+.cite-form { margin: 1.2rem 0; }
+.choice { display: flex; gap: 0.6rem; align-items: flex-start; margin-top: 0.6rem; }
+.choice input { margin-top: 0.3rem; }
+.choice span { display: block; font-size: 0.88em; color: var(--ink-soft); }
+.choice strong { display: block; color: #e6e4de; font-weight: 600; }
+.choice em {
+  display: block;
+  font-style: normal;
+  color: var(--accent);
+  margin: 0.1rem 0 0.15rem;
+}

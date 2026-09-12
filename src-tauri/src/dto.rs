@@ -226,6 +226,19 @@ pub enum Form {
     Narrative,
 }
 
+/// One citation the interface wants rendered.
+///
+/// Batched rather than asked for one at a time. Every single `citation_format` reads the whole
+/// library and recomputes the disambiguation pass, so a document with fifteen citations over a
+/// hundred sources would read fifteen hundred files to draw one screen.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub struct CitationRequest {
+    pub source: Id,
+    pub form: Form,
+    pub locator: Option<Locator>,
+}
+
 /// A page, paragraph, chapter or timestamp, as the user typed it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "../../src/lib/bindings/")]
@@ -559,6 +572,7 @@ mod export_bindings {
         SavedSource::export_all(&config).unwrap();
         Form::export_all(&config).unwrap();
         Locator::export_all(&config).unwrap();
+        CitationRequest::export_all(&config).unwrap();
     }
 }
 
