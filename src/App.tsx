@@ -69,6 +69,20 @@ export function App() {
     );
   }
 
+  // Renaming a document reaches two places: the tree, and the open document's own header.
+  //
+  // The engine hands back the renamed document, including its new revision — renaming writes
+  // the file, because the title lives in the front matter. Passing that straight into `setOpen`
+  // is what keeps the editor able to save afterwards; dropping it would leave the editor
+  // holding a revision the file no longer has.
+  function renameDocument(id: string, title: string) {
+    void guard(async () => {
+      const renamed = await engine.document.rename(id, title);
+      if (open?.id === renamed.id) setOpen(renamed);
+      await refresh();
+    });
+  }
+
   async function guard(work: () => Promise<void>) {
     setError(null);
     try {
@@ -131,6 +145,13 @@ export function App() {
               await refresh();
             })
           }
+          onRenameTopic={(id, name) =>
+            void guard(async () => {
+              await engine.topic.rename(id, name);
+              await refresh();
+            })
+          }
+          onRenameDocument={renameDocument}
         />
 
         {library.problems.length > 0 && (
@@ -167,6 +188,7 @@ export function App() {
               setOpen(saved);
               void refresh();
             }}
+            onRename={renameDocument}
           />
         ) : (
           <p className="empty">

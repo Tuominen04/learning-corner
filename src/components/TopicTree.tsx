@@ -1,3 +1,4 @@
+import { RenameableName } from "./RenameableName";
 import type { Topic } from "../lib/engine";
 
 // The sidebar mirrors the folders on disk, because the folders on disk mirror this. Opening
@@ -8,12 +9,16 @@ export function TopicTree({
   onSelectDocument,
   onAddDocument,
   onAddTopic,
+  onRenameTopic,
+  onRenameDocument,
 }: {
   topics: Topic[];
   selected: string | null;
   onSelectDocument: (id: string) => void;
   onAddDocument: (topicId: string) => void;
   onAddTopic: (parent: string | null) => void;
+  onRenameTopic: (id: string, name: string) => void;
+  onRenameDocument: (id: string, title: string) => void;
 }) {
   return (
     <nav className="tree">
@@ -37,6 +42,8 @@ export function TopicTree({
               onSelectDocument={onSelectDocument}
               onAddDocument={onAddDocument}
               onAddTopic={onAddTopic}
+              onRenameTopic={onRenameTopic}
+              onRenameDocument={onRenameDocument}
             />
           ))}
         </ul>
@@ -51,17 +58,25 @@ function TopicBranch({
   onSelectDocument,
   onAddDocument,
   onAddTopic,
+  onRenameTopic,
+  onRenameDocument,
 }: {
   topic: Topic;
   selected: string | null;
   onSelectDocument: (id: string) => void;
   onAddDocument: (topicId: string) => void;
   onAddTopic: (parent: string | null) => void;
+  onRenameTopic: (id: string, name: string) => void;
+  onRenameDocument: (id: string, title: string) => void;
 }) {
   return (
     <li className="branch">
       <div className="branch-head">
-        <span className="topic-name">{topic.name}</span>
+        <RenameableName
+          name={topic.name}
+          label="topic"
+          onRename={(name) => onRenameTopic(topic.id, name)}
+        />
         <span className="branch-actions">
           <button className="ghost" onClick={() => onAddDocument(topic.id)} title="New document">
             +doc
@@ -74,13 +89,16 @@ function TopicBranch({
 
       <ul>
         {topic.documents.map((doc) => (
-          <li key={doc.id}>
-            <button
-              className={doc.id === selected ? "doc selected" : "doc"}
-              onClick={() => onSelectDocument(doc.id)}
-            >
-              {doc.title}
-            </button>
+          // A row rather than a bare button, because the name and the pencil are two controls
+          // and a button cannot contain another one.
+          <li key={doc.id} className="doc-row">
+            <RenameableName
+              name={doc.title}
+              label="document"
+              selected={doc.id === selected}
+              onSelect={() => onSelectDocument(doc.id)}
+              onRename={(title) => onRenameDocument(doc.id, title)}
+            />
           </li>
         ))}
         {topic.children.map((child) => (
@@ -91,6 +109,8 @@ function TopicBranch({
             onSelectDocument={onSelectDocument}
             onAddDocument={onAddDocument}
             onAddTopic={onAddTopic}
+            onRenameTopic={onRenameTopic}
+            onRenameDocument={onRenameDocument}
           />
         ))}
       </ul>

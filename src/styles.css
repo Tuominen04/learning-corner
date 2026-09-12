@@ -89,27 +89,87 @@ main { overflow-y: auto; padding: 1.5rem 2rem; }
 .tree ul { list-style: none; margin: 0; padding-left: 0.7rem; }
 .tree > ul { padding-left: 0; }
 .branch-head { display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; }
-.topic-name { font-weight: 600; font-size: 0.92em; }
 .branch-actions { display: flex; gap: 0.1rem; opacity: 0; }
 .branch-head:hover .branch-actions { opacity: 1; }
 
-button.doc {
+/* A topic name is as wide as its words: it is a label, and the pencil belongs beside it. */
+.branch-head .name { font-weight: 600; font-size: 0.92em; font-family: inherit; color: inherit; }
+
+/* A document's name fills the row, so the whole row reads as the thing you click. */
+.doc-row .renameable { width: 100%; }
+.doc-row .name {
   display: block;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   text-align: left;
   border: none;
   background: none;
   padding: 0.22rem 0.4rem;
   border-radius: 4px;
   color: #c9c6be;
+  font: inherit;
 }
-button.doc:hover { background: #23262f; }
-button.doc.selected { background: #2a2d38; color: #fff; }
+.doc-row .name:hover { background: #23262f; }
+.doc-row .name.selected { background: #2a2d38; color: #fff; }
+
+/* ---- renaming in place ---- */
+
+.renameable { position: relative; display: flex; align-items: center; min-width: 0; }
+
+/* Only shown on hover, but kept focusable so the keyboard can reach it — a control that
+   exists only under a pointer does not exist for everyone.
+   It sits after the name by default. Overlaying the name's own last letters is the wrong
+   default; only a row whose name fills the full width has nowhere else to put it. */
+.pencil {
+  /* Positioned just past the name rather than placed in the row, so it takes no width even
+     while hidden. In the flow it narrowed every name by its own size, which was enough to
+     wrap a two-word topic onto a second line whether or not anyone was hovering it. */
+  position: absolute;
+  left: 100%;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  border: none;
+  background: none;
+  color: var(--ink-soft);
+  padding: 0 0.25rem;
+  border-radius: 4px;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* Revealed by hovering the whole row, not only the name itself — the row is what the pointer
+   is actually over, and it is what already reveals the row's other actions. */
+.branch-head:hover .pencil,
+.doc-row:hover .pencil,
+.renameable:hover .pencil,
+.renameable:focus-within .pencil { opacity: 1; }
+.pencil:hover { color: #e6e4de; background: #2b2e38; }
+
+/* A document's name already fills the row, so there is no "just past" it — its pencil
+   overlays the far end instead. */
+.doc-row .pencil { left: auto; right: 0.15rem; }
+
+/* Sized by the row it replaces, so the name does not jump when it becomes editable. */
+.rename-input {
+  width: 100%;
+  font: inherit;
+  padding: 0.18rem 0.36rem;
+  border-radius: 4px;
+  border: 1px solid var(--accent);
+  background: var(--panel);
+  color: inherit;
+}
 
 /* ---- editor ---- */
 
 .editor header { display: flex; align-items: baseline; gap: 1rem; }
 .editor h2 { margin: 0 0 0.8rem; }
+.editor h2 .renameable { display: inline-flex; }
+.editor h2 .name { font: inherit; color: inherit; }
+.editor h2 .pencil { position: static; margin-left: 0.4rem; }
+.editor h2 .rename-input { font: inherit; min-width: 16rem; }
 .state { font-size: 0.78em; color: var(--ink-soft); }
 .state.saving { color: var(--warning); }
 .state.conflict, .state.error { color: var(--error); }

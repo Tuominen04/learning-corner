@@ -16,13 +16,22 @@ import {
 } from "../lib/engine";
 import { CitationView, RenderedCitations } from "./CitationView";
 import { CitePicker } from "./CitePicker";
+import { RenameableName } from "./RenameableName";
 import { Citation, DocumentLink } from "./nodes";
 
 // Saving is continuous: there is no save button and no unsaved state to lose. A short debounce
 // keeps the write off every keystroke without ever leaving work only in memory.
 const SAVE_AFTER_IDLE_MS = 600;
 
-export function Editor({ document, onSaved }: { document: Doc; onSaved: (d: Doc) => void }) {
+export function Editor({
+  document,
+  onSaved,
+  onRename,
+}: {
+  document: Doc;
+  onSaved: (d: Doc) => void;
+  onRename: (id: string, title: string) => void;
+}) {
   const [state, setState] = useState<"clean" | "saving" | "conflict" | "error">("clean");
   const [message, setMessage] = useState<string | null>(null);
   const [citing, setCiting] = useState(false);
@@ -33,13 +42,22 @@ export function Editor({ document, onSaved }: { document: Doc; onSaved: (d: Doc)
   // The revision travels from the last successful read or write into the next write. Kept in a
   // ref rather than state so a save in flight always sees the current one.
   //
-  // Nothing synchronises it back from the `document` prop, and nothing needs to. Switching
-  // documents remounts this component — App keys it by document id — so the ref and the saved
-  // indicator start fresh. Staying on the same document and saving updates both in `save`
-  // below, before the new prop even arrives. An effect doing it again was redundant, and
-  // react-hooks 7 was right to object to setting state in one.
+  // It also has to follow the prop, which it did not always need to. Renaming a document
+  // **writes the file** — the title lives in the front matter — so the engine hands back a new
+  // revision while this component stays mounted, since App keys it by document id and a rename
+  // does not change the id. Without adopting it, the next keystroke would be refused as a
+  // conflict against a change the user had just made themselves.
+  //
+  // Synchronised in an effect keyed on the revision itself, so it runs when the prop changes
+  // and not on every render. A ref is still the right home for the value — a save in flight
+  // must see the current one, not the one its render closed over — and an effect is the right
+  // place to write it, which is what react-hooks 7 objects to doing during a render.
   const revision = useRef(document.revision);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    revision.current = document.revision;
+  }, [document.revision]);
 
   // Which citations we have already asked about, as one sorted string.
   //
@@ -149,7 +167,13 @@ export function Editor({ document, onSaved }: { document: Doc; onSaved: (d: Doc)
   return (
     <section className="editor">
       <header>
-        <h2>{document.title}</h2>
+        <h2>
+          <RenameableName
+            name={document.title}
+            label="document"
+            onRename={(title) => onRename(document.id, title)}
+          />
+        </h2>
         <span className={`state ${state}`}>
           {state === "saving" ? "Saving…" : state === "clean" ? "Saved" : "Not saved"}
         </span>
