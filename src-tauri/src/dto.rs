@@ -226,6 +226,19 @@ pub enum Form {
     Narrative,
 }
 
+/// One citation the interface wants rendered.
+///
+/// Batched rather than asked for one at a time. Every single `citation_format` reads the whole
+/// library and recomputes the disambiguation pass, so a document with fifteen citations over a
+/// hundred sources would read fifteen hundred files to draw one screen.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub struct CitationRequest {
+    pub source: Id,
+    pub form: Form,
+    pub locator: Option<Locator>,
+}
+
 /// A page, paragraph, chapter or timestamp, as the user typed it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "../../src/lib/bindings/")]
@@ -559,6 +572,7 @@ mod export_bindings {
         SavedSource::export_all(&config).unwrap();
         Form::export_all(&config).unwrap();
         Locator::export_all(&config).unwrap();
+        CitationRequest::export_all(&config).unwrap();
     }
 }
 
@@ -761,6 +775,134 @@ mod wire {
 
         let back: Locator = serde_json::from_value(value).unwrap();
         assert_eq!(back, page);
+    }
+
+    #[test]
+    fn every_locator_kind_reaches_the_engine_as_itself() {
+        // One kind tested is one kind proven. The engine renders all four differently — "p. 44",
+        // "para. 7", "Chapter 3", "1:04:22" — so a conversion that quietly collapses two of them
+        // produces a citation that is wrong rather than missing, which is worse.
+        use engine_fmt::Locator as E;
+        let cases = [
+            (Locator::Page("44".into()), E::Page("44".into())),
+            (Locator::Paragraph("7".into()), E::Paragraph("7".into())),
+            (Locator::Chapter("3".into()), E::Chapter("3".into())),
+            (
+                Locator::Timestamp("1:04:22".into()),
+                E::Timestamp("1:04:22".into()),
+            ),
+        ];
+        for (wire, expected) in cases {
+            let json = serde_json::to_string(&wire).unwrap();
+            let returned: Locator = serde_json::from_str(&json).unwrap();
+            assert_eq!(
+                engine_fmt::Locator::from(returned),
+                expected,
+                "{json} did not reach the engine as itself"
+            );
+        }
+    }
+
+    #[test]
+    fn both_citation_forms_reach_the_engine_as_themselves() {
+        for (wire, expected) in [
+            (Form::Parenthetical, engine_fmt::Form::Parenthetical),
+            (Form::Narrative, engine_fmt::Form::Narrative),
+        ] {
+            let json = serde_json::to_string(&wire).unwrap();
+            let returned: Form = serde_json::from_str(&json).unwrap();
+            assert_eq!(engine_fmt::Form::from(returned), expected);
+        }
+    }
+
+    #[test]
+    fn a_document_written_with_the_grown_syntax_builds_its_reference_list() {
+        // The pin bump, proven rather than assumed. A narrative citation and a timestamp are
+        // written through this crate's own command path, read back off disk by the engine at the
+        // pinned tag, and counted. Against the old tag the citations parsed as ids only, so the
+        // timestamp would have been a page and the narrative form would not have existed.
+        let (_dir, mut engine) = library();
+
+        let mut source = plc_engine::citation::Source::new(
+            plc_engine::citation::SourceType::Video,
+            "How muscle repairs",
+            plc_engine::citation::Date::Year(2020),
+        );
+        source.contributors = vec![plc_engine::citation::Contributor::person(
+            plc_engine::citation::Role::Author,
+            "Chen",
+            "Wei",
+        )];
+        source.site = Some("Aalto University".into());
+        let (id, _) = engine.source_create(source).unwrap();
+
+        let topic = engine.topic_create(None, "Protein").unwrap();
+        let doc = engine.document_create(topic, "What protein is").unwrap();
+        let revision = engine.document_read(doc).unwrap().revision;
+        engine
+            .document_write(
+                doc,
+                format!("[^cite:{id}!narrative] showed it.[^cite:{id}@time:1:04:22]"),
+                revision,
+            )
+            .unwrap();
+
+        // Cited twice, listed once: the reference list answers what the document draws on.
+        assert_eq!(engine.citation_reference_list(doc).unwrap().len(), 1);
+
+        // And the two places render differently, which is the whole point of the syntax growing.
+        let body = engine.document_read(doc).unwrap().body;
+        let refs = plc_engine::citation::reference::parse_all(&body);
+        let requests: Vec<_> = refs
+            .iter()
+            .map(|r| (r.source, r.form, r.locator.clone()))
+            .collect();
+        let rendered = engine.citation_format_many(&requests).unwrap();
+
+        assert_eq!(rendered[0].as_deref(), Some("Chen (2020)"));
+        assert_eq!(rendered[1].as_deref(), Some("(Chen, 2020, 1:04:22)"));
+    }
+
+    #[test]
+    fn a_stale_revision_is_refused_after_crossing_the_wire() {
+        // The promise the editor makes in words — "This document changed on disk while you were
+        // editing. Nothing has been overwritten." — depends entirely on this. Editing the file
+        // in a text editor while the app holds it open is something the user is *told* they may
+        // do, so a stale revision that quietly succeeded would silently eat their edit.
+        //
+        // The engine has its own conflict tests. This one is here because the revision has to
+        // survive a JSON round trip *and* still be recognised as stale: the bug that shipped
+        // once was not in the engine or in the interface but in the gap between them.
+        let (_dir, mut engine) = library();
+        let topic = engine.topic_create(None, "Protein").unwrap();
+        let id = engine.document_create(topic, "What protein is").unwrap();
+
+        // What the interface is holding, having read the document and been handed it as JSON.
+        let read: Document = engine.document_read(id).unwrap().into();
+        let held: Document = serde_json::from_str(&serde_json::to_string(&read).unwrap()).unwrap();
+
+        // Meanwhile the file changes underneath — a hand edit, or another window.
+        let current = engine.document_read(id).unwrap().revision;
+        engine
+            .document_write(id, "Edited somewhere else entirely.", current)
+            .unwrap();
+
+        let refused = engine.document_write(id, "What the app thinks is there.", held.revision);
+        assert!(
+            matches!(refused, Err(plc_engine::Error::Conflict { .. })),
+            "a stale revision must be refused, not written: {refused:?}"
+        );
+
+        // And it has to arrive as something the interface can branch on rather than a sentence
+        // to display — the editor shows a different message for a conflict than for a failure.
+        let wire = EngineError::from(refused.unwrap_err());
+        assert_eq!(wire.kind, "Conflict");
+
+        // Nothing overwritten. This is the half that makes the message honest.
+        assert_eq!(
+            engine.document_read(id).unwrap().body,
+            "Edited somewhere else entirely."
+        );
     }
 
     #[test]

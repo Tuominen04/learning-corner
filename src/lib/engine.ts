@@ -7,6 +7,7 @@
 import { invoke } from "@tauri-apps/api/core";
 
 import type { Appraisal } from "./bindings/Appraisal";
+import type { CitationRequest } from "./bindings/CitationRequest";
 import type { Contributor } from "./bindings/Contributor";
 import type { Document } from "./bindings/Document";
 import type { DocumentRef } from "./bindings/DocumentRef";
@@ -25,6 +26,7 @@ import type { Topic } from "./bindings/Topic";
 
 export type {
   Appraisal,
+  CitationRequest,
   Contributor,
   Document,
   DocumentRef,
@@ -138,6 +140,14 @@ export const engine = {
   citation: {
     format: (source: string, form: Form, locator: Locator | null = null) =>
       call<string>("citation_format", { source, form, locator }),
+    /**
+     * Render many at once — what the editor uses to draw a document.
+     *
+     * `null` in a slot means that source no longer exists. One citation pointing nowhere must
+     * not blank the other fourteen, so the hole is reported rather than the batch failing.
+     */
+    formatMany: (requests: CitationRequest[]) =>
+      call<(string | null)[]>("citation_format_many", { requests }),
     referenceList: (document: string) =>
       call<string[]>("citation_reference_list", { document }),
   },
