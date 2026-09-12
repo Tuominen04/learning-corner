@@ -850,6 +850,48 @@ mod wire {
     }
 
     #[test]
+    fn a_stale_revision_is_refused_after_crossing_the_wire() {
+        // The promise the editor makes in words — "This document changed on disk while you were
+        // editing. Nothing has been overwritten." — depends entirely on this. Editing the file
+        // in a text editor while the app holds it open is something the user is *told* they may
+        // do, so a stale revision that quietly succeeded would silently eat their edit.
+        //
+        // The engine has its own conflict tests. This one is here because the revision has to
+        // survive a JSON round trip *and* still be recognised as stale: the bug that shipped
+        // once was not in the engine or in the interface but in the gap between them.
+        let (_dir, mut engine) = library();
+        let topic = engine.topic_create(None, "Protein").unwrap();
+        let id = engine.document_create(topic, "What protein is").unwrap();
+
+        // What the interface is holding, having read the document and been handed it as JSON.
+        let read: Document = engine.document_read(id).unwrap().into();
+        let held: Document = serde_json::from_str(&serde_json::to_string(&read).unwrap()).unwrap();
+
+        // Meanwhile the file changes underneath — a hand edit, or another window.
+        let current = engine.document_read(id).unwrap().revision;
+        engine
+            .document_write(id, "Edited somewhere else entirely.", current)
+            .unwrap();
+
+        let refused = engine.document_write(id, "What the app thinks is there.", held.revision);
+        assert!(
+            matches!(refused, Err(plc_engine::Error::Conflict { .. })),
+            "a stale revision must be refused, not written: {refused:?}"
+        );
+
+        // And it has to arrive as something the interface can branch on rather than a sentence
+        // to display — the editor shows a different message for a conflict than for a failure.
+        let wire = EngineError::from(refused.unwrap_err());
+        assert_eq!(wire.kind, "Conflict");
+
+        // Nothing overwritten. This is the half that makes the message honest.
+        assert_eq!(
+            engine.document_read(id).unwrap().body,
+            "Edited somewhere else entirely."
+        );
+    }
+
+    #[test]
     fn a_revision_crosses_as_a_string_not_a_number() {
         // The guard. A JavaScript number holds integers exactly only to 2^53, and a revision
         // carries nanoseconds since the epoch — roughly two hundred times larger.
