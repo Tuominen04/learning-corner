@@ -174,25 +174,69 @@ scanning `[[…]]` references into the index.
 One file per source in `sources/`, named from a slug of author and year.
 
 ```toml
-id      = "01J8ZQ8D4Q6S8W0W2Y4A6C8E0G"
-type    = "journal-article"
-title   = "Protein requirements in adults"
-year    = 2021
-authors = [ { family = "Nieminen", given = "A." } ]
+id = "01J8ZQ8D4Q6S8W0W2Y4A6C8E0G"
+type = "journal-article"
+title = "Protein requirements in adults"
 container = "Journal of Nutrition"
-volume  = "151"
-issue   = "4"
-pages   = "612-620"
-doi     = "10.1000/example"
+volume = "151"
+issue = "4"
+pages = "612-620"
+doi = "10.1000/example"
+
+[date]
+year = 2021
+
+[[contributors]]
+role = "author"
+family = "Nieminen"
+given = "Anna Maria"
 
 [appraisal]
 trust = "high"
-note  = "Peer reviewed, replicated by Kim et al."
+note = "Peer reviewed, replicated by Kim et al."
 ```
 
 `type` selects which fields APA 7 requires; the full per-type field list is in
 [Citation model](citation-model.md). Missing required fields make the source *incomplete* —
 stored, citable, and reported — never silently defaulted or invented.
+
+### Contributors
+
+One `[[contributors]]` block each, in the order they are credited. A `role` is always present:
+`author`, `editor`, `translator`, `director` or `host`, because who did what to a thing changes
+how it is cited.
+
+A person is `family` plus `given`. A name that is not two Western parts — an organisation, or
+simply a name that does not split that way — is a single `literal`, optionally with the
+`abbreviation` it is known by after first use:
+
+```toml
+[[contributors]]
+role = "author"
+literal = "World Health Organization"
+abbreviation = "WHO"
+```
+
+Assuming every name in the world decomposes into two parts is a bug, not a simplification, so
+both shapes are first-class and neither is derived from the other.
+
+### Dates
+
+A date is one of three things, and `no-date` is a **value** rather than a missing field — APA 7
+prints `n.d.` for it, which an absent field could not express:
+
+```toml
+date = "no-date"          # the year is genuinely unknown
+
+[date]
+year = 2021               # a year is all that is needed
+
+[date]
+full = [2021, 3, 4]       # year, month, day — where the day matters
+```
+
+`retrieved` takes the same three shapes, and appears only where content is designed to change
+and is not archived — not on every web page.
 
 ## Works and editions
 
