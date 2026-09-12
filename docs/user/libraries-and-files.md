@@ -46,9 +46,17 @@ computer it was created on and nothing is tied to the folder's old path.
 
 ## Renaming things
 
-Rename topics, documents, and sources freely inside the app. Links between your documents
-and citations to your sources keep working — the app tracks them by an internal marker that
-does not change when a name does.
+Rename topics, documents, and sources freely inside the app — double-click a name, or use the
+pencil that appears when you hover it. Links between your documents and citations to your
+sources keep working: the app tracks them by an internal marker that does not change when a
+name does.
+
+**The file on disk keeps the name it was created with.** Renaming a document changes its title,
+which is what you see everywhere in the app and what is stored inside the file — but the `.md`
+file itself stays where it is, under its original name. So a document you renamed to *Protein,
+properly* may still be `what-protein-is.md` in your folder. Nothing is lost or hidden by this,
+and the app finds it either way, but it is worth knowing before you go looking for a file by
+its new title.
 
 Renaming files **outside** the app is a different matter, see below.
 

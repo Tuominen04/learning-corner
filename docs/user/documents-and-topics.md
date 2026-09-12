@@ -46,7 +46,7 @@ like.
 | To do this | Do that |
 | ---------- | ------- |
 | Make one | **New topic**, in the sidebar or inside another topic |
-| Rename it | Right-click → **Rename**. Links and citations keep working |
+| Rename it | Double-click the name, or click the pencil that appears when you hover it. Links and citations keep working |
 | Move it | Drag it onto another topic, or out to the top level |
 | Split it | Make a topic inside it and drag documents in |
 | Delete it | Right-click → **Delete**. The app asks what to do with what is inside, and never deletes documents without saying so |
@@ -69,7 +69,9 @@ two-directional: at the foot of every document, **Linked from** lists every docu
 points here. That list is how you notice that two topics you thought were separate have been
 talking to each other for a while.
 
-**Renaming.** Safe at any time. Links follow.
+**Renaming.** Double-click the title — in the sidebar or above the page you are writing —
+or click the pencil that appears when you hover it. Enter keeps the new name, Escape throws it
+away, and clicking away keeps it. Safe at any time. Links follow.
 
 ## Claims: what you verified, and what you assumed
 
