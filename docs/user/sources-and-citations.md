@@ -69,6 +69,12 @@ surname kept apart, and two works by the same author in the same year marked *20
 Every document builds its own reference list at the bottom, from the sources it actually
 cites. You never type it and you never maintain it.
 
+It is **not stored in your file**. The document on disk holds your writing and its citation
+markers, and nothing else — so if you open the file in a text editor you will not find a
+reference list in it. The app works it out from the citations each time the document is saved,
+which is why a list that has gone out of date is not a thing that can happen to you. When you
+export a document, the reference list goes with it.
+
 - Alphabetical by author, as APA 7 requires.
 - Correctly punctuated and correctly indented for each kind of source.
 - Updates itself when you add a citation, remove one, or correct a source's details.

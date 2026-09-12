@@ -3,7 +3,7 @@ import Document from "@tiptap/extension-document";
 import Paragraph from "@tiptap/extension-paragraph";
 import Text from "@tiptap/extension-text";
 import History from "@tiptap/extension-history";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { collectCitations, parseBody, serializeBody } from "../lib/body";
 import { citationKey, insertCitation, toLocator, type Chosen } from "../lib/citation";
@@ -16,6 +16,7 @@ import {
 } from "../lib/engine";
 import { CitationView, RenderedCitations } from "./CitationView";
 import { CitePicker } from "./CitePicker";
+import { ReferenceList } from "./ReferenceList";
 import { RenameableName } from "./RenameableName";
 import { Citation, DocumentLink } from "./nodes";
 
@@ -38,6 +39,9 @@ export function Editor({
 
   // What each citation in this document reads as. Empty until the engine answers.
   const [rendered, setRendered] = useState<Map<string, string | null>>(new Map());
+
+  // The reference list, as the engine builds it from the file on disk.
+  const [references, setReferences] = useState<string[]>([]);
 
   // The revision travels from the last successful read or write into the next write. Kept in a
   // ref rather than state so a save in flight always sees the current one.
@@ -134,6 +138,45 @@ export function Editor({
     refreshCitations(parseBody(document.body));
   }, [document.body, refreshCitations]);
 
+  // Which sources the document on disk cites, as one sorted string.
+  //
+  // Derived from `document.body` rather than from what is being typed, and that is the point:
+  // the engine builds the reference list by **reading the file**, so asking about a citation
+  // the file does not have yet answers about the document as it was a moment ago and quietly
+  // leaves the new source out. This prop only changes when a save has come back, so it is
+  // exactly the version the engine is about to read.
+  //
+  // It depends on *which sources* are cited and nothing else — not on page numbers, not on
+  // which citations are narrative — so adding a second page reference to a book already cited
+  // rebuilds nothing.
+  const cited = useMemo(
+    () =>
+      [...new Set(collectCitations(parseBody(document.body)).map((one) => one.source))]
+        .sort()
+        .join("\u0000"),
+    [document.body],
+  );
+
+  useEffect(() => {
+    // A document that cites nothing has no reference list, and that is answerable here. Asking
+    // the engine would be a whole library read to be told what the document already says.
+    if (cited === "") return;
+
+    let live = true;
+    engine.citation
+      .referenceList(document.id)
+      .then((entries) => {
+        if (live) setReferences(entries);
+      })
+      .catch(() => {
+        // Keep showing the list we have. It is a view of the sources, and a failed lookup is
+        // no reason to tell somebody mid-sentence that their references vanished.
+      });
+    return () => {
+      live = false;
+    };
+  }, [cited, document.id]);
+
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
 
   async function save(body: string) {
@@ -189,6 +232,8 @@ export function Editor({
       <RenderedCitations.Provider value={rendered}>
         <EditorContent editor={editor} className="prose" />
       </RenderedCitations.Provider>
+
+      <ReferenceList entries={cited === "" ? [] : references} />
 
       <footer className="note">
         Plain text with citations and links. Headings, lists and emphasis arrive with the
