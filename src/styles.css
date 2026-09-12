@@ -192,6 +192,39 @@ main { overflow-y: auto; padding: 1.5rem 2rem; }
 }
 .prose p { margin: 0 0 1rem; }
 
+/* ---- reference list ---- */
+
+/* On the page rather than beside it: this is part of the document you are writing, and APA 7
+   puts it at the end of the piece. It is drawn from the citations every time the file is
+   saved and is never written into the file itself. */
+.references {
+  background: var(--page);
+  color: var(--ink);
+  border-radius: 8px;
+  max-width: 42rem;
+  margin-top: 1rem;
+  padding: 1rem 1.4rem 1.2rem;
+}
+.references h3 {
+  margin: 0 0 0.8rem;
+  font-size: 0.82em;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6b6559;
+}
+.references ul { list-style: none; margin: 0; padding: 0; }
+
+/* The hanging indent APA 7 asks for, and the thing a reader notices missing: the author's
+   name starts at the margin and everything that wraps sits clear of it. */
+.references li {
+  padding-left: 2em;
+  text-indent: -2em;
+  margin-bottom: 0.6rem;
+  line-height: 1.5;
+}
+.references li:last-child { margin-bottom: 0; }
+.references em { font-style: italic; }
+
 .citation, .doc-link {
   font-size: 0.82em;
   padding: 0.05rem 0.3rem;
