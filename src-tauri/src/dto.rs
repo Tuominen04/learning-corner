@@ -764,6 +764,92 @@ mod wire {
     }
 
     #[test]
+    fn every_locator_kind_reaches_the_engine_as_itself() {
+        // One kind tested is one kind proven. The engine renders all four differently — "p. 44",
+        // "para. 7", "Chapter 3", "1:04:22" — so a conversion that quietly collapses two of them
+        // produces a citation that is wrong rather than missing, which is worse.
+        use engine_fmt::Locator as E;
+        let cases = [
+            (Locator::Page("44".into()), E::Page("44".into())),
+            (Locator::Paragraph("7".into()), E::Paragraph("7".into())),
+            (Locator::Chapter("3".into()), E::Chapter("3".into())),
+            (
+                Locator::Timestamp("1:04:22".into()),
+                E::Timestamp("1:04:22".into()),
+            ),
+        ];
+        for (wire, expected) in cases {
+            let json = serde_json::to_string(&wire).unwrap();
+            let returned: Locator = serde_json::from_str(&json).unwrap();
+            assert_eq!(
+                engine_fmt::Locator::from(returned),
+                expected,
+                "{json} did not reach the engine as itself"
+            );
+        }
+    }
+
+    #[test]
+    fn both_citation_forms_reach_the_engine_as_themselves() {
+        for (wire, expected) in [
+            (Form::Parenthetical, engine_fmt::Form::Parenthetical),
+            (Form::Narrative, engine_fmt::Form::Narrative),
+        ] {
+            let json = serde_json::to_string(&wire).unwrap();
+            let returned: Form = serde_json::from_str(&json).unwrap();
+            assert_eq!(engine_fmt::Form::from(returned), expected);
+        }
+    }
+
+    #[test]
+    fn a_document_written_with_the_grown_syntax_builds_its_reference_list() {
+        // The pin bump, proven rather than assumed. A narrative citation and a timestamp are
+        // written through this crate's own command path, read back off disk by the engine at the
+        // pinned tag, and counted. Against the old tag the citations parsed as ids only, so the
+        // timestamp would have been a page and the narrative form would not have existed.
+        let (_dir, mut engine) = library();
+
+        let mut source = plc_engine::citation::Source::new(
+            plc_engine::citation::SourceType::Video,
+            "How muscle repairs",
+            plc_engine::citation::Date::Year(2020),
+        );
+        source.contributors = vec![plc_engine::citation::Contributor::person(
+            plc_engine::citation::Role::Author,
+            "Chen",
+            "Wei",
+        )];
+        source.site = Some("Aalto University".into());
+        let (id, _) = engine.source_create(source).unwrap();
+
+        let topic = engine.topic_create(None, "Protein").unwrap();
+        let doc = engine.document_create(topic, "What protein is").unwrap();
+        let revision = engine.document_read(doc).unwrap().revision;
+        engine
+            .document_write(
+                doc,
+                format!("[^cite:{id}!narrative] showed it.[^cite:{id}@time:1:04:22]"),
+                revision,
+            )
+            .unwrap();
+
+        // Cited twice, listed once: the reference list answers what the document draws on.
+        assert_eq!(engine.citation_reference_list(doc).unwrap().len(), 1);
+
+        // And the two places render differently, which is the whole point of the syntax growing.
+        let body = engine.document_read(doc).unwrap().body;
+        let refs = plc_engine::citation::reference::parse_all(&body);
+        let requests: Vec<_> = refs
+            .iter()
+            .map(|r| (r.source, r.form, r.locator.clone()))
+            .collect();
+        let rendered = engine.citation_format_many(&requests).unwrap();
+
+        assert_eq!(rendered[0].as_deref(), Some("Chen (2020)"));
+        assert_eq!(rendered[1].as_deref(), Some("(Chen, 2020, 1:04:22)"));
+    }
+
+    #[test]
     fn a_revision_crosses_as_a_string_not_a_number() {
         // The guard. A JavaScript number holds integers exactly only to 2^53, and a revision
         // carries nanoseconds since the epoch — roughly two hundred times larger.
