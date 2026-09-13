@@ -192,6 +192,25 @@ main { overflow-y: auto; padding: 1.5rem 2rem; }
 }
 .prose p { margin: 0 0 1rem; }
 
+/* ---- a source's paper ---- */
+
+.paper { margin: 1.2rem 0 0.4rem; }
+.paper .field-label { display: block; font-size: 0.85em; color: var(--ink-soft); margin-bottom: 0.4rem; }
+.paper-kept {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin: 0 0 0.4rem;
+}
+.paper-kept strong { font-weight: 500; }
+.paper-kept .hint { margin: 0; }
+button.small { padding: 0.2rem 0.5rem; font-size: 0.85em; }
+
+/* The one marker in the source list that says a source has its paper, not just its details. */
+.paper-open { color: var(--accent); font-weight: 600; letter-spacing: 0.04em; font-size: 0.8em; }
+.paper-open:hover { text-decoration: underline; }
+
 /* ---- reference list ---- */
 
 /* On the page rather than beside it: this is part of the document you are writing, and APA 7
@@ -281,8 +300,12 @@ button.view.selected { background: #2a2d38; color: #fff; border-color: var(--acc
 }
 .source-row strong { display: block; }
 .source-meta { font-size: 0.82em; color: var(--ink-soft); }
-.source-actions { display: flex; gap: 0.2rem; opacity: 0; white-space: nowrap; }
-.source-row:hover .source-actions { opacity: 1; }
+.source-actions { display: flex; gap: 0.2rem; align-items: center; white-space: nowrap; }
+/* Edit and Delete are actions, and stay out of the way until the row is under the pointer.
+   The PDF marker is not an action — it is the answer to "which of these do I actually have
+   the paper for", which is a question you ask by scanning the list, never by hovering it. */
+.source-actions > :not(.paper-open) { opacity: 0; }
+.source-row:hover .source-actions > * { opacity: 1; }
 
 .saved-note {
   border-left: 2px solid var(--accent);

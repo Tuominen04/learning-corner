@@ -101,8 +101,20 @@ precisely the case this exists to catch.
 | `source.delete` | id | `plan` (lists every citing document) / `apply` |
 | `source.citingDocuments` | id | documents citing it, with locators |
 | `source.requiredFields` | type | the fields APA 7 requires for that type |
+| `source.attach` | id, path | source, now carrying the copy's filename |
+| `source.detach` | id | source, with the copy deleted |
+| `source.open` | id | `false` when there is nothing to open |
 | `citation.format` | source id, locator, form | the formatted in-text citation |
 | `citation.referenceList` | document id | ordered, formatted reference list |
+
+`source.attach` **copies** the file into the library rather than referencing it, so deleting
+the original afterwards is safe — see [storage format](storage-format.md). `source.update` never
+changes the attachment: an interface sends the fields its form knows about, and one that had not
+heard of attachments would otherwise detach a paper every time somebody corrected a title.
+
+`source.open` takes an identifier and not a path, on purpose. The path is the engine's answer,
+so nothing the interface can say reaches a file outside the library, and the interface needs no
+filesystem permission of its own.
 
 `source.delete` can orphan citations across the library, so it is two-phase without
 exception. The plan lists every affected document; the apply step records the user's choice

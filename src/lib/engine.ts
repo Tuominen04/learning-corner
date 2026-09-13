@@ -134,6 +134,24 @@ export const engine = {
     delete: (source: string) => call<void>("source_delete", { source }),
     citingDocuments: (source: string) =>
       call<DocumentRef[]>("source_citing_documents", { source }),
+    /**
+     * Keep a copy of a PDF with this source.
+     *
+     * The file is copied into the library, so the original can be deleted from wherever it
+     * was downloaded and the source still has its paper. Returns the source as it now stands.
+     */
+    attach: (source: string, path: string) =>
+      call<Source>("source_attach", { source, path }),
+    /** Forget the paper, and delete the library's copy of it. */
+    detach: (source: string) => call<Source>("source_detach", { source }),
+    /**
+     * Open the kept PDF in whatever the desktop uses for PDFs.
+     *
+     * A **source** is named here, never a path — the path is the engine's answer, which is
+     * why the interface needs no filesystem permission of its own. `false` means there was
+     * nothing to open, which is not an error: a user may delete files from their own library.
+     */
+    open: (source: string) => call<boolean>("source_open", { source }),
     requiredFields: (sourceType: SourceType) =>
       call<Field[]>("source_required_fields", { sourceType }),
   },

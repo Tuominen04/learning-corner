@@ -18,6 +18,19 @@ with the kind: a book asks for a publisher, an article asks for the journal and 
 a web page asks for the site and the date you read it. You are only ever asked for what a
 correct citation genuinely needs, which is usually fewer fields than you expect.
 
+### Keeping the paper itself
+
+If you have the PDF — downloaded, or handed to you — choose **Add a PDF…** on the source and
+pick it. The file is **copied into your library**, not pointed at.
+
+That distinction is the whole feature. Empty your downloads folder next week, unplug the stick
+it came on, reinstall your machine — the source still has its paper, because your library has
+its own copy. Sources that have one are marked **PDF** in the list, and one click opens it.
+
+Only PDFs for now. The app checks that the file really is one, rather than trusting the name:
+finding out that a paper will not open is much better today than in six months, when you go back
+to check what you wrote.
+
 Two habits worth having:
 
 - **Save the source when you find it, not when you need to cite it.** The web page you meant

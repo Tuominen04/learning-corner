@@ -41,8 +41,9 @@ A library is just a folder, so moving it is just moving a folder:
    stick.
 3. Open the app and choose **File → Open library**, then point it at the new location.
 
-Everything comes with it, including your sources and citations. Nothing is tied to the
-computer it was created on and nothing is tied to the folder's old path.
+Everything comes with it, including your sources and citations, and any PDFs you kept with a
+source — those live in `sources/files/` inside the library, so they travel with it. Nothing is
+tied to the computer it was created on and nothing is tied to the folder's old path.
 
 ## Renaming things
 

@@ -33,7 +33,9 @@ MyLibrary/
 │           └── how-protein-is-used.md
 ├── sources/
 │   ├── nieminen-2021.toml
-│   └── who-protein-intake-2019.toml
+│   ├── who-protein-intake-2019.toml
+│   └── files/                    # the library's own copies of source PDFs
+│       └── nieminen-2021.pdf
 ├── works/
 │   └── ya-vas-lyubil/
 │       ├── work.toml
@@ -172,6 +174,28 @@ scanning `[[…]]` references into the index.
 ## Sources
 
 One file per source in `sources/`, named from a slug of author and year.
+
+A source may also carry **the paper itself**. The file is copied into `sources/files/` and
+named after the source's own record, so a folder listing pairs `nieminen-2021.toml` with
+`nieminen-2021.pdf` by eye. What the record holds is a filename:
+
+```toml
+file = "nieminen-2021.pdf"
+```
+
+**A filename, never a path.** A library has to survive being moved to another disk or another
+computer, and recording where the PDF sat on one machine would break that on the first move.
+The name is also treated as a name when it is read back: a hand-edited record naming
+`../../../elsewhere.pdf` resolves to nothing rather than reaching outside the library.
+
+**Copied, not referenced.** That is the whole point of the field — the original can be deleted
+out of a downloads folder afterwards, and the source still has its paper. The copy goes through
+the same temp-fsync-rename sequence as every other write here, so an interrupted copy leaves
+the previous file or the new one and never half a PDF.
+
+Deleting a source deletes its copy. Attaching a second one replaces the first. Only PDFs are
+accepted today, checked by extension *and* by content, because a renamed `.docx` carries a
+`.pdf` extension just as well.
 
 ```toml
 id = "01J8ZQ8D4Q6S8W0W2Y4A6C8E0G"
