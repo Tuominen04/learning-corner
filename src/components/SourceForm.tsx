@@ -6,6 +6,7 @@ import {
   EngineFailure,
   type Contributor,
   type Field,
+  type Keep,
   type Source,
   type SourceDate,
   type SourceType,
@@ -39,6 +40,20 @@ const CHANGEABLE = new Set<SourceType>(["web-page", "video", "audio"]);
 function basename(path: string): string {
   const at = Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\"));
   return at === -1 ? path : path.slice(at + 1);
+}
+
+/**
+ * The folder a chosen file sits in, named rather than spelt out in full.
+ *
+ * "Takes it out of Downloads" is a sentence somebody can check against what they meant. The
+ * whole path would be true and unreadable, and this is the choice that deletes something.
+ */
+function folder(path: string): string {
+  const at = Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\"));
+  if (at <= 0) return "that folder";
+  const parent = path.slice(0, at);
+  const from = Math.max(parent.lastIndexOf("/"), parent.lastIndexOf("\\"));
+  return from === -1 ? parent : parent.slice(from + 1) || "that folder";
 }
 
 /** Today, as a full date — the answer somebody wants when they record reading something. */
@@ -84,6 +99,10 @@ export function SourceForm({
   // copied file behind in the library.
   const [chosen, setChosen] = useState<string | null>(null);
   const [detaching, setDetaching] = useState(false);
+
+  // Copy by default. Move deletes a file of the user's, so it is something they choose rather
+  // than something they discover afterwards.
+  const [keep, setKeep] = useState<Keep>("copy");
 
   const kept = detaching ? null : source.file;
 
@@ -137,6 +156,7 @@ export function SourceForm({
       if (typeof picked !== "string") return; // dismissed the dialog
       setChosen(picked);
       setDetaching(false);
+      setKeep("copy");
     } catch (thrown) {
       setError(thrown instanceof EngineFailure ? thrown.message : String(thrown));
     }
@@ -150,7 +170,7 @@ export function SourceForm({
    * this runs afterwards with the identifier the engine just assigned.
    */
   async function savePaper(id: string) {
-    if (chosen) await engine.source.attach(id, chosen);
+    if (chosen) await engine.source.attach(id, chosen, keep);
     else if (detaching && source.file) await engine.source.detach(id);
   }
 
@@ -311,13 +331,38 @@ export function SourceForm({
         <span className="field-label">The paper itself</span>
 
         {chosen ? (
-          <p className="paper-kept">
-            <strong>{basename(chosen)}</strong>
-            <span className="hint">Will be copied into your library when you save.</span>
-            <button className="secondary small" onClick={() => setChosen(null)}>
-              Don't add
-            </button>
-          </p>
+          <div className="paper-choice">
+            <p className="paper-kept">
+              <strong>{basename(chosen)}</strong>
+              <button className="secondary small" onClick={() => setChosen(null)}>
+                Don't add
+              </button>
+            </p>
+
+            <span className="field-label">Do you want to copy or move the file?</span>
+            <label className="choice">
+              <input
+                type="radio"
+                checked={keep === "copy"}
+                onChange={() => setKeep("copy")}
+              />
+              <span>
+                <strong>Copy file</strong>
+                Leaves your own copy in {folder(chosen)}
+              </span>
+            </label>
+            <label className="choice">
+              <input
+                type="radio"
+                checked={keep === "move"}
+                onChange={() => setKeep("move")}
+              />
+              <span>
+                <strong>Move file</strong>
+                Takes it out of {folder(chosen)} once your library has it
+              </span>
+            </label>
+          </div>
         ) : kept ? (
           <p className="paper-kept">
             <strong>{kept}</strong>
@@ -338,9 +383,9 @@ export function SourceForm({
         )}
 
         <small className="hint">
-          The file is <strong>copied into your library</strong>, not pointed at. Empty your
-          downloads folder afterwards, or unplug the stick it came on — the source keeps its
-          paper either way.
+          Your library keeps <strong>its own copy</strong> either way, so the source has its
+          paper for good — empty your downloads folder afterwards, or unplug the stick it came
+          on, and nothing is lost.
         </small>
       </div>
 

@@ -233,6 +233,28 @@ pub enum Form {
     Narrative,
 }
 
+/// What becomes of the file when a source keeps it.
+///
+/// The library gets its own copy either way. This is only about the file the user picked.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "kebab-case")]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub enum Keep {
+    /// Leave it where it is.
+    Copy,
+    /// Take it away once the library's copy is safe.
+    Move,
+}
+
+impl From<Keep> for plc_engine::api::Keep {
+    fn from(keep: Keep) -> Self {
+        match keep {
+            Keep::Copy => plc_engine::api::Keep::Copy,
+            Keep::Move => plc_engine::api::Keep::Move,
+        }
+    }
+}
+
 /// One citation the interface wants rendered.
 ///
 /// Batched rather than asked for one at a time. Every single `citation_format` reads the whole
@@ -705,7 +727,9 @@ mod wire {
 
         let pdf = dir.path().join("downloaded.pdf");
         std::fs::write(&pdf, "%PDF-1.7\n").unwrap();
-        engine.source_attach(id, &pdf).unwrap();
+        engine
+            .source_attach(id, &pdf, plc_engine::api::Keep::Copy)
+            .unwrap();
 
         let listed: Source = engine.source_read(id).unwrap().into();
         let received: Source =

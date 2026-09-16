@@ -12,7 +12,7 @@ use plc_engine::{Error, Id};
 use tauri::State;
 
 use crate::dto::{
-    CitationRequest, Document, DocumentRef, EngineError, Field, Form, LibraryStatus, Locator,
+    CitationRequest, Document, DocumentRef, EngineError, Field, Form, Keep, LibraryStatus, Locator,
     SavedSource, SearchHit, Source, SourceType, Topic,
 };
 
@@ -214,19 +214,21 @@ pub fn source_list(state: State<'_, OpenLibrary>) -> Answer<Vec<Source>> {
 /// Two-phase without exception: deleting a source orphans every citation of it, so the
 /// Keep a copy of a PDF with a source.
 ///
-/// The interface sends a path it got from the file dialog, and the engine copies the file
-/// into the library. Copying is the point: the original can be deleted out of a downloads
-/// folder afterwards and the source still has its paper.
+/// The interface sends a path it got from the file dialog, and the engine brings the file
+/// into the library. That is the point: the original can be gone afterwards — deleted by the
+/// user, or taken away by `Keep::Move` — and the source still has its paper.
 #[tauri::command]
 pub fn source_attach(
     state: State<'_, OpenLibrary>,
     source: String,
     path: String,
+    keep: Keep,
 ) -> Answer<Source> {
     with(&state, |e| {
         Ok(Source::from(e.source_attach(
             id(&source)?,
             std::path::Path::new(&path),
+            keep.into(),
         )?))
     })
 }

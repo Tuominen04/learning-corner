@@ -17,6 +17,7 @@ import type { Form } from "./bindings/Form";
 import type { LibraryStatus } from "./bindings/LibraryStatus";
 import type { Locator } from "./bindings/Locator";
 import type { Role } from "./bindings/Role";
+import type { Keep } from "./bindings/Keep";
 import type { SavedSource } from "./bindings/SavedSource";
 import type { SearchHit } from "./bindings/SearchHit";
 import type { Source } from "./bindings/Source";
@@ -33,6 +34,7 @@ export type {
   EngineError,
   Field,
   Form,
+  Keep,
   LibraryStatus,
   Locator,
   Role,
@@ -137,11 +139,12 @@ export const engine = {
     /**
      * Keep a copy of a PDF with this source.
      *
-     * The file is copied into the library, so the original can be deleted from wherever it
-     * was downloaded and the source still has its paper. Returns the source as it now stands.
+     * The library takes its own copy either way, so the original can be gone afterwards and
+     * the source still has its paper. `keep` decides what becomes of the file the user
+     * picked: left alone, or taken away once the copy is safe.
      */
-    attach: (source: string, path: string) =>
-      call<Source>("source_attach", { source, path }),
+    attach: (source: string, path: string, keep: Keep) =>
+      call<Source>("source_attach", { source, path, keep }),
     /** Forget the paper, and delete the library's copy of it. */
     detach: (source: string) => call<Source>("source_detach", { source }),
     /**

@@ -188,10 +188,15 @@ computer, and recording where the PDF sat on one machine would break that on the
 The name is also treated as a name when it is read back: a hand-edited record naming
 `../../../elsewhere.pdf` resolves to nothing rather than reaching outside the library.
 
-**Copied, not referenced.** That is the whole point of the field — the original can be deleted
-out of a downloads folder afterwards, and the source still has its paper. The copy goes through
-the same temp-fsync-rename sequence as every other write here, so an interrupted copy leaves
-the previous file or the new one and never half a PDF.
+**Brought in, not referenced.** That is the whole point of the field — the original can be gone
+afterwards and the source still has its paper. The copy goes through the same temp-fsync-rename
+sequence as every other write here, so an interrupted copy leaves the previous file or the new
+one and never half a PDF.
+
+The caller chooses what becomes of the original: **copy** leaves it alone, **move** removes it
+once the library's copy is written, recorded and indexed — never before, since removing it any
+earlier risks taking away the only one anybody can find. A removal that fails is not a failed
+attach: the outcome is then exactly *copy*, and nothing has been lost.
 
 Deleting a source deletes its copy. Attaching a second one replaces the first. Only PDFs are
 accepted today, checked by extension *and* by content, because a renamed `.docx` carries a
