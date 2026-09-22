@@ -135,6 +135,19 @@ export function Sources({ onOpenDocument }: { onOpenDocument: (id: string) => vo
                   </span>
                 </div>
                 <span className="source-actions">
+                  {source.file && (
+                    // Reading the paper is the point of keeping it, so it is one click from
+                    // the list rather than something you go into an edit form to reach.
+                    <button
+                      className="ghost paper-open"
+                      title={`Open ${source.file}`}
+                      onClick={() => void guard(async () => {
+                        if (source.id) await engine.source.open(source.id);
+                      })}
+                    >
+                      PDF
+                    </button>
+                  )}
                   <button className="ghost" onClick={() => setEditing(source)}>
                     Edit
                   </button>

@@ -12,7 +12,7 @@ use plc_engine::{Error, Id};
 use tauri::State;
 
 use crate::dto::{
-    CitationRequest, Document, DocumentRef, EngineError, Field, Form, LibraryStatus, Locator,
+    CitationRequest, Document, DocumentRef, EngineError, Field, Form, Keep, LibraryStatus, Locator,
     SavedSource, SearchHit, Source, SourceType, Topic,
 };
 
@@ -212,6 +212,54 @@ pub fn source_list(state: State<'_, OpenLibrary>) -> Answer<Vec<Source>> {
 /// What would break if this source were deleted.
 ///
 /// Two-phase without exception: deleting a source orphans every citation of it, so the
+/// Keep a copy of a PDF with a source.
+///
+/// The interface sends a path it got from the file dialog, and the engine brings the file
+/// into the library. That is the point: the original can be gone afterwards — deleted by the
+/// user, or taken away by `Keep::Move` — and the source still has its paper.
+#[tauri::command]
+pub fn source_attach(
+    state: State<'_, OpenLibrary>,
+    source: String,
+    path: String,
+    keep: Keep,
+) -> Answer<Source> {
+    with(&state, |e| {
+        Ok(Source::from(e.source_attach(
+            id(&source)?,
+            std::path::Path::new(&path),
+            keep.into(),
+        )?))
+    })
+}
+
+#[tauri::command]
+pub fn source_detach(state: State<'_, OpenLibrary>, source: String) -> Answer<Source> {
+    with(&state, |e| Ok(Source::from(e.source_detach(id(&source)?)?)))
+}
+
+/// Open a source's PDF in whatever the desktop uses for PDFs.
+///
+/// The interface names a **source**, never a path. The path is the engine's answer, which is
+/// why nothing the interface can say reaches a file outside the library — and why this needs
+/// no filesystem permission on the JavaScript side at all.
+///
+/// `false` means there was nothing to open: no file kept, or the copy has been deleted from
+/// the folder by hand. Not an error — a user may do what they like inside their own library,
+/// and saying so plainly beats an error dialog about a missing path.
+#[tauri::command]
+pub fn source_open(state: State<'_, OpenLibrary>, source: String) -> Answer<bool> {
+    with(&state, |e| {
+        let Some(path) = e.source_file(id(&source)?)? else {
+            return Ok(false);
+        };
+        tauri_plugin_opener::open_path(&path, None::<&str>).map_err(|why| {
+            plc_engine::Error::library(format!("cannot open {}: {why}", path.display()))
+        })?;
+        Ok(true)
+    })
+}
+
 /// interface must show this list and be told to go ahead before `source_delete` may run.
 #[tauri::command]
 pub fn source_delete_plan(

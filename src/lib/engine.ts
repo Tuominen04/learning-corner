@@ -17,6 +17,7 @@ import type { Form } from "./bindings/Form";
 import type { LibraryStatus } from "./bindings/LibraryStatus";
 import type { Locator } from "./bindings/Locator";
 import type { Role } from "./bindings/Role";
+import type { Keep } from "./bindings/Keep";
 import type { SavedSource } from "./bindings/SavedSource";
 import type { SearchHit } from "./bindings/SearchHit";
 import type { Source } from "./bindings/Source";
@@ -33,6 +34,7 @@ export type {
   EngineError,
   Field,
   Form,
+  Keep,
   LibraryStatus,
   Locator,
   Role,
@@ -134,6 +136,25 @@ export const engine = {
     delete: (source: string) => call<void>("source_delete", { source }),
     citingDocuments: (source: string) =>
       call<DocumentRef[]>("source_citing_documents", { source }),
+    /**
+     * Keep a copy of a PDF with this source.
+     *
+     * The library takes its own copy either way, so the original can be gone afterwards and
+     * the source still has its paper. `keep` decides what becomes of the file the user
+     * picked: left alone, or taken away once the copy is safe.
+     */
+    attach: (source: string, path: string, keep: Keep) =>
+      call<Source>("source_attach", { source, path, keep }),
+    /** Forget the paper, and delete the library's copy of it. */
+    detach: (source: string) => call<Source>("source_detach", { source }),
+    /**
+     * Open the kept PDF in whatever the desktop uses for PDFs.
+     *
+     * A **source** is named here, never a path — the path is the engine's answer, which is
+     * why the interface needs no filesystem permission of its own. `false` means there was
+     * nothing to open, which is not an error: a user may delete files from their own library.
+     */
+    open: (source: string) => call<boolean>("source_open", { source }),
     requiredFields: (sourceType: SourceType) =>
       call<Field[]>("source_required_fields", { sourceType }),
   },

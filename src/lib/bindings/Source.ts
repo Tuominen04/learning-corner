@@ -19,4 +19,13 @@ container: string | null, publisher: string | null, site: string | null, volume:
 /**
  * Only where content is designed to change and is not archived — not on every web page.
  */
-retrieved: SourceDate | null, appraisal: Appraisal | null, };
+retrieved: SourceDate | null, appraisal: Appraisal | null, 
+/**
+ * The library's own copy of this source's paper, as a filename inside `sources/files/`.
+ *
+ * Read-only from the interface's point of view. It is carried on the way out so a source
+ * can be shown with its paper, and ignored on the way in: the engine keeps whatever it
+ * has stored, so a form that does not carry the field cannot detach a PDF by saving a
+ * corrected title. Attaching and detaching are their own commands.
+ */
+file: string | null, };

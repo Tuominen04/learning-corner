@@ -1,3 +1,4 @@
+import { open as openFile } from "@tauri-apps/plugin-dialog";
 import { useEffect, useState } from "react";
 
 import {
@@ -5,6 +6,7 @@ import {
   EngineFailure,
   type Contributor,
   type Field,
+  type Keep,
   type Source,
   type SourceDate,
   type SourceType,
@@ -33,6 +35,26 @@ import {
  * on all seven types, where it means nothing.
  */
 const CHANGEABLE = new Set<SourceType>(["web-page", "video", "audio"]);
+
+/** The last part of a path, for showing a chosen file by name rather than by where it sat. */
+function basename(path: string): string {
+  const at = Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\"));
+  return at === -1 ? path : path.slice(at + 1);
+}
+
+/**
+ * The folder a chosen file sits in, named rather than spelt out in full.
+ *
+ * "Takes it out of Downloads" is a sentence somebody can check against what they meant. The
+ * whole path would be true and unreadable, and this is the choice that deletes something.
+ */
+function folder(path: string): string {
+  const at = Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\"));
+  if (at <= 0) return "that folder";
+  const parent = path.slice(0, at);
+  const from = Math.max(parent.lastIndexOf("/"), parent.lastIndexOf("\\"));
+  return from === -1 ? parent : parent.slice(from + 1) || "that folder";
+}
 
 /** Today, as a full date — the answer somebody wants when they record reading something. */
 function today(): SourceDate {
@@ -69,6 +91,20 @@ export function SourceForm({
   const [extras, setExtras] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // A PDF chosen but not yet saved, and a kept one marked to go.
+  //
+  // Both wait for Save, like every other field on this form. That is the consistent behaviour
+  // — nothing here happens until you save — and it means abandoning an edit never leaves a
+  // copied file behind in the library.
+  const [chosen, setChosen] = useState<string | null>(null);
+  const [detaching, setDetaching] = useState(false);
+
+  // Copy by default. Move deletes a file of the user's, so it is something they choose rather
+  // than something they discover afterwards.
+  const [keep, setKeep] = useState<Keep>("copy");
+
+  const kept = detaching ? null : source.file;
 
   // Which fields APA 7 needs is the engine's to answer, not this form's — it is a fact about
   // the citation style, and a copy here would be a second definition free to drift from it.
@@ -109,6 +145,35 @@ export function SourceForm({
     }));
   }
 
+  async function choosePdf() {
+    setError(null);
+    try {
+      const picked = await openFile({
+        multiple: false,
+        directory: false,
+        filters: [{ name: "PDF", extensions: ["pdf"] }],
+      });
+      if (typeof picked !== "string") return; // dismissed the dialog
+      setChosen(picked);
+      setDetaching(false);
+      setKeep("copy");
+    } catch (thrown) {
+      setError(thrown instanceof EngineFailure ? thrown.message : String(thrown));
+    }
+  }
+
+  /**
+   * The paper, once the source it belongs to exists.
+   *
+   * Separated from saving the fields because the copy is named after the source's own record,
+   * which the engine writes. A source being created has no record to be named after yet, so
+   * this runs afterwards with the identifier the engine just assigned.
+   */
+  async function savePaper(id: string) {
+    if (chosen) await engine.source.attach(id, chosen, keep);
+    else if (detaching && source.file) await engine.source.detach(id);
+  }
+
   async function save() {
     setError(null);
     setBusy(true);
@@ -116,9 +181,11 @@ export function SourceForm({
       const ready = tidy(source);
       if (ready.id) {
         const missing = await engine.source.update(ready);
+        await savePaper(ready.id);
         onSaved(ready.id, missing, ready.type);
       } else {
         const saved = await engine.source.create(ready);
+        await savePaper(saved.id);
         onSaved(saved.id, saved.missing, ready.type);
       }
     } catch (thrown) {
@@ -259,6 +326,68 @@ export function SourceForm({
           />
         </label>
       </details>
+
+      <div className="paper">
+        <span className="field-label">The paper itself</span>
+
+        {chosen ? (
+          <div className="paper-choice">
+            <p className="paper-kept">
+              <strong>{basename(chosen)}</strong>
+              <button className="secondary small" onClick={() => setChosen(null)}>
+                Don't add
+              </button>
+            </p>
+
+            <span className="field-label">Do you want to copy or move the file?</span>
+            <label className="choice">
+              <input
+                type="radio"
+                checked={keep === "copy"}
+                onChange={() => setKeep("copy")}
+              />
+              <span>
+                <strong>Copy file</strong>
+                Leaves your own copy in {folder(chosen)}
+              </span>
+            </label>
+            <label className="choice">
+              <input
+                type="radio"
+                checked={keep === "move"}
+                onChange={() => setKeep("move")}
+              />
+              <span>
+                <strong>Move file</strong>
+                Takes it out of {folder(chosen)} once your library has it
+              </span>
+            </label>
+          </div>
+        ) : kept ? (
+          <p className="paper-kept">
+            <strong>{kept}</strong>
+            <button
+              className="secondary small"
+              onClick={() => void engine.source.open(source.id ?? "")}
+            >
+              Open
+            </button>
+            <button className="secondary small" onClick={() => setDetaching(true)}>
+              Remove
+            </button>
+          </p>
+        ) : (
+          <button className="secondary" onClick={() => void choosePdf()}>
+            Add a PDF…
+          </button>
+        )}
+
+        <small className="hint">
+          Your library keeps <strong>its own copy</strong> either way, so the source has its
+          paper for good — empty your downloads folder afterwards, or unplug the stick it came
+          on, and nothing is lost.
+        </small>
+      </div>
 
       {error && <p className="error">{error}</p>}
 

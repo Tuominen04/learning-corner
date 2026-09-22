@@ -171,6 +171,9 @@ export function blankSource(type: SourceType): Source {
     title: "",
     date: { kind: "year", year: new Date().getFullYear() },
     contributors: [emptyContributor("person")],
+    // Never set here. A paper is attached to a source that already exists, because the copy
+    // is named after the source's own record — which the engine writes when it saves it.
+    file: null,
     container: null,
     publisher: null,
     site: null,

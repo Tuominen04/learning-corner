@@ -200,6 +200,13 @@ pub struct Source {
     /// Only where content is designed to change and is not archived — not on every web page.
     pub retrieved: Option<SourceDate>,
     pub appraisal: Option<Appraisal>,
+    /// The library's own copy of this source's paper, as a filename inside `sources/files/`.
+    ///
+    /// Read-only from the interface's point of view. It is carried on the way out so a source
+    /// can be shown with its paper, and ignored on the way in: the engine keeps whatever it
+    /// has stored, so a form that does not carry the field cannot detach a PDF by saving a
+    /// corrected title. Attaching and detaching are their own commands.
+    pub file: Option<String>,
 }
 
 /// What came back from saving a source.
@@ -224,6 +231,28 @@ pub enum Form {
     Parenthetical,
     /// `Nieminen (2021)` — who said it is part of the point.
     Narrative,
+}
+
+/// What becomes of the file when a source keeps it.
+///
+/// The library gets its own copy either way. This is only about the file the user picked.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "kebab-case")]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub enum Keep {
+    /// Leave it where it is.
+    Copy,
+    /// Take it away once the library's copy is safe.
+    Move,
+}
+
+impl From<Keep> for plc_engine::api::Keep {
+    fn from(keep: Keep) -> Self {
+        match keep {
+            Keep::Copy => plc_engine::api::Keep::Copy,
+            Keep::Move => plc_engine::api::Keep::Move,
+        }
+    }
 }
 
 /// One citation the interface wants rendered.
@@ -494,6 +523,7 @@ impl From<engine_src::Source> for Source {
             url: s.url,
             retrieved: s.retrieved.map(SourceDate::from),
             appraisal: s.appraisal.map(Appraisal::from),
+            file: s.file,
         }
     }
 }
@@ -529,6 +559,9 @@ impl Source {
             url: self.url,
             retrieved: self.retrieved.map(engine_src::Date::from),
             appraisal: self.appraisal.map(engine_src::Appraisal::from),
+            // Sent, but not trusted: `source_update` overwrites it with what is stored. Here
+            // so the struct is complete rather than so the value travels.
+            file: self.file,
         })
     }
 }
@@ -647,6 +680,7 @@ mod wire {
             doi: None,
             url: None,
             retrieved: None,
+            file: None,
             appraisal: None,
         }
     }
@@ -678,6 +712,47 @@ mod wire {
             "given names carry the initials APA prints; losing them silently degrades every \
              citation of this source"
         );
+    }
+
+    #[test]
+    fn an_attached_paper_crosses_the_wire_and_survives_an_edit() {
+        // Two things at once, because they fail together. The filename has to reach the client
+        // so a source can be shown with its paper, and it has to survive the client sending
+        // the source back — an interface whose form predates attachments sends `file: null`,
+        // and that must not detach anything.
+        let (dir, mut engine) = library();
+        let (id, _) = engine
+            .source_create(a_book().into_engine().unwrap())
+            .unwrap();
+
+        let pdf = dir.path().join("downloaded.pdf");
+        std::fs::write(&pdf, "%PDF-1.7\n").unwrap();
+        engine
+            .source_attach(id, &pdf, plc_engine::api::Keep::Copy)
+            .unwrap();
+
+        let listed: Source = engine.source_read(id).unwrap().into();
+        let received: Source =
+            serde_json::from_str(&serde_json::to_string(&listed).unwrap()).unwrap();
+        assert_eq!(
+            received.file.as_deref(),
+            Some("nieminen-2021.pdf"),
+            "the client cannot show a paper it was never told about"
+        );
+
+        // Now the client sends it back the way a form that never heard of attachments would.
+        let mut edited = received;
+        edited.file = None;
+        edited.title = "Ravinto ja terveys, 2. painos".into();
+        engine.source_update(edited.into_engine().unwrap()).unwrap();
+
+        let after: Source = engine.source_read(id).unwrap().into();
+        assert_eq!(
+            after.file.as_deref(),
+            Some("nieminen-2021.pdf"),
+            "correcting a title across the wire detached the paper"
+        );
+        assert_eq!(after.title, "Ravinto ja terveys, 2. painos");
     }
 
     #[test]
