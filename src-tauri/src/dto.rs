@@ -71,12 +71,35 @@ pub struct Document {
     pub revision: Revision,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "../../src/lib/bindings/")]
 pub struct SearchHit {
     pub id: Id,
+    /// What was found. One index holds topics, documents and sources, so this is what lets a
+    /// result be drawn and acted on — opening a source is not opening a document.
+    pub kind: HitKind,
     pub title: String,
     pub excerpt: String,
+}
+
+/// What a search hit refers to.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "kebab-case")]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub enum HitKind {
+    Topic,
+    Document,
+    Source,
+}
+
+impl From<plc_engine::index::Kind> for HitKind {
+    fn from(kind: plc_engine::index::Kind) -> Self {
+        match kind {
+            plc_engine::index::Kind::Topic => HitKind::Topic,
+            plc_engine::index::Kind::Document => HitKind::Document,
+            plc_engine::index::Kind::Source => HitKind::Source,
+        }
+    }
 }
 
 // ---- sources -------------------------------------------------------------------
@@ -625,6 +648,57 @@ mod wire {
         let dir = tempfile::tempdir().unwrap();
         let engine = Engine::create(dir.path(), "Learning").unwrap();
         (dir, engine)
+    }
+
+    #[test]
+    fn a_search_hit_keeps_its_kind_across_the_wire() {
+        // The interface decides what to draw and where a click goes from this one field, so a
+        // kind that arrives as the wrong variant sends somebody to the wrong screen. Both the
+        // conversion and the JSON spelling are checked, because either can drift alone.
+        let (_dir, mut engine) = library();
+        let topic = engine.topic_create(None, "Protein").unwrap();
+        engine.document_create(topic, "What protein is").unwrap();
+
+        let mut source = plc_engine::citation::source::Source::new(
+            plc_engine::citation::source::SourceType::JournalArticle,
+            "Protein in adults",
+            plc_engine::citation::source::Date::Year(2021),
+        );
+        source.container = Some("Journal of Nutrition".into());
+        engine.source_create(source).unwrap();
+
+        let hits: Vec<SearchHit> = engine
+            .search("protein")
+            .unwrap()
+            .into_iter()
+            .map(|h| SearchHit {
+                id: h.id.to_string(),
+                kind: h.kind.into(),
+                title: h.title,
+                excerpt: h.excerpt,
+            })
+            .collect();
+
+        let sent = serde_json::to_string(&hits).unwrap();
+        let received: Vec<SearchHit> = serde_json::from_str(&sent).unwrap();
+        assert_eq!(hits, received);
+
+        for kind in [HitKind::Topic, HitKind::Document, HitKind::Source] {
+            assert!(
+                received.iter().any(|h| h.kind == kind),
+                "expected a {kind:?} among {received:?}"
+            );
+        }
+
+        // Kebab-case on the wire, because that is what the generated TypeScript union says.
+        assert!(
+            sent.contains(r#""kind":"document""#),
+            "unexpected spelling in {sent}"
+        );
+        assert!(
+            sent.contains(r#""kind":"source""#),
+            "unexpected spelling in {sent}"
+        );
     }
 
     #[test]

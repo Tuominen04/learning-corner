@@ -1,8 +1,8 @@
 # Topics and documents
 
 > **Audience:** People using Personal Learning Corner
-> **Status:** Planned
-> **Last reviewed:** 2026-09-06
+> **Status:** In progress
+> **Last reviewed:** 2026-09-22
 
 Learning does not arrive organised. You start with one question and finish with a structure
 you could not have designed at the start. This part of the app is built for that: start
@@ -94,13 +94,23 @@ See [Sources and citations](sources-and-citations.md) for how citing works.
 
 ## Finding things
 
-**Search** covers every document, source, and text in the library — the words you wrote, the
-titles of your sources, and the names of everything. It works offline and it works on a
-library too large to scroll through.
+**Search** sits above your topics in the sidebar. Type, and your topics and documents are
+replaced by what matches; clear the box and they come back exactly as they were.
 
-You can narrow it to one topic, or to documents citing a particular source. That last one is
-the useful one: *"What did I write based on this book?"* — and, when a source turns out to be
-wrong, *"What do I now need to go back and fix?"*
+It looks **inside what you wrote**, not only at titles, and shows you the words it matched on
+so you can tell one result from another without opening it. Click a document to open it.
+Topics are listed too, marked as topics — there is nothing to open for a topic, but knowing one
+matched tells you where to look.
+
+Your **sources** are not in these results. They have [their own screen](sources-and-citations.md),
+where a source can be shown with its authors, its year and its paper — a bare title in a list
+is the least useful way to meet one.
+
+It works offline, and it works on a library too large to scroll through.
+
+Narrowing to one topic, or to the documents citing a particular source, comes later. That
+second one is the useful one: *"What did I write based on this book?"* — and, when a source
+turns out to be wrong, *"What do I now need to go back and fix?"*
 
 ## When you want the whole picture
 

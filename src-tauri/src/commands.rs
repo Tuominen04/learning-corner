@@ -161,6 +161,7 @@ pub fn search(state: State<'_, OpenLibrary>, query: String) -> Answer<Vec<Search
             .into_iter()
             .map(|h| SearchHit {
                 id: h.id.to_string(),
+                kind: h.kind.into(),
                 title: h.title,
                 excerpt: h.excerpt,
             })

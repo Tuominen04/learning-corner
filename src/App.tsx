@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 
 import { Editor } from "./components/Editor";
 import { LibraryPicker } from "./components/LibraryPicker";
+import { Search } from "./components/Search";
 import { Sources } from "./components/Sources";
 import { TopicTree } from "./components/TopicTree";
 import {
@@ -22,6 +23,11 @@ export function App() {
   // Sources are library-wide rather than living under a topic, so they are a place you go
   // rather than something you select in the tree.
   const [view, setView] = useState<"documents" | "sources">("documents");
+
+  // Searching is navigating, so it lives in the sidebar with the tree rather than being a
+  // place you go. While there is a query the results stand in for the tree; clear it and the
+  // tree is back, unchanged.
+  const [query, setQuery] = useState("");
 
   const refresh = useCallback(async () => {
     try {
@@ -122,6 +128,32 @@ export function App() {
           </button>
         </nav>
 
+        <div className="find">
+          <input
+            className="find-input"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search your writing"
+            aria-label="Search your topics and documents"
+          />
+          {query !== "" && (
+            <button className="ghost" onClick={() => setQuery("")} title="Clear the search">
+              ×
+            </button>
+          )}
+        </div>
+
+        {query.trim() !== "" ? (
+          <Search
+            query={query}
+            onOpenDocument={(id) =>
+              void guard(async () => {
+                setOpen(await engine.document.read(id));
+                setView("documents");
+              })
+            }
+          />
+        ) : (
         <TopicTree
           topics={topics}
           selected={view === "documents" ? (open?.id ?? null) : null}
@@ -153,6 +185,7 @@ export function App() {
           }
           onRenameDocument={renameDocument}
         />
+        )}
 
         {library.problems.length > 0 && (
           <div className="problems">
