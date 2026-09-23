@@ -57,6 +57,17 @@ and bare `AND` as operators, so a search for `protein (2021)` is a syntax error 
 search. Every term is wrapped in quotes and embedded quotes doubled, so what a person types is
 always treated as words to find.
 
+**Every term is a prefix.** `tuttu` finds `tuttujuttu`. Searching answers while somebody types,
+so all but the last keystroke of a word is a partial word — matching only whole tokens meant
+the results said *nothing matches* until a word happened to be finished and spelled exactly,
+including for a document that was open on screen at the time.
+
+**Prefix, not substring**: `juttu` does not find `tuttujuttu`. Matching inside a word needs the
+`trigram` tokeniser, which is a different index, a full rebuild, a three-character floor and
+different ranking — a decision with costs, and one that wants [an ADR](adr/) if it is ever
+taken. The engine's tests pin the limit as well as the behaviour, so the boundary is met
+deliberately rather than found by surprise.
+
 ## Staying current
 
 - **On write.** Every engine write updates the affected rows in the same operation. The index
