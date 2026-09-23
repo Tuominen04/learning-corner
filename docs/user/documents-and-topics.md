@@ -98,7 +98,8 @@ See [Sources and citations](sources-and-citations.md) for how citing works.
 replaced by what matches; clear the box and they come back exactly as they were.
 
 It looks **inside what you wrote**, not only at titles, and shows you the words it matched on
-so you can tell one result from another without opening it. Click a document to open it.
+so you can tell one result from another without opening it. You do not have to finish a word:
+typing `tuttu` finds *tuttujuttu*. You do have to start it — `juttu` will not. Click a document to open it.
 Topics are listed too, marked as topics — there is nothing to open for a topic, but knowing one
 matched tells you where to look.
 
