@@ -414,8 +414,34 @@ button.view.selected { background: #2a2d38; color: #fff; border-color: var(--acc
 /* Edit and Delete are actions, and stay out of the way until the row is under the pointer.
    The PDF marker is not an action — it is the answer to "which of these do I actually have
    the paper for", which is a question you ask by scanning the list, never by hovering it. */
-.source-actions > :not(.paper-open) { opacity: 0; }
+.source-actions > :not(.paper-open):not(.used-in) { opacity: 0; }
 .source-row:hover .source-actions > * { opacity: 1; }
+
+/* ---- where a source is used ---- */
+
+/* Open, and it says so — the row stays legible as a row while one of them is expanded. */
+button.used-in[aria-expanded="true"] { color: var(--accent); }
+
+/* Indented under the source rather than beside it, because these belong to the row above.
+   The rule down the left is what says "still the same source" while you read the list. */
+.uses {
+  border-left: 2px solid var(--line);
+  margin: 0 0 0.8rem 0.9rem;
+  padding-left: 0.9rem;
+}
+.uses-count {
+  margin: 0 0 0.3rem;
+  font-size: 0.82em;
+  color: var(--ink-soft);
+}
+.uses ul { list-style: none; margin: 0; padding: 0; }
+.uses li button {
+  font-size: inherit;
+  padding: 0.15rem 0;
+  text-align: left;
+}
+.uses li button:hover { text-decoration: underline; }
+p.uses { font-size: 0.88em; max-width: 42rem; }
 
 .saved-note {
   border-left: 2px solid var(--accent);

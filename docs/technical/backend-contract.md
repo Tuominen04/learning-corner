@@ -115,7 +115,7 @@ precisely the case this exists to catch.
 | `source.read` | id | source |
 | `source.list` | filter, sort | sources |
 | `source.delete` | id | `plan` (lists every citing document) / `apply` |
-| `source.citingDocuments` | id | documents citing it, with locators |
+| `source.citingDocuments` | id | the documents citing it, each once |
 | `source.requiredFields` | type | the fields APA 7 requires for that type |
 | `source.attach` | id, path, `copy`/`move` | source, now carrying the copy's filename |
 | `source.detach` | id | source, with the copy deleted |
