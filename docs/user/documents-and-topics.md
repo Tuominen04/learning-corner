@@ -58,6 +58,19 @@ A document is a page you write, inside a topic.
 **Writing.** Plain writing with headings, lists, emphasis, and quotes. There is no page
 layout to fight with — this is for learning, not for typesetting.
 
+**Headings.** Click **H1**, **H2** or **H3** above the page, or just type `# ` at the start of
+a line. One `#` makes a heading, `##` a sub-heading, and you can go as deep as `######`.
+Clicking the same button again turns it back into ordinary writing.
+
+**Pictures.** Click **Picture**, choose a file, and it goes where your cursor is. A copy is
+kept in your library right next to the document, so the picture stays even if you empty the
+folder you took it from — and you are asked first whether to copy the file or move it, exactly
+as you are for a source's PDF.
+
+Because the copy sits beside the document, the picture also shows up when you open the file
+anywhere else: a text editor's preview, a file manager, anything that reads Markdown. Move the
+document to another topic and its pictures move with it.
+
 **Saving.** Continuous. There is no save button and no unsaved state to lose.
 
 **Splitting.** Select part of a document and choose **Split into new document**. The

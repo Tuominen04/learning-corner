@@ -2548,6 +2548,7 @@ checksum = "9b4f627cb1b25917193a259e49bdad08f671f8d9708acfd5fe0a8c1455d87220"
 name = "personal-learning-corner"
 version = "0.1.0"
 dependencies = [
+ "base64 0.22.1",
  "plc-engine",
  "serde",
  "serde_json",
@@ -2638,7 +2639,7 @@ checksum = "f6b464fbc74e149a392436b17d523f769e057cb6877f6a5c4618bc6f11800548"
 [[package]]
 name = "plc-engine"
 version = "0.1.0"
-source = "git+https://github.com/Tuominen04/personal-learning-corner-engine?tag=v0.6.2#11a25bab9fb2b3307587bac074a2cb2409dbd764"
+source = "git+https://github.com/Tuominen04/personal-learning-corner-engine?tag=v0.7.1#b13a449223bab0384084efd7aa65039c1b5854ab"
 dependencies = [
  "blake3",
  "rusqlite",
