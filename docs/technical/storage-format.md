@@ -75,8 +75,12 @@ JSON is rejected for the same job because it has no comments and is unpleasant t
 Every entity carries an `id`: a [ULID](https://github.com/ulid/spec) — 26 characters,
 lexicographically sortable by creation time, generated locally without coordination.
 
-- The ID lives **in the file**, never in the filename. Filenames are human-chosen slugs and
-  may be changed freely, by the application or by the user in a file manager.
+- The ID lives **in the file**, never in the filename. Filenames are slugs and may be changed
+  freely, by the application or by the user in a file manager.
+- A name **follows what it holds**: renaming a document renames its `.md`, and renaming a
+  topic renames its folder. Free to do precisely because the ID is not in the name — and worth
+  doing, because a folder of `untitled-2.md` keeps the letter of files-as-source-of-truth
+  while losing the point of it. See [ADR 0003](adr/0003-files-as-source-of-truth.md).
 - Links and citations reference IDs, so renaming never breaks them.
 - Resolving an ID to a path is the [index](search-index.md)'s job, and a full scan of the
   library rebuilds that mapping — the ID→path relation is derived, never stored.

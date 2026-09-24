@@ -52,12 +52,15 @@ pencil that appears when you hover it. Links between your documents and citation
 sources keep working: the app tracks them by an internal marker that does not change when a
 name does.
 
-**The file on disk keeps the name it was created with.** Renaming a document changes its title,
-which is what you see everywhere in the app and what is stored inside the file — but the `.md`
-file itself stays where it is, under its original name. So a document you renamed to *Protein,
-properly* may still be `what-protein-is.md` in your folder. Nothing is lost or hidden by this,
-and the app finds it either way, but it is worth knowing before you go looking for a file by
-its new title.
+**The file on disk is renamed too.** A document called *Protein, properly* is
+`protein-properly.md`, and a topic called *Protein* is a folder called `protein` — so going
+looking for something by the name you gave it works. If that name is already taken by a
+neighbour, the new one gets a number on the end.
+
+Libraries made before this worked may still hold files named after what a document was first
+called — often `untitled.md`, since that is what a new document starts as. Renaming it once
+puts the file right, and renaming it to the name it already has counts: open the rename box
+and press Enter.
 
 Renaming files **outside** the app is a different matter, see below.
 
