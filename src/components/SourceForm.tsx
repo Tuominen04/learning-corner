@@ -11,6 +11,7 @@ import {
   type SourceDate,
   type SourceType,
 } from "../lib/engine";
+import { basename, folder } from "../lib/paths";
 import {
   blankSource,
   contributorName,
@@ -35,26 +36,6 @@ import {
  * on all seven types, where it means nothing.
  */
 const CHANGEABLE = new Set<SourceType>(["web-page", "video", "audio"]);
-
-/** The last part of a path, for showing a chosen file by name rather than by where it sat. */
-function basename(path: string): string {
-  const at = Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\"));
-  return at === -1 ? path : path.slice(at + 1);
-}
-
-/**
- * The folder a chosen file sits in, named rather than spelt out in full.
- *
- * "Takes it out of Downloads" is a sentence somebody can check against what they meant. The
- * whole path would be true and unreadable, and this is the choice that deletes something.
- */
-function folder(path: string): string {
-  const at = Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\"));
-  if (at <= 0) return "that folder";
-  const parent = path.slice(0, at);
-  const from = Math.max(parent.lastIndexOf("/"), parent.lastIndexOf("\\"));
-  return from === -1 ? parent : parent.slice(from + 1) || "that folder";
-}
 
 /** Today, as a full date — the answer somebody wants when they record reading something. */
 function today(): SourceDate {

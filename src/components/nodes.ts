@@ -1,15 +1,20 @@
-// The two inline node types the storage format defines.
+// The inline node types the storage format defines.
 //
-// Registered in M0 even though they render plainly here, because retrofitting node types into
-// a working editor means reworking every document interaction built before them (ADR 0005).
-// In M1 the citation node renders as "(Nieminen, 2021, p. 44)" from the source record; the
-// text on disk does not change.
+// Registered in M0 even though they rendered plainly then, because retrofitting node types
+// into a working editor means reworking every document interaction built before them (ADR
+// 0005). The citation node now renders as "(Nieminen, 2021, p. 44)" from the source record,
+// and the picture node as the picture; the text on disk does not change either way.
+//
+// Headings are the exception: they are TipTap's own node, because `# ` has one spelling and
+// nothing about it is ours. What is ours is `body.ts`, which decides which blocks are
+// headings and writes them back.
 
 import { Node } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 
-import { CITATION, DOCUMENT_LINK } from "../lib/body";
+import { CITATION, DOCUMENT_LINK, IMAGE } from "../lib/body";
 import { CitationView } from "./CitationView";
+import { ImageView } from "./ImageView";
 
 export const Citation = Node.create({
   name: CITATION,
@@ -81,5 +86,50 @@ export const DocumentLink = Node.create({
       },
       "[link]",
     ];
+  },
+});
+
+/**
+ * A picture kept beside the document, named plainly.
+ *
+ * Inline rather than block, so `As shown ![here](d.png) the bond forms` is a sentence and not
+ * three. A picture on its own line is then simply a paragraph with one thing in it, which is
+ * also how the Markdown reads.
+ */
+export const DocumentImage = Node.create({
+  name: IMAGE,
+  group: "inline",
+  inline: true,
+  atom: true,
+
+  addAttributes() {
+    return {
+      /** The filename the body carries. Beside the document; never a path. */
+      name: { default: "" },
+      /** What the picture is, as the body says — read by anything that cannot show it. */
+      alt: { default: "" },
+    };
+  },
+
+  parseHTML() {
+    return [{ tag: "img[data-image]" }];
+  },
+
+  // The plain form, for when the editor renders to HTML without a React tree — copying to the
+  // clipboard, for instance. It carries the name rather than the picture, because the picture
+  // is the shell's answer and cannot be waited for here.
+  renderHTML({ node }) {
+    return [
+      "img",
+      {
+        "data-image": node.attrs["name"] as string,
+        alt: node.attrs["alt"] as string,
+        class: "picture",
+      },
+    ];
+  },
+
+  addNodeView() {
+    return ReactNodeViewRenderer(ImageView);
   },
 });

@@ -123,6 +123,25 @@ export const engine = {
     rename: (document: string, title: string) =>
       call<Document>("document_rename", { document, title }),
     delete: (document: string) => call<void>("document_delete", { document }),
+    /**
+     * Keep a picture with this document, and get back the name to write into the body.
+     *
+     * The library takes its own copy either way, so the file the user picked may be gone
+     * afterwards. The name is the engine's, made unique against everything already beside
+     * the document — never the name of the file that was picked.
+     */
+    attachImage: (document: string, path: string, keep: Keep) =>
+      call<string>("document_attach_image", { document, path, keep }),
+    /**
+     * A picture this document's body names, as a `data:` URL to put straight into an `img`.
+     *
+     * A **document** and a **name from its own body** are named here, never a path — so
+     * nothing the interface can say reaches a file the engine did not resolve. `null` means
+     * there is nothing to show: the file has been deleted, or the name never led anywhere.
+     * Not an error — a user may do what they like inside their own library.
+     */
+    image: (document: string, name: string) =>
+      call<string | null>("document_image", { document, name }),
   },
   source: {
     create: (source: Source) => call<SavedSource>("source_create", { source }),
