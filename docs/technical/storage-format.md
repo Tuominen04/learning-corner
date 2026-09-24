@@ -136,6 +136,44 @@ extensions, both chosen so that a file remains readable when the syntax is not u
 | `[^cite:<source-id>]` | A citation of a source |
 | `[[<document-id>]]` | A link to another document |
 
+Ordinary Markdown means ordinary Markdown: `# Heading` is a heading and
+`![Diagram](diagram.png)` is a picture, in this application and in every other reader of the
+file. Which of it the editor *renders* is a separate question, decided by whether a construct
+can be written back character for character — see
+[What the editor renders](#what-the-editor-renders).
+
+### Pictures
+
+A picture lives **beside the document that shows it**, in the same folder, and the body names
+it by a bare filename:
+
+```
+topics/protein/
+  what-protein-is.md      ![Amino acid diagram](amino-acid-diagram.png)
+  amino-acid-diagram.png
+```
+
+Beside rather than in a folder of its own, because that is what makes the `.md` show its
+pictures everywhere else: a Markdown viewer, a text editor's preview, a forge, a static site
+generator. A library-wide `images/` folder would be tidier to look at and would leave every
+document's pictures broken outside this application.
+
+Three rules follow from the file being the source of truth:
+
+**The name is a name, never a path.** A body is plain text somebody may type anything into, so
+`![x](../../elsewhere.png)` is not followed out of the folder. The reference is simply broken,
+which is visible and harmless.
+
+**A document takes its pictures with it.** Moving a document to another topic moves the files
+its body names, so the bare names keep working and the body needs no rewriting.
+
+**A name is made unique when the picture is filed.** Two pictures both called `diagram.png` are
+two pictures; the second is stored under a name of its own rather than landing on the first.
+
+Pictures are copied into the library, never referenced where they were found — so the
+downloads folder they came from can be emptied afterwards. Whether the original is left alone
+or taken away is the user's choice at the time, exactly as it is for a source's PDF.
+
 ### What a citation can say
 
 A citation names a source, and may also say **where** in it and **how** the sentence uses it.
@@ -174,6 +212,29 @@ cited — see [Citation model](citation-model.md).
 
 **Backlinks are derived.** No file records what points at it; that relation is computed by
 scanning `[[…]]` references into the index.
+
+### What the editor renders
+
+A document opened and saved without being touched must produce **byte-identical** text. That
+single requirement decides which Markdown the editor draws, and it is a stricter test than
+"can we display it":
+
+| Construct | Rendered | Why |
+| --------- | -------- | --- |
+| Paragraphs, `[^cite:…]`, `[[…]]` | Yes | One spelling each |
+| `# ` to `###### ` | Yes | ATX has one spelling; the editor writes back exactly the hashes it read |
+| `![alt](name)` | Yes | One spelling, and the name is a slug the engine chose |
+| Setext headings (`===` underlines) | No | A second spelling of `# `, so reading one and writing the other would rewrite the file |
+| `*a*`, `_a_` | No | Two spellings of emphasis |
+| Lists | No | Four spellings of a bullet, and indentation that is not free to normalise |
+
+Everything in the "no" column is still **kept perfectly**. It stays literal text in the editor,
+survives every save untouched, and renders correctly in any Markdown reader. The editor not
+drawing something is not the file losing it — and that is the trade the rule is protecting.
+
+Anything malformed is treated the same way. `#Heading` with no space is not a heading in any
+reader, and `![Diagram](my file.png)` is a name this editor could not write back, so both stay
+text rather than being guessed at.
 
 ## Sources
 

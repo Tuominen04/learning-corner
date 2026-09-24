@@ -34,7 +34,30 @@ const roundTrips = [
   ],
   ["adjacent constructs", "[[01J8ZQ9C3P5R7T9V1X3Z5B7D9F]][^cite:01J8ZQ8D4Q6S8W0W2Y4A6C8E0G]"],
   ["Finnish and Cyrillic", "Ääkköset ja öljy. Я вас любил."],
-  ["Markdown left as written", "# Heading\n\n- a list item\n\n**bold** stays literal"],
+  ["Markdown this editor does not render", "- a list item\n\n**bold** stays literal"],
+  ["a heading", "# What protein is"],
+  ["every heading level", "# One\n\n## Two\n\n### Three\n\n#### Four\n\n##### Five\n\n###### Six"],
+  ["a heading above its prose", "## In the body\n\nProtein is built from amino acids."],
+  ["a heading with a citation in it", "## Nine[^cite:01J8ZQ8D4Q6S8W0W2Y4A6C8E0G@44]"],
+  // Seven hashes is not a heading in any reader; nor is a hash with no space after it.
+  ["seven hashes, left as prose", "####### Not a heading"],
+  ["a hash with no space, left as prose", "#NotAHeading"],
+  ["a bare hash, left as prose", "#"],
+  // `# Title` and the prose under it are two blocks in Markdown and one block here. Written
+  // back as a heading it would lose the second line, so it stays text.
+  ["a hash line joined to prose, left as prose", "# Title\nand prose on the next line"],
+  ["a hash inside a heading", "# # not nested"],
+  ["a closed heading, kept exactly", "## Heading ##"],
+  ["an image", "![Amino acid diagram](diagram.png)"],
+  ["an image with no alt text", "![](diagram.png)"],
+  ["an image among prose", "As shown ![here](diagram.png) the bond forms."],
+  ["two images in one paragraph", "![One](a.png) and ![Two](b.png)"],
+  ["an image beside a citation", "![Diagram](d.png)[^cite:01J8ZQ8D4Q6S8W0W2Y4A6C8E0G]"],
+  // An ordinary link is not an image and is not rendered; it has to survive all the same.
+  ["a link, left as prose", "See [the notes](notes.md) for more."],
+  // Neither of these can be written back as `![alt](name)`, so neither is read as one.
+  ["an image name with a space, left as prose", "![Diagram](my diagram.png)"],
+  ["an unclosed image, left as prose", "![Diagram](diagram.png"],
   ["prose that resembles syntax", "An unclosed [[ and a [[not-an-id]] and a bare ] bracket."],
   ["blank line runs", "One.\n\n\n\nTwo."],
   ["trailing whitespace", "Ends with a space. "],
@@ -72,6 +95,119 @@ describe("parsing", () => {
     const inline = doc.content?.[0]?.content ?? [];
     expect(inline).toHaveLength(1);
     expect(inline[0]?.type).toBe("text");
+  });
+});
+
+// Round-tripping proves nothing at all about a heading: `####### Not a heading` survives
+// perfectly either way. These say which blocks were *understood* as headings, which is what
+// decides whether the file on disk still means what the editor is showing.
+describe("what a heading says", () => {
+  function block(text: string) {
+    return parseBody(text).content?.[0];
+  }
+
+  it("reads one hash and a space as a first-level heading", () => {
+    expect(block("# What protein is")).toMatchObject({
+      type: "heading",
+      attrs: { level: 1 },
+    });
+  });
+
+  it("reads every level Markdown has", () => {
+    for (let level = 1; level <= 6; level += 1) {
+      expect(block(`${"#".repeat(level)} Heading`)).toMatchObject({
+        type: "heading",
+        attrs: { level },
+      });
+    }
+  });
+
+  it("keeps the heading's text out of the hashes", () => {
+    const heading = block("### In the body");
+    expect(heading?.content?.[0]).toMatchObject({ type: "text", text: "In the body" });
+  });
+
+  it("refuses a seventh hash rather than clamping it to six", () => {
+    // No Markdown reader renders `#######` as a heading, so neither may this. Reading it as a
+    // sixth-level heading would make the editor show a heading the file does not contain.
+    expect(block("####### Not a heading")?.type).toBe("paragraph");
+  });
+
+  it("requires the space", () => {
+    expect(block("#NotAHeading")?.type).toBe("paragraph");
+    expect(block("#")?.type).toBe("paragraph");
+  });
+
+  it("leaves a hash line joined to prose alone", () => {
+    // Two blocks in Markdown, one block here. Read as a heading it would have to be written
+    // back as one line, and the prose under it would be gone.
+    const joined = block("# Title\nand prose on the next line");
+    expect(joined?.type).toBe("paragraph");
+    expect(joined?.content).toHaveLength(1);
+  });
+
+  it("carries citations inside the heading", () => {
+    const heading = block("## Nine[^cite:01J8ZQ8D4Q6S8W0W2Y4A6C8E0G@44]");
+    expect(heading?.content?.[1]).toMatchObject({
+      type: "citation",
+      attrs: { source: "01J8ZQ8D4Q6S8W0W2Y4A6C8E0G", locator: "44" },
+    });
+  });
+
+  it("writes back a level no Markdown reader would follow as the deepest one it would", () => {
+    // Unreachable through `parseBody` and through the editor's schema, so this is about the
+    // one remaining way in: a document model built by hand or by a future extension. `#######`
+    // is not a heading, and a heading that stops being one is the document changing meaning
+    // behind the user's back.
+    expect(
+      serializeBody({
+        type: "doc",
+        content: [{ type: "heading", attrs: { level: 9 }, content: [{ type: "text", text: "Deep" }] }],
+      }),
+    ).toBe("###### Deep");
+  });
+});
+
+// The same for images: `![Diagram](my diagram.png)` round-trips as text, and would render as
+// nothing. These say which ones became pictures.
+describe("what an image says", () => {
+  function image(text: string) {
+    return (parseBody(text).content?.[0]?.content ?? []).find((n) => n.type === "image");
+  }
+
+  it("reads the alt text and the filename", () => {
+    expect(image("![Amino acid diagram](diagram.png)")?.attrs).toMatchObject({
+      alt: "Amino acid diagram",
+      name: "diagram.png",
+    });
+  });
+
+  it("accepts an empty alt text", () => {
+    expect(image("![](diagram.png)")?.attrs).toMatchObject({ alt: "", name: "diagram.png" });
+  });
+
+  it("reads one in the middle of a sentence", () => {
+    const inline = parseBody("As shown ![here](d.png) the bond forms.").content?.[0]?.content ?? [];
+    expect(inline.map((n) => n.type)).toEqual(["text", "image", "text"]);
+  });
+
+  it("is not an ordinary link", () => {
+    // `[text](url)` and `![alt](name)` differ by one character, and only one of them names a
+    // file in the library.
+    expect(image("See [the notes](notes.md) for more.")).toBeUndefined();
+  });
+
+  it("leaves a name it could not write back as text", () => {
+    // Every name the engine hands out is a slug, so a name with a space in it was typed by
+    // hand. Rendering it would mean writing back a line this file cannot reproduce.
+    expect(image("![Diagram](my diagram.png)")).toBeUndefined();
+    expect(image("![Diagram](diagram.png")).toBeUndefined();
+  });
+
+  it("does not run past the end of a line", () => {
+    // Alt text stops at the newline, so an unclosed `![` cannot swallow the paragraph under
+    // it and turn somebody's writing into a filename.
+    expect(image("![Diagram\nand prose](diagram.png)")).toBeUndefined();
   });
 });
 

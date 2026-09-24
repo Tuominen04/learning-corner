@@ -78,6 +78,22 @@ loses the source altogether. See [Citation model](citation-model.md).
 | `document.move` | id, topic id | document |
 | `document.delete` | id | `plan` / `apply` |
 | `document.backlinks` | id | documents linking here |
+| `document.attachImage` | id, path, `copy`/`move` | the filename to write into the body |
+| `document.image` | id, filename | the picture, or `null` when there is nothing to show |
+
+`document.attachImage` brings the picture **into** the library rather than referencing it,
+exactly as `source.attach` does for a PDF, and with the same `copy`/`move` choice. It answers
+with the filename to write — `![alt](diagram.png)` — which is the engine's, not the picked
+file's: it has been made unique against everything already beside the document, so two
+pictures called `diagram.png` stay two pictures. The layout rules are in
+[storage format](storage-format.md#pictures).
+
+`document.image` takes an identifier and a **name out of that document's own body**, never a
+path, for the same reason `source.open` does: nothing the interface can say reaches a file the
+engine did not resolve, and the interface needs no filesystem permission of its own. `null`
+rather than an error when there is nothing to show — a body is plain text, so it may name a
+picture the user has since deleted, or something that is not a filename at all, and neither
+may fail the document around it.
 
 `document.write` takes the **revision** the interface received from the last read: an opaque
 token the interface stores and passes back, never interprets. If the file changed underneath —

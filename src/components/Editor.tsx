@@ -1,11 +1,12 @@
 import { EditorContent, useEditor } from "@tiptap/react";
 import Document from "@tiptap/extension-document";
+import Heading from "@tiptap/extension-heading";
 import Paragraph from "@tiptap/extension-paragraph";
 import Text from "@tiptap/extension-text";
 import History from "@tiptap/extension-history";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { collectCitations, parseBody, serializeBody } from "../lib/body";
+import { collectCitations, collectImages, parseBody, serializeBody } from "../lib/body";
 import { citationKey, insertCitation, toLocator, type Chosen } from "../lib/citation";
 import {
   engine,
@@ -14,11 +15,23 @@ import {
   type Document as Doc,
   type Form,
 } from "../lib/engine";
+import { insertImage } from "../lib/pictures";
 import { CitationView, RenderedCitations } from "./CitationView";
 import { CitePicker } from "./CitePicker";
+import { DocumentImages } from "./ImageView";
+import { ImagePicker } from "./ImagePicker";
 import { ReferenceList } from "./ReferenceList";
 import { RenameableName } from "./RenameableName";
-import { Citation, DocumentLink } from "./nodes";
+import { Citation, DocumentImage, DocumentLink } from "./nodes";
+
+/** The levels the toolbar offers. Deeper ones are still read, and still written back. */
+const LEVELS = [1, 2, 3] as const;
+
+/** Pictures, and the document they were fetched for. */
+type Pictures = { document: string; urls: Map<string, string | null> };
+
+/** One empty map, so "nothing fetched" is the same value every time. */
+const NONE: Map<string, string | null> = new Map();
 
 // Saving is continuous: there is no save button and no unsaved state to lose. A short debounce
 // keeps the write off every keystroke without ever leaving work only in memory.
@@ -36,9 +49,19 @@ export function Editor({
   const [state, setState] = useState<"clean" | "saving" | "conflict" | "error">("clean");
   const [message, setMessage] = useState<string | null>(null);
   const [citing, setCiting] = useState(false);
+  const [picturing, setPicturing] = useState(false);
 
   // What each citation in this document reads as. Empty until the engine answers.
   const [rendered, setRendered] = useState<Map<string, string | null>>(new Map());
+
+  // The pictures the document names, as `data:` URLs. Same three states as the citations
+  // above: absent means not fetched yet, `null` means there is nothing to show.
+  //
+  // Carried with the document they belong to, because a filename means different things in
+  // different folders. Two documents may each have a `diagram.png`, and a map left over from
+  // the last one would draw the wrong picture in the moment before the right one arrives.
+  const [pictures, setPictures] = useState<Pictures>({ document: document.id, urls: NONE });
+  const shown = pictures.document === document.id ? pictures.urls : NONE;
 
   // The reference list, as the engine builds it from the file on disk.
   const [references, setReferences] = useState<string[]>([]);
@@ -62,6 +85,14 @@ export function Editor({
   useEffect(() => {
     revision.current = document.revision;
   }, [document.revision]);
+
+  // Which document is open, for answers that come back after the user has moved on. A picture
+  // fetched for the document they just left must not replace the pictures of the one they are
+  // looking at now.
+  const openDocument = useRef(document.id);
+  useEffect(() => {
+    openDocument.current = document.id;
+  }, [document.id]);
 
   // Which citations we have already asked about, as one sorted string.
   //
@@ -115,7 +146,16 @@ export function Editor({
 
   const editor = useEditor(
     {
-      extensions: [Document, Paragraph, Text, History, Citation, DocumentLink],
+      extensions: [
+        Document,
+        Paragraph,
+        Text,
+        History,
+        Heading.configure({ levels: [1, 2, 3, 4, 5, 6] }),
+        Citation,
+        DocumentLink,
+        DocumentImage,
+      ],
       content: parseBody(document.body),
       onUpdate: ({ editor }) => {
         if (timer.current) clearTimeout(timer.current);
@@ -137,6 +177,40 @@ export function Editor({
   useEffect(() => {
     refreshCitations(parseBody(document.body));
   }, [document.body, refreshCitations]);
+
+  /**
+   * The pictures this document names, fetched once when it opens.
+   *
+   * Not on every keystroke, unlike the citations, because typing cannot introduce a picture:
+   * the editor has no way to make one except the picker, which fetches the one it just added.
+   * `![x](y.png)` typed by hand is text until the file is saved and opened again, and the
+   * reopening is what runs this.
+   *
+   * Each is fetched by the name the body carries, against **this** document, so a document
+   * that moves takes its pictures with it and nothing here needs to know it happened.
+   */
+  useEffect(() => {
+    const names = collectImages(parseBody(document.body));
+    if (names.length === 0) return;
+
+    let live = true;
+    const id = document.id;
+    void Promise.all(
+      names.map((name) =>
+        engine.document
+          .image(id, name)
+          // One picture that cannot be read must not blank the others. The view says plainly
+          // enough that there is nothing to show.
+          .catch(() => null)
+          .then((url) => [name, url] as const),
+      ),
+    ).then((pairs) => {
+      if (live) setPictures({ document: id, urls: new Map(pairs) });
+    });
+    return () => {
+      live = false;
+    };
+  }, [document.body, document.id]);
 
   // Which sources the document on disk cites, as one sorted string.
   //
@@ -207,6 +281,30 @@ export function Editor({
     if (editor) insertCitation(editor, chosen);
   }
 
+  /**
+   * A picture the engine has just filed, put where the cursor is.
+   *
+   * Fetched straight afterwards rather than waited for: the save that carries the new line to
+   * disk is six hundred milliseconds away, and leaving a placeholder on screen until then
+   * makes adding a picture feel like it did not work.
+   */
+  function inserted(name: string, alt: string) {
+    setPicturing(false);
+    if (editor) insertImage(editor, name, alt);
+
+    const id = document.id;
+    void engine.document
+      .image(id, name)
+      .catch(() => null)
+      .then((url) => {
+        if (openDocument.current !== id) return;
+        setPictures((had) => ({
+          document: id,
+          urls: new Map(had.document === id ? had.urls : []).set(name, url),
+        }));
+      });
+  }
+
   return (
     <section className="editor">
       <header>
@@ -225,20 +323,52 @@ export function Editor({
         </button>
       </header>
 
+      <div className="toolbar" role="toolbar" aria-label="Formatting">
+        {LEVELS.map((level) => (
+          <button
+            key={level}
+            className={editor?.isActive("heading", { level }) ? "tool on" : "tool"}
+            aria-pressed={editor?.isActive("heading", { level }) ?? false}
+            title={level === 1 ? "Heading" : `Heading, level ${level}`}
+            onClick={() => editor?.chain().focus().toggleHeading({ level }).run()}
+          >
+            H{level}
+          </button>
+        ))}
+        <button
+          className="tool"
+          title="Add a picture"
+          onClick={() => setPicturing(true)}
+          disabled={picturing}
+        >
+          Picture
+        </button>
+      </div>
+
       {message && <p className={state === "conflict" ? "warning" : "error"}>{message}</p>}
 
       {citing && <CitePicker onChoose={insert} onCancel={() => setCiting(false)} />}
 
+      {picturing && (
+        <ImagePicker
+          document={document.id}
+          onInserted={inserted}
+          onCancel={() => setPicturing(false)}
+        />
+      )}
+
       <RenderedCitations.Provider value={rendered}>
-        <EditorContent editor={editor} className="prose" />
+        <DocumentImages.Provider value={shown}>
+          <EditorContent editor={editor} className="prose" />
+        </DocumentImages.Provider>
       </RenderedCitations.Provider>
 
       <ReferenceList entries={cited === "" ? [] : references} />
 
       <footer className="note">
-        Plain text with citations and links. Headings, lists and emphasis arrive with the
-        Markdown work in the next milestone — until then nothing is rendered that could not be
-        written back to your file exactly as you typed it.
+        Markdown with citations, links and pictures. Type <code># </code> for a heading, up to
+        six deep. Lists and emphasis are still written plainly — nothing is rendered here that
+        could not be written back to your file exactly as you typed it.
       </footer>
     </section>
   );

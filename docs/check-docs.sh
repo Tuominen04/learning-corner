@@ -27,8 +27,15 @@ echo "Checking relative links…"
 links=$(mktemp)
 for f in $docs README.md; do
   dir=$(dirname "$f")
+  # Code first, then links. These pages document a file format whose own syntax is
+  # `![alt](diagram.png)`, so an example of it is not a link to check — it is a picture that
+  # exists in somebody's library and deliberately not in this repository. Fenced blocks and
+  # `inline spans` are dropped before anything is extracted.
+  #
   # pull ](target) out of Markdown links, drop external ones and #anchors
-  grep -o '](\([^)]*\))' "$f" 2>/dev/null | sed 's/^](//; s/)$//' \
+  awk '/^```/ { fenced = !fenced; next } !fenced' "$f" 2>/dev/null \
+  | sed 's/`[^`]*`//g' \
+  | grep -o '](\([^)]*\))' | sed 's/^](//; s/)$//' \
   | while read -r target; do
       case "$target" in http*|mailto:*|'#'*|'') continue ;; esac
       target=${target%%#*}

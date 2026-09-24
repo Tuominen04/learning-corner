@@ -6,6 +6,7 @@
 
 use std::sync::Mutex;
 
+use base64::Engine as _;
 use plc_engine::api::Engine;
 use plc_engine::store::Revision;
 use plc_engine::{Error, Id};
@@ -152,6 +153,92 @@ pub fn document_rename(
 #[tauri::command]
 pub fn document_delete(state: State<'_, OpenLibrary>, document: String) -> Answer<()> {
     with(&state, |e| e.document_delete(id(&document)?))
+}
+
+/// Keep a picture with a document, and answer with the name to write into the body.
+///
+/// The interface hands over a path it got from the file dialog and gets back a bare filename
+/// — `diagram.png` — which it writes as `![alt](diagram.png)`. Beside the document rather than
+/// in a folder of its own, so the `.md` shows its pictures in any Markdown reader.
+///
+/// `keep` decides what becomes of the file the user picked, exactly as it does for a source's
+/// paper. The library's own copy is written first either way.
+#[tauri::command]
+pub fn document_attach_image(
+    state: State<'_, OpenLibrary>,
+    document: String,
+    path: String,
+    keep: Keep,
+) -> Answer<String> {
+    with(&state, |e| {
+        e.document_attach_image(id(&document)?, std::path::Path::new(&path), keep.into())
+    })
+}
+
+/// A picture the body names, as a `data:` URL the interface can put straight into an `img`.
+///
+/// The interface names a **document** and the **name its own body carries**, never a path —
+/// the same arrangement `source_open` has, and the reason the window needs no filesystem
+/// permission of its own. Nothing here can reach a file the engine did not resolve.
+///
+/// `None` means there is nothing to show, which is not an error. A body is plain text: it may
+/// name a picture somebody has since deleted, or something that is not a filename at all, and
+/// neither may fail the document around it. An extension the library never stores answers the
+/// same way — the file is there, and this cannot honestly say what it is.
+///
+/// A `data:` URL rather than a path or a served file because it keeps the whole arrangement
+/// above true, and because it costs nothing to get right: there is no object to release and
+/// no lifetime to track on the other side.
+#[tauri::command]
+pub fn document_image(
+    state: State<'_, OpenLibrary>,
+    document: String,
+    name: String,
+) -> Answer<Option<String>> {
+    with(&state, |e| {
+        match e.document_image(id(&document)?, &name)? {
+            Some(path) => data_url(&path),
+            None => Ok(None),
+        }
+    })
+}
+
+/// A file on disk as a `data:` URL, or `None` if there is no honest way to say what it is.
+///
+/// Separated from the command because a command cannot be tested without a window, and this
+/// is the half worth testing: the wrong media type means a picture the window refuses to
+/// draw, with nothing on screen to say why.
+fn data_url(path: &std::path::Path) -> Result<Option<String>, Error> {
+    let Some(mime) = mime_for(path) else {
+        return Ok(None);
+    };
+    let bytes = std::fs::read(path)
+        .map_err(|why| Error::library(format!("cannot read {}: {why}", path.display())))?;
+    Ok(Some(format!(
+        "data:{mime};base64,{}",
+        base64::engine::general_purpose::STANDARD.encode(bytes)
+    )))
+}
+
+/// What a picture is, from the name the library gave it.
+///
+/// Only the kinds the engine accepts when a picture is attached, because those are the only
+/// ones it ever writes. Anything else beside a document was put there by hand under a name
+/// the body happens to mention, and guessing at it would mean handing the window a `data:`
+/// URL that says one thing and contains another.
+fn mime_for(path: &std::path::Path) -> Option<&'static str> {
+    match path
+        .extension()
+        .and_then(|e| e.to_str())?
+        .to_ascii_lowercase()
+        .as_str()
+    {
+        "png" => Some("image/png"),
+        "jpg" | "jpeg" => Some("image/jpeg"),
+        "gif" => Some("image/gif"),
+        "webp" => Some("image/webp"),
+        _ => None,
+    }
 }
 
 #[tauri::command]
@@ -353,4 +440,75 @@ pub fn citation_reference_list(
     document: String,
 ) -> Answer<Vec<String>> {
     with(&state, |e| e.citation_reference_list(id(&document)?))
+}
+
+/// The picture half of the wire, where it can be reached without a window.
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn png(dir: &std::path::Path, name: &str) -> std::path::PathBuf {
+        let path = dir.join(name);
+        std::fs::write(&path, b"\x89PNG\r\n\x1a\nbody").unwrap();
+        path
+    }
+
+    #[test]
+    fn a_picture_crosses_as_a_data_url_the_window_can_draw() {
+        let dir = tempfile::tempdir().unwrap();
+        let url = data_url(&png(dir.path(), "diagram.png")).unwrap().unwrap();
+
+        assert!(
+            url.starts_with("data:image/png;base64,"),
+            "a window will not draw this: {url}"
+        );
+        // Round-tripped rather than compared to a literal: what matters is that the bytes on
+        // the other side are the bytes on disk, not that this crate spells base64 a
+        // particular way.
+        let encoded = url.strip_prefix("data:image/png;base64,").unwrap();
+        let decoded = base64::engine::general_purpose::STANDARD
+            .decode(encoded)
+            .unwrap();
+        assert_eq!(
+            decoded,
+            std::fs::read(dir.path().join("diagram.png")).unwrap()
+        );
+    }
+
+    #[test]
+    fn every_kind_the_library_stores_is_named_correctly() {
+        // These four are what the engine accepts when a picture is attached, so these four
+        // are what can be beside a document. A media type that says one thing while the bytes
+        // say another is a picture that silently fails to draw.
+        for (name, expected) in [
+            ("diagram.png", "image/png"),
+            ("photo.jpg", "image/jpeg"),
+            ("photo.jpeg", "image/jpeg"),
+            ("animation.gif", "image/gif"),
+            ("shot.webp", "image/webp"),
+            // The extension is the library's own, and the library lowercases it — but a file
+            // put beside a document by hand keeps whatever case it came with.
+            ("SHOUTED.PNG", "image/png"),
+        ] {
+            assert_eq!(
+                mime_for(std::path::Path::new(name)),
+                Some(expected),
+                "{name} was not recognised as {expected}"
+            );
+        }
+    }
+
+    #[test]
+    fn anything_else_beside_a_document_is_not_offered_as_a_picture() {
+        // The library never writes these, so one beside a document was put there by hand
+        // under a name the body happens to mention. Guessing would mean handing the window a
+        // `data:` URL that says one thing and contains another.
+        let dir = tempfile::tempdir().unwrap();
+        let notes = dir.path().join("notes.md");
+        std::fs::write(&notes, "not a picture").unwrap();
+
+        assert_eq!(mime_for(&notes), None);
+        assert_eq!(data_url(&notes).unwrap(), None);
+        assert_eq!(mime_for(std::path::Path::new("no-extension")), None);
+    }
 }

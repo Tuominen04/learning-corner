@@ -19,6 +19,7 @@
     "@tauri-apps/plugin-dialog": "^2",
     "@tiptap/core": "^3",
     "@tiptap/extension-document": "^3",
+    "@tiptap/extension-heading": "^3",
     "@tiptap/extension-history": "^3",
     "@tiptap/extension-paragraph": "^3",
     "@tiptap/extension-text": "^3",

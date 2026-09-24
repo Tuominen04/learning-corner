@@ -238,6 +238,68 @@ button.hit:hover { background: #23262f; }
 }
 .prose p { margin: 0 0 1rem; }
 
+/* Headings in the page rather than headings in an interface: the first one is barely larger
+   than the prose, and each level steps down a little. A document is a few hundred words, so
+   an h1 sized for a web page would be a banner across somebody's paragraph. */
+.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+  margin: 1.6rem 0 0.6rem;
+  line-height: 1.25;
+  font-weight: 600;
+}
+.prose :is(h1, h2, h3, h4, h5, h6):first-child { margin-top: 0; }
+.prose h1 { font-size: 1.5em; }
+.prose h2 { font-size: 1.28em; }
+.prose h3 { font-size: 1.12em; }
+.prose h4 { font-size: 1em; }
+/* The deepest two stop growing and start marking instead — there is no size left to give
+   them, and "smaller than the prose" would read as a footnote rather than as a heading. */
+.prose h5, .prose h6 { font-size: 0.95em; letter-spacing: 0.04em; color: var(--ink-soft); }
+.prose h6 { text-transform: uppercase; font-size: 0.85em; }
+
+/* ---- pictures ---- */
+
+/* Inline, because `![alt](name)` is an inline construct and may sit mid-sentence. A picture
+   on its own line is a paragraph with one thing in it, and this is what makes that read as a
+   picture on its own line rather than as a very tall word. */
+.prose .picture { display: inline-block; vertical-align: top; max-width: 100%; }
+.prose .picture img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+}
+/* The selected picture, since an atom node has no cursor inside it to show. */
+.prose .picture.ProseMirror-selectednode img { outline: 2px solid var(--accent); }
+
+/* Two states that are not the picture: still being fetched, and nothing to fetch. The second
+   is worth noticing — the file has been deleted, or the name never led anywhere — so it says
+   which name it could not find. */
+.picture-pending, .picture-missing {
+  font-size: 0.82em;
+  padding: 0.05rem 0.3rem;
+  border-radius: 3px;
+}
+.picture-pending { background: #e6e2d8; color: #6b6559; }
+.picture-missing {
+  background: #f0d4d4;
+  color: #8a3030;
+  text-decoration: underline wavy currentColor;
+}
+
+/* ---- the formatting toolbar ---- */
+
+.toolbar {
+  display: flex;
+  gap: 0.3rem;
+  margin: 0.2rem 0 0.6rem;
+}
+button.tool { padding: 0.25rem 0.6rem; font-size: 0.85em; }
+/* The heading you are standing in, so the buttons say what the cursor is in as well as what
+   it could become. Dark on the accent rather than light: this is the one button that is
+   filled, and pale text on that amber is the least readable pairing in the palette. */
+button.tool.on { background: var(--accent); color: var(--ground); border-color: var(--accent); }
+
 /* ---- a source's paper ---- */
 
 .paper { margin: 1.2rem 0 0.4rem; }

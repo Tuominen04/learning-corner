@@ -4,16 +4,22 @@
 // without being touched must produce byte-identical text, because the user is promised their
 // files stay readable and hand-editable and because anything else is quiet data loss.
 //
-// That requirement is why the editor's schema is deliberately narrow in M0: paragraphs, text,
-// and the two inline constructs the storage format defines. No headings, no bold, no lists —
-// not because they are unwanted, but because serialising them back to Markdown faithfully is
-// M1 work, and shipping a Ctrl+B that silently drops formatting on save would be worse than
-// not having one.
+// That requirement is what decides which Markdown the editor understands. A construct belongs
+// here only when it has exactly one spelling that can be written back character for character:
+// paragraphs, ATX headings, images, and the two inline constructs the storage format defines.
+// Emphasis and lists are still absent — `*a*` and `_a_` mean the same thing, and a list has
+// four spellings of its bullet, so reading one and writing another would quietly rewrite the
+// user's file the first time they opened it.
+//
+// Everything else stays literal text. Text this file does not recognise still round-trips
+// perfectly; it simply does not render.
 
 import type { JSONContent } from "@tiptap/core";
 
 export const CITATION = "citation";
 export const DOCUMENT_LINK = "documentLink";
+export const HEADING = "heading";
+export const IMAGE = "image";
 
 /**
  * `[^cite:<id>]`, optionally `@<locator>`, optionally `!narrative`.
@@ -33,16 +39,49 @@ const CITATION_PATTERN =
 /** `[[<id>]]` */
 const LINK_PATTERN = /\[\[([0-9A-HJKMNP-TV-Z]{26})\]\]/g;
 
+/**
+ * `![<alt>](<name>)`, where the name is a file beside the document.
+ *
+ * Narrower than the engine's own scan, deliberately. The engine accepts anything up to the
+ * closing bracket so that a hand-typed reference still moves with its document; this side has
+ * to *write the line back*, so it recognises only what it can reproduce exactly. Everything
+ * it matches, the engine matches too — the guarantee that runs the wrong way is the dangerous
+ * one, because it would mean a picture this editor draws and the engine leaves behind.
+ *
+ * No whitespace in the name, which is also true of every name the engine hands out: they are
+ * slugs. A path is not refused here so much as never produced — but one typed by hand stays
+ * literal text, and the engine refuses to follow it out of the folder.
+ */
+const IMAGE_PATTERN = /!\[([^\]\n]*)\]\(([^)\s]+)\)/g;
+
+/**
+ * `# ` to `###### `, and nothing else.
+ *
+ * ATX only, one space, one line. Setext underlining is a second spelling of the same thing;
+ * `#Heading` is not a heading at all in any Markdown reader, so treating it as one here would
+ * mean the file said something the file does not say. Both stay paragraphs, and both survive.
+ *
+ * The block may not contain a newline: `# Title\nand prose` is a heading *and* a paragraph in
+ * Markdown, and this file has no way to write two blocks back from one. Left whole, it stays
+ * text — visible, and intact.
+ */
+const HEADING_PATTERN = /^(#{1,6}) (.*)$/;
+
 /** Text on disk to the editor's document model. */
 export function parseBody(text: string): JSONContent {
-  const paragraphs = text.split("\n\n");
-  return {
-    type: "doc",
-    content: paragraphs.map((paragraph) => ({
-      type: "paragraph",
-      content: parseInline(paragraph),
-    })),
-  };
+  return { type: "doc", content: text.split("\n\n").map(parseBlock) };
+}
+
+function parseBlock(block: string): JSONContent {
+  const heading = HEADING_PATTERN.exec(block);
+  if (heading) {
+    return {
+      type: HEADING,
+      attrs: { level: (heading[1] ?? "#").length },
+      content: parseInline(heading[2] ?? ""),
+    };
+  }
+  return { type: "paragraph", content: parseInline(block) };
 }
 
 function parseInline(paragraph: string): JSONContent[] {
@@ -73,6 +112,13 @@ function parseInline(paragraph: string): JSONContent[] {
       node: { type: DOCUMENT_LINK, attrs: { document: m[1] ?? "" } },
     });
   }
+  for (const m of paragraph.matchAll(IMAGE_PATTERN)) {
+    matches.push({
+      start: m.index,
+      end: m.index + m[0].length,
+      node: { type: IMAGE, attrs: { alt: m[1] ?? "", name: m[2] ?? "" } },
+    });
+  }
   matches.sort((a, b) => a.start - b.start);
 
   const out: JSONContent[] = [];
@@ -93,11 +139,17 @@ function parseInline(paragraph: string): JSONContent[] {
 
 /** The editor's document model back to text on disk. */
 export function serializeBody(doc: JSONContent): string {
-  return (doc.content ?? []).map(serializeParagraph).join("\n\n");
+  return (doc.content ?? []).map(serializeBlock).join("\n\n");
 }
 
-function serializeParagraph(paragraph: JSONContent): string {
-  return (paragraph.content ?? []).map(serializeInline).join("");
+function serializeBlock(block: JSONContent): string {
+  const text = (block.content ?? []).map(serializeInline).join("");
+  if (block.type !== HEADING) return text;
+  // Clamped rather than trusted. A level outside 1-6 cannot come from `parseBody` or from the
+  // editor's own schema, and writing `####### ` would be a line no reader treats as a heading
+  // — so the document would silently stop saying what it said.
+  const level = Math.min(Math.max(Number(block.attrs?.["level"] ?? 1) || 1, 1), 6);
+  return `${"#".repeat(level)} ${text}`;
 }
 
 function serializeInline(node: JSONContent): string {
@@ -114,6 +166,8 @@ function serializeInline(node: JSONContent): string {
     }
     case DOCUMENT_LINK:
       return `[[${String(node.attrs?.["document"] ?? "")}]]`;
+    case IMAGE:
+      return `![${String(node.attrs?.["alt"] ?? "")}](${String(node.attrs?.["name"] ?? "")})`;
     default:
       return "";
   }
@@ -143,6 +197,22 @@ export function collectCitations(doc: JSONContent): FoundCitation[] {
     });
   });
   return found;
+}
+
+/**
+ * Every picture the document names, in order, each name once.
+ *
+ * Deduplicated, unlike citations: a citation's repeats each have to be drawn separately
+ * because they can read differently, whereas the same file shown twice is one file to fetch.
+ */
+export function collectImages(doc: JSONContent): string[] {
+  const found = new Set<string>();
+  walk(doc, (node) => {
+    if (node.type !== IMAGE) return;
+    const name = String(node.attrs?.["name"] ?? "");
+    if (name !== "") found.add(name);
+  });
+  return [...found];
 }
 
 function walk(node: JSONContent, visit: (node: JSONContent) => void) {
