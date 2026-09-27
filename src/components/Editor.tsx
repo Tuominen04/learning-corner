@@ -13,13 +13,19 @@ import {
   EngineFailure,
   type CitationRequest,
   type Document as Doc,
+  type DocumentRef,
   type Form,
+  type Topic,
 } from "../lib/engine";
+import { insertLink, titlesOf } from "../lib/links";
 import { insertImage } from "../lib/pictures";
+import { Backlinks } from "./Backlinks";
 import { CitationView, RenderedCitations } from "./CitationView";
 import { CitePicker } from "./CitePicker";
+import { DocumentLinks, type LinkTargets } from "./DocumentLinkView";
 import { DocumentImages } from "./ImageView";
 import { ImagePicker } from "./ImagePicker";
+import { LinkPicker } from "./LinkPicker";
 import { ReferenceList } from "./ReferenceList";
 import { RenameableName } from "./RenameableName";
 import { Citation, DocumentImage, DocumentLink } from "./nodes";
@@ -39,17 +45,26 @@ const SAVE_AFTER_IDLE_MS = 600;
 
 export function Editor({
   document,
+  topics,
   onSaved,
   onRename,
+  onOpenDocument,
 }: {
   document: Doc;
+  /** The whole library, for drawing links as titles and for choosing what to link to. */
+  topics: Topic[];
   onSaved: (d: Doc) => void;
   onRename: (id: string, title: string) => void;
+  onOpenDocument: (id: string) => void;
 }) {
   const [state, setState] = useState<"clean" | "saving" | "conflict" | "error">("clean");
   const [message, setMessage] = useState<string | null>(null);
   const [citing, setCiting] = useState(false);
   const [picturing, setPicturing] = useState(false);
+  const [linking, setLinking] = useState(false);
+
+  // The documents linking here. Asked for once, when a document opens.
+  const [backlinks, setBacklinks] = useState<DocumentRef[]>([]);
 
   // What each citation in this document reads as. Empty until the engine answers.
   const [rendered, setRendered] = useState<Map<string, string | null>>(new Map());
@@ -212,6 +227,41 @@ export function Editor({
     };
   }, [document.body, document.id]);
 
+  /**
+   * The documents linking here, asked for when this one opens.
+   *
+   * Not on every save, because saving *this* document cannot change who links *to* it —
+   * that only changes when somebody else's document does, which means leaving this screen.
+   * Navigating away and back is the invalidation, as it is everywhere else here.
+   */
+  useEffect(() => {
+    let live = true;
+    engine.document
+      .backlinks(document.id)
+      .then((found) => {
+        if (live) setBacklinks(found ?? []);
+      })
+      .catch(() => {
+        // Keep showing what we have. A failed lookup is no reason to tell somebody
+        // mid-sentence that nothing links to their document any more.
+      });
+    return () => {
+      live = false;
+    };
+  }, [document.id]);
+
+  /**
+   * What a link in the text reads as, and what following one does.
+   *
+   * Titles come from the tree the application already holds rather than from an engine call:
+   * every document in the library is in it, so drawing a link costs nothing and cannot
+   * disagree with the sidebar beside it.
+   */
+  const links = useMemo<LinkTargets>(
+    () => ({ titles: titlesOf(topics), open: onOpenDocument }),
+    [topics, onOpenDocument],
+  );
+
   // Which sources the document on disk cites, as one sorted string.
   //
   // Derived from `document.body` rather than from what is being typed, and that is the point:
@@ -305,6 +355,11 @@ export function Editor({
       });
   }
 
+  function linked(id: string) {
+    setLinking(false);
+    if (editor) insertLink(editor, id);
+  }
+
   return (
     <section className="editor">
       <header>
@@ -343,6 +398,14 @@ export function Editor({
         >
           Picture
         </button>
+        <button
+          className="tool"
+          title="Link to another document"
+          onClick={() => setLinking(true)}
+          disabled={linking}
+        >
+          Link
+        </button>
       </div>
 
       {message && <p className={state === "conflict" ? "warning" : "error"}>{message}</p>}
@@ -357,13 +420,26 @@ export function Editor({
         />
       )}
 
+      {linking && (
+        <LinkPicker
+          topics={topics}
+          exclude={document.id}
+          onChoose={linked}
+          onCancel={() => setLinking(false)}
+        />
+      )}
+
       <RenderedCitations.Provider value={rendered}>
         <DocumentImages.Provider value={shown}>
-          <EditorContent editor={editor} className="prose" />
+          <DocumentLinks.Provider value={links}>
+            <EditorContent editor={editor} className="prose" />
+          </DocumentLinks.Provider>
         </DocumentImages.Provider>
       </RenderedCitations.Provider>
 
       <ReferenceList entries={cited === "" ? [] : references} />
+
+      <Backlinks entries={backlinks} onOpen={onOpenDocument} />
 
       <footer className="note">
         Markdown with citations, links and pictures. Type <code># </code> for a heading, up to

@@ -77,10 +77,17 @@ document to another topic and its pictures move with it.
 selection moves into a new document in the same topic, its citations come with it, and a
 link is left where it used to be.
 
-**Linking.** Type `[[` and start typing a document's name to link to it. Links are
-two-directional: at the foot of every document, **Linked from** lists every document that
-points here. That list is how you notice that two topics you thought were separate have been
-talking to each other for a while.
+**Linking.** Click **Link** above the page and choose a document. The link appears in your
+writing as that document's title, and clicking it takes you there.
+
+The link is stored as the document's identifier, not its name — so rename either document
+afterwards and the link still reads correctly, with nothing to go and fix. If you delete the
+document a link points at, the link says so plainly rather than disappearing: your sentence is
+still your sentence, and you can see what needs changing.
+
+Links are two-directional. At the foot of every document, **Linked from** lists every document
+that points here — you do nothing to make that happen. That list is how you notice that two
+topics you thought were separate have been talking to each other for a while.
 
 **Renaming.** Double-click the title — in the sidebar or above the page you are writing —
 or click the pencil that appears when you hover it. Enter keeps the new name, Escape throws it

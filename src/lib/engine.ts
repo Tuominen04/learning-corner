@@ -142,6 +142,15 @@ export const engine = {
      */
     image: (document: string, name: string) =>
       call<string | null>("document_image", { document, name }),
+    /**
+     * The documents linking here.
+     *
+     * Derived from the `[[…]]` in other documents rather than stored anywhere, so it cannot
+     * go out of step with the writing: a link deleted in a text editor stops being a
+     * backlink the next time the library is read.
+     */
+    backlinks: (document: string) =>
+      call<DocumentRef[]>("document_backlinks", { document }),
   },
   source: {
     create: (source: Source) => call<SavedSource>("source_create", { source }),
