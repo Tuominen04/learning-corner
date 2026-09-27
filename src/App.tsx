@@ -29,6 +29,27 @@ export function App() {
   // tree is back, unchanged.
   const [query, setQuery] = useState("");
 
+  /**
+   * Open a document, from wherever somebody asked.
+   *
+   * Four things now do this — the tree, a search result, a source's list of citing documents,
+   * and a link inside a document — and they all mean exactly the same thing. One definition,
+   * and a stable one: the editor memoises against it, so a new function every render would
+   * rebuild the library's titles on every keystroke.
+   */
+  const openDocument = useCallback((id: string) => {
+    setError(null);
+    engine.document
+      .read(id)
+      .then((doc) => {
+        setOpen(doc);
+        setView("documents");
+      })
+      .catch((thrown: unknown) => {
+        setError(thrown instanceof EngineFailure ? thrown.message : String(thrown));
+      });
+  }, []);
+
   const refresh = useCallback(async () => {
     try {
       const [tree, status] = await Promise.all([
@@ -144,25 +165,12 @@ export function App() {
         </div>
 
         {query.trim() !== "" ? (
-          <Search
-            query={query}
-            onOpenDocument={(id) =>
-              void guard(async () => {
-                setOpen(await engine.document.read(id));
-                setView("documents");
-              })
-            }
-          />
+          <Search query={query} onOpenDocument={openDocument} />
         ) : (
         <TopicTree
           topics={topics}
           selected={view === "documents" ? (open?.id ?? null) : null}
-          onSelectDocument={(id) =>
-            void guard(async () => {
-              setOpen(await engine.document.read(id));
-              setView("documents");
-            })
-          }
+          onSelectDocument={openDocument}
           onAddDocument={(topicId) =>
             void guard(async () => {
               const id = await engine.document.create(topicId, "Untitled");
@@ -205,23 +213,18 @@ export function App() {
       <main>
         {error && <p className="error">{error}</p>}
         {view === "sources" ? (
-          <Sources
-            onOpenDocument={(id) =>
-              void guard(async () => {
-                setOpen(await engine.document.read(id));
-                setView("documents");
-              })
-            }
-          />
+          <Sources onOpenDocument={openDocument} />
         ) : open ? (
           <Editor
             key={open.id}
             document={open}
+            topics={topics}
             onSaved={(saved) => {
               setOpen(saved);
               void refresh();
             }}
             onRename={renameDocument}
+            onOpenDocument={openDocument}
           />
         ) : (
           <p className="empty">

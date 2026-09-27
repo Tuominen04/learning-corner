@@ -77,7 +77,7 @@ loses the source altogether. See [Citation model](citation-model.md).
 | `document.rename` | id, title | document |
 | `document.move` | id, topic id | document |
 | `document.delete` | id | `plan` / `apply` |
-| `document.backlinks` | id | documents linking here |
+| `document.backlinks` | id | documents linking here, derived from `[[…]]` and never stored |
 | `document.attachImage` | id, path, `copy`/`move` | the filename to write into the body |
 | `document.image` | id, filename | the picture, or `null` when there is nothing to show |
 

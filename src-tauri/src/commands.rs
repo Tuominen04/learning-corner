@@ -241,6 +241,24 @@ fn mime_for(path: &std::path::Path) -> Option<&'static str> {
     }
 }
 
+/// The documents linking here.
+///
+/// Derived from `[[…]]` in other documents' text, never stored — no file records what points
+/// at it. That is what makes the relation impossible to get out of step with the writing: a
+/// link deleted in a text editor stops being a backlink the next time the library is read.
+#[tauri::command]
+pub fn document_backlinks(
+    state: State<'_, OpenLibrary>,
+    document: String,
+) -> Answer<Vec<DocumentRef>> {
+    with(&state, |e| {
+        Ok(e.backlinks(id(&document)?)?
+            .into_iter()
+            .map(DocumentRef::from)
+            .collect())
+    })
+}
+
 #[tauri::command]
 pub fn search(state: State<'_, OpenLibrary>, query: String) -> Answer<Vec<SearchHit>> {
     with(&state, |e| {

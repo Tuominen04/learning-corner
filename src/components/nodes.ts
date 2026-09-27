@@ -14,6 +14,7 @@ import { ReactNodeViewRenderer } from "@tiptap/react";
 
 import { CITATION, DOCUMENT_LINK, IMAGE } from "../lib/body";
 import { CitationView } from "./CitationView";
+import { DocumentLinkView } from "./DocumentLinkView";
 import { ImageView } from "./ImageView";
 
 export const Citation = Node.create({
@@ -76,6 +77,9 @@ export const DocumentLink = Node.create({
     return [{ tag: "span[data-document-link]" }];
   },
 
+  // The plain form, for when the editor renders to HTML without a React tree. It carries the
+  // identifier rather than the title, because the title belongs to another document and this
+  // cannot go and look it up.
   renderHTML({ node }) {
     return [
       "span",
@@ -86,6 +90,12 @@ export const DocumentLink = Node.create({
       },
       "[link]",
     ];
+  },
+
+  // Where the title comes from. It has to be a node view because what a link reads as is a
+  // fact about a different document — one that can be renamed without this file changing.
+  addNodeView() {
+    return ReactNodeViewRenderer(DocumentLinkView);
   },
 });
 
