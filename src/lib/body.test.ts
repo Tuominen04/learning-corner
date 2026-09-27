@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { offsetOf, parseBody, serializeBody } from "./body";
+import { offsetOf, parseBody, serializeBody, wholeConstructs } from "./body";
 
 // Every case here is a document that must survive being opened and saved untouched. A failure
 // in this file is silent data loss in the user's own files, which is the worst thing this
@@ -356,5 +356,70 @@ describe("editor positions to file offsets", () => {
 
   it("is zero for an empty document", () => {
     expect(offsetOf(parseBody(""), 1)).toBe(0);
+  });
+});
+
+
+// Splitting must never leave half a construct behind.
+//
+// The dangerous ones are the constructs the editor does **not** render: `@page:44` is refused
+// as a locator, a link to a deleted document is left as text, and anything hand-typed is text
+// by definition. Unrendered means ordinary text in the editor, so a person can put a selection
+// boundary in the middle of one — and a real library came back with `3R4QFEM]` sitting in it.
+describe("keeping constructs whole", () => {
+  const ID = "01J8ZQ8D4Q6S8W0W2Y4A6C8E0G";
+
+  it("leaves a range alone when it breaks nothing", () => {
+    const text = `Nine acids.[^cite:${ID}] And more.`;
+    expect(wholeConstructs(text, 0, 11)).toEqual({ start: 0, end: 11, widened: false });
+  });
+
+  it("pushes an end out past a citation it would have cut", () => {
+    const text = `Nine acids.[^cite:${ID}] And more.`;
+    const cut = text.indexOf("[^cite:") + 20;
+    const whole = wholeConstructs(text, 0, cut);
+    expect(whole.widened).toBe(true);
+    expect(text.slice(whole.start, whole.end)).toBe(`Nine acids.[^cite:${ID}]`);
+  });
+
+  it("pushes a start back to the beginning of one", () => {
+    const text = `Nine acids.[^cite:${ID}] And more.`;
+    const cut = text.indexOf("[^cite:") + 20;
+    const whole = wholeConstructs(text, cut, text.length);
+    expect(whole.widened).toBe(true);
+    expect(text.slice(whole.start, whole.end)).toBe(`[^cite:${ID}] And more.`);
+  });
+
+  it("protects the ones the editor refuses to render, which are the whole point", () => {
+    // `@page:44` is a second spelling of `@44` and stays literal text, so nothing stops a
+    // selection landing inside it — and being text is exactly why it needs protecting.
+    for (const marker of [
+      `[^cite:${ID}@page:44]`,
+      `[^cite:${ID}@section:2]`,
+      `[^cite:not-a-ulid]`,
+      `[[gone-from-the-library]]`,
+      `![Diagram](my diagram.png)`,
+    ]) {
+      const text = `Before ${marker} after.`;
+      const cut = text.indexOf(marker) + 4;
+      const whole = wholeConstructs(text, 0, cut);
+      expect(text.slice(whole.start, whole.end)).toBe(`Before ${marker}`);
+    }
+  });
+
+  it("widens both ends at once", () => {
+    const text = `[^cite:${ID}] middle [[${ID}]]`;
+    const whole = wholeConstructs(text, 4, text.length - 4);
+    expect(text.slice(whole.start, whole.end)).toBe(text);
+  });
+
+  it("leaves a boundary that sits exactly against a construct alone", () => {
+    // Touching is not cutting. A selection ending the moment a citation begins is a selection
+    // that does not include it, and widening there would take a citation nobody highlighted.
+    const text = `Nine acids.[^cite:${ID}] And more.`;
+    const opens = text.indexOf("[^cite:");
+    const closes = opens + `[^cite:${ID}]`.length;
+    expect(wholeConstructs(text, 0, opens).widened).toBe(false);
+    expect(wholeConstructs(text, closes, text.length).widened).toBe(false);
   });
 });

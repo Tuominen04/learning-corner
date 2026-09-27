@@ -170,6 +170,45 @@ function serializeInline(node: JSONContent): string {
 }
 
 /**
+ * The syntax a body carries that must never be cut in half.
+ *
+ * Deliberately more permissive than the patterns above. Those decide what the editor
+ * *renders*; this decides what must survive being cut, and the dangerous case is exactly the
+ * construct the editor did **not** render — `[^cite:…@page:44]`, a link to a document that is
+ * gone, anything hand-typed. Unrendered means it is ordinary text in the editor, so a person
+ * can put a selection boundary in the middle of it, and a split there leaves half an
+ * identifier lying in their file.
+ */
+const CONSTRUCTS = /\[\^cite:[^\]\n]*\]|\[\[[^\]\n]*\]\]|!\[[^\]\n]*\]\([^)\n]*\)/g;
+
+/** A range widened, if it needs it, so that it cuts nothing in half. */
+export type Whole = { start: number; end: number; widened: boolean };
+
+/**
+ * Push a range outwards until it breaks no construct.
+ *
+ * Outwards rather than inwards, and never refused. A whole citation moving somewhere the
+ * person did not quite intend is visible and undoable; half of one left behind is their file
+ * carrying text that means nothing, which is the outcome this whole file exists to prevent.
+ *
+ * `widened` is reported rather than done quietly, because it changes what moves and the
+ * person is about to be shown what moves.
+ */
+export function wholeConstructs(text: string, start: number, end: number): Whole {
+  let from = start;
+  let to = end;
+
+  for (const match of text.matchAll(CONSTRUCTS)) {
+    const opens = match.index;
+    const closes = opens + match[0].length;
+    if (from > opens && from < closes) from = opens;
+    if (to > opens && to < closes) to = closes;
+  }
+
+  return { start: from, end: to, widened: from !== start || to !== end };
+}
+
+/**
  * Where a position in the editor lands in the text on disk.
  *
  * Two different coordinate systems, and the whole reason splitting needs care. ProseMirror

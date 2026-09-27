@@ -13,6 +13,7 @@ import { useState } from "react";
 export function SplitPicker({
   suggested,
   preview,
+  widened,
   busy,
   onSplit,
   onCancel,
@@ -20,6 +21,8 @@ export function SplitPicker({
   suggested: string;
   /** The first of what will move, so the choice can be checked against the text. */
   preview: string;
+  /** Whether the selection has to grow a little to keep a citation or a link whole. */
+  widened: boolean;
   busy: boolean;
   onSplit: (title: string) => void;
   onCancel: () => void;
@@ -52,6 +55,13 @@ export function SplitPicker({
         <span className="field-label">What moves</span>
         <p>{preview}</p>
       </div>
+
+      {widened && (
+        <p className="warning">
+          Your selection ends part-way through a citation or a link, so it will be stretched to
+          take the whole of it. Half of one left behind would be text that means nothing.
+        </p>
+      )}
 
       <div className="row">
         <button onClick={() => onSplit(title.trim())} disabled={busy || title.trim() === ""}>

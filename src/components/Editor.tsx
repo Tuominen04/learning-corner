@@ -14,6 +14,7 @@ import {
   offsetOf,
   parseBody,
   serializeBody,
+  wholeConstructs,
 } from "../lib/body";
 import { citationKey, insertCitation, toLocator, type Chosen } from "../lib/citation";
 import {
@@ -403,10 +404,20 @@ export function Editor({
       );
       revision.current = saved.revision;
 
-      const result = await engine.document.split(
-        document.id,
+
+      // Widened, if it has to be, so the split cuts no citation, link or picture in half.
+      // The person was shown this on the panel before they pressed anything.
+      const body = serializeBody(json);
+      const range = wholeConstructs(
+        body,
         splitStart(editor, json, splitting.from),
         offsetOf(json, splitting.to),
+      );
+
+      const result = await engine.document.split(
+        document.id,
+        range.start,
+        range.end,
         title,
         saved.revision,
       );
@@ -521,6 +532,7 @@ export function Editor({
         <SplitPicker
           suggested={suggestedTitle(editor, splitting)}
           preview={previewOf(editor, splitting)}
+          widened={widenedBy(editor, splitting)}
           busy={splittingNow}
           onSplit={(title) => void split(title)}
           onCancel={() => setSplitting(null)}
@@ -592,6 +604,23 @@ function suggestedTitle(
   if (!editor) return "";
   const block = editor.state.doc.resolve(at.from).parent;
   return block.type.name === "heading" ? block.textContent.trim() : "";
+}
+
+/**
+ * Whether the selection has to grow to keep a construct whole, and what kind.
+ *
+ * Worked out for the panel rather than only at the moment of splitting, because a selection
+ * quietly growing is a surprise, and a surprise about somebody's own writing is the one kind
+ * this application must not spring.
+ */
+function widenedBy(editor: TipTapEditor | null, at: { from: number; to: number }): boolean {
+  if (!editor) return false;
+  const json = editor.getJSON();
+  return wholeConstructs(
+    serializeBody(json),
+    splitStart(editor, json, at.from),
+    offsetOf(json, at.to),
+  ).widened;
 }
 
 /** The start of what would move, so the choice can be checked against the text. */
