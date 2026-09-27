@@ -115,12 +115,17 @@ of writing, not something that needs this app to make sense.
 
 ## Working backwards from a source
 
-Open any source to see **every document that cites it**.
+Under **Sources**, every source has a **Used in** button. Press it to see **every document
+that cites it**, and click any of them to go there.
 
 This is the feature you will be glad of on a bad day. A study gets retracted, or you realise
 a site you trusted is not reliable, or you simply find something better. Open the source, see
 the eleven places you leaned on it, and go fix them. Without this list, a bad source quietly
 poisons everything you built on it and you never find out.
+
+It answers a quieter question too: a source nothing cites is one you saved and never used.
+That is not a problem — saving a source when you find it, rather than when you need it, is
+the habit this app is built around — but it is worth being able to see.
 
 ## Does it need the internet?
 
