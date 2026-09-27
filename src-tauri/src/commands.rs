@@ -14,7 +14,7 @@ use tauri::State;
 
 use crate::dto::{
     CitationRequest, Document, DocumentRef, EngineError, Field, Form, Keep, LibraryStatus, Locator,
-    SavedSource, SearchHit, Source, SourceType, Topic,
+    SavedSource, SearchHit, Source, SourceType, Split, Topic,
 };
 
 /// The open library, or none. The interface holds no durable state of its own.
@@ -239,6 +239,35 @@ fn mime_for(path: &std::path::Path) -> Option<&'static str> {
         "webp" => Some("image/webp"),
         _ => None,
     }
+}
+
+/// Take part of a document out into a new one, leaving a link behind.
+///
+/// `start` and `end` are **character offsets into the body the interface last read**, which is
+/// why the revision comes too: offsets into a file that changed underneath address different
+/// text, and splitting on them takes the wrong words out of somebody's document.
+///
+/// The interface works in ProseMirror positions and the file is counted in characters. The
+/// two do not agree — a citation is one position and thirty-five characters — so the
+/// conversion happens on the interface side, where the editor's document actually is, and
+/// arrives here already in the file's own terms.
+#[tauri::command]
+pub fn document_split(
+    state: State<'_, OpenLibrary>,
+    document: String,
+    start: usize,
+    end: usize,
+    title: String,
+    revision: Revision,
+) -> Answer<Split> {
+    with(&state, |e| {
+        Ok(Split::from(e.document_split(
+            id(&document)?,
+            start..end,
+            title,
+            revision,
+        )?))
+    })
 }
 
 /// The documents linking here.

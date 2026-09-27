@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parseBody, serializeBody } from "./body";
+import { offsetOf, parseBody, serializeBody } from "./body";
 
 // Every case here is a document that must survive being opened and saved untouched. A failure
 // in this file is silent data loss in the user's own files, which is the worst thing this
@@ -271,5 +271,90 @@ describe("what a citation says", () => {
     expect(citations).toHaveLength(2);
     expect(citations[0]?.attrs?.["form"]).toBe("narrative");
     expect(citations[1]?.attrs?.["form"]).toBe("parenthetical");
+  });
+});
+
+
+// Where a position in the editor lands in the text on disk.
+//
+// The two coordinate systems only agree on plain prose in one paragraph. Everywhere else they
+// diverge, and a split computed on the assumption that they agree cuts somebody's document in
+// the wrong place. Each case below is a way they come apart.
+describe("editor positions to file offsets", () => {
+  const ID = "01J8ZQ8D4Q6S8W0W2Y4A6C8E0G";
+
+  /**
+   * What the offsets say the text is, for a selection from one position to another.
+   *
+   * Asserting on the *substring* rather than on the numbers: numbers are unreadable and a
+   * test that agrees with a wrong implementation about them proves nothing. What matters is
+   * which words would move.
+   */
+  function taken(text: string, from: number, to: number): string {
+    const doc = parseBody(text);
+    return text.slice(offsetOf(doc, from), offsetOf(doc, to));
+  }
+
+  it("matches character for character inside one paragraph", () => {
+    // Position 1 is the start of the first paragraph's text, so it trails by exactly one.
+    expect(taken("Protein repairs tissue", 1, 8)).toBe("Protein");
+    expect(taken("Protein repairs tissue", 9, 16)).toBe("repairs");
+  });
+
+  it("counts the blank line between paragraphs, which the editor does not", () => {
+    // "One." is 4 characters and 4 positions; the paragraph break is 2 characters and 2
+    // positions, but they are not the same two, and by the third paragraph the drift is real.
+    expect(taken("One.\n\nTwo.\n\nThree.", 7, 11)).toBe("Two.");
+    expect(taken("One.\n\nTwo.\n\nThree.", 13, 19)).toBe("Three.");
+  });
+
+  it("counts a heading's hashes, which exist only on disk", () => {
+    // `## ` is three characters in the file and no positions at all in the editor.
+    expect(taken("## In the body\n\nProtein is used.", 1, 12)).toBe("In the body");
+    expect(taken("## In the body\n\nProtein is used.", 14, 30)).toBe("Protein is used.");
+  });
+
+  it("counts a citation as one position and all of its characters", () => {
+    // The case that breaks any formula. In the editor the citation is a single position; on
+    // disk it is thirty-five characters, and everything after it is that much further along.
+    const text = `Nine acids.[^cite:${ID}] And more.`;
+    expect(taken(text, 1, 12)).toBe("Nine acids.");
+    expect(taken(text, 13, 23)).toBe(" And more.");
+  });
+
+  it("counts a picture and a link the same way", () => {
+    const text = `See ![Diagram](d.png) and [[${ID}]] there.`;
+    expect(taken(text, 5, 6)).toBe("![Diagram](d.png)");
+    expect(taken(text, 11, 12)).toBe(`[[${ID}]]`);
+  });
+
+  it("puts a block boundary at the end of what came before it", () => {
+    // The position between two paragraphs belongs to no text block, so no cursor can sit
+    // there and the editor cannot be asked what it means. It still has to mean something:
+    // answering with the start of the *next* paragraph would drag the blank line into
+    // whatever a split takes, and somebody would lose a line they did not highlight.
+    //
+    // For "One.\n\nTwo." the boundary is position 6, and the end of "One." is offset 4.
+    expect(offsetOf(parseBody("One.\n\nTwo."), 6)).toBe(4);
+  });
+
+  it("puts the end of a paragraph at the end of its text", () => {
+    // Not at the start of the next one. A selection to the end of a paragraph must not drag
+    // the blank line after it into what moves.
+    expect(taken("One.\n\nTwo.", 1, 5)).toBe("One.");
+  });
+
+  it("takes whole paragraphs when the selection spans them", () => {
+    expect(taken("One.\n\nTwo.\n\nThree.", 1, 11)).toBe("One.\n\nTwo.");
+  });
+
+  it("clamps rather than running off the end", () => {
+    const doc = parseBody("Short.");
+    expect(offsetOf(doc, 0)).toBe(0);
+    expect(offsetOf(doc, 999)).toBe(6);
+  });
+
+  it("is zero for an empty document", () => {
+    expect(offsetOf(parseBody(""), 1)).toBe(0);
   });
 });

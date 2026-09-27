@@ -385,6 +385,29 @@ button.doc-link-open:hover { text-decoration: underline; }
   text-decoration: underline wavy currentColor;
 }
 
+/* ---- splitting ---- */
+
+/* What would move, shown rather than described. A split rewrites the document somebody is in
+   the middle of writing, and "is this the part you meant" is a better question than "are you
+   sure". */
+.split-preview {
+  border-left: 2px solid var(--line);
+  padding-left: 0.9rem;
+  margin: 0.8rem 0;
+}
+.split-preview .field-label {
+  display: block;
+  font-size: 0.85em;
+  color: var(--ink-soft);
+  margin-bottom: 0.3rem;
+}
+.split-preview p {
+  margin: 0;
+  font-size: 0.9em;
+  max-height: 7rem;
+  overflow-y: auto;
+}
+
 /* ---- linked from ---- */
 
 /* Under the document rather than beside it, like the reference list: this is part of what the

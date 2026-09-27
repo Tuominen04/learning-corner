@@ -73,9 +73,17 @@ document to another topic and its pictures move with it.
 
 **Saving.** Continuous. There is no save button and no unsaved state to lose.
 
-**Splitting.** Select part of a document and choose **Split into new document**. The
-selection moves into a new document in the same topic, its citations come with it, and a
-link is left where it used to be.
+**Splitting.** Select the part you want to move and click **Split** above the page. It asks
+what to call the new document — and if you started your selection at a heading, it has already
+filled that in — and shows you what will move before anything happens.
+
+The selection moves into a new document in the same topic, its citations come with it, and a
+link is left where it used to be. Your pictures keep working, because the new document sits in
+the same folder as the one it came out of.
+
+Starting a selection at a heading takes the heading with it, even though you cannot highlight
+the `##` itself. That is almost always what you meant — you are moving a section, and the
+section has a name.
 
 **Linking.** Click **Link** above the page and choose a document. The link appears in your
 writing as that document's title, and clicking it takes you there.
