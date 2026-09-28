@@ -80,7 +80,8 @@ lexicographically sortable by creation time, generated locally without coordinat
 - A name **follows what it holds**: renaming a document renames its `.md`, and renaming a
   topic renames its folder. Free to do precisely because the ID is not in the name — and worth
   doing, because a folder of `untitled-2.md` keeps the letter of files-as-source-of-truth
-  while losing the point of it. See [ADR 0003](adr/0003-files-as-source-of-truth.md).
+  while losing the point of it. See [ADR 0003](adr/0003-files-as-source-of-truth.md). The
+  library itself is the one exception — see [`library.toml`](#librarytoml).
 - Links and citations reference IDs, so renaming never breaks them.
 - Resolving an ID to a path is the [index](search-index.md)'s job, and a full scan of the
   library rebuilds that mapping — the ID→path relation is derived, never stored.
@@ -101,6 +102,12 @@ name          = "Learning"
 format_version = 1
 created        = 2026-09-06T10:14:00Z
 ```
+
+`name` is what the application calls the library: the heading of the sidebar, and its entry
+on the start screen. Renaming the library changes `name` and nothing else. Its folder keeps
+the name it has, unlike a topic's — the user chose that folder, it may be one they use for
+more than this library, their whole `Documents` even, and where a library lives is never the
+application's decision.
 
 `format_version` is the format's version, not the application's. On opening a library the
 engine compares it against what it supports:

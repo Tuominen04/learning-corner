@@ -78,6 +78,11 @@ called — often `untitled.md`, since that is what a new document starts as. Ren
 puts the file right, and renaming it to the name it already has counts: open the rename box
 and press Enter.
 
+**The library's own name** renames the same way, at the top of the sidebar. Its folder is the
+exception: it keeps the name it has, because you chose that folder and it may be one you use
+for other things too. Rename or move the folder yourself whenever you like — then open it from
+its new place, as in [Moving a library](#moving-a-library).
+
 Renaming files **outside** the app is a different matter, see below.
 
 ## Editing your files outside the app

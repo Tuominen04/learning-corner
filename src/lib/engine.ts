@@ -114,6 +114,8 @@ export const engine = {
     close: () => call<void>("library_close"),
     status: () => call<LibraryStatus>("library_status"),
     rebuildIndex: () => call<LibraryStatus>("library_rebuild_index"),
+    /** A new name for the open library. Its folder keeps the name it has. */
+    rename: (name: string) => call<LibraryStatus>("library_rename", { name }),
   },
   topic: {
     tree: () => call<Topic[]>("topic_tree"),

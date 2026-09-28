@@ -94,6 +94,25 @@ impl Recent {
         write(file, libraries)
     }
 
+    /// Call the library at `path` by its new name, where it already is on the list.
+    ///
+    /// It keeps its place and its date: being renamed is not being opened. A library that is
+    /// not on the list is not put there by this.
+    pub fn renamed(&self, path: &Path, name: &str) -> Result<()> {
+        let file = self.file.lock().unwrap_or_else(|e| e.into_inner());
+        let Some(file) = file.as_deref() else {
+            return Ok(());
+        };
+
+        let path = fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf());
+        let mut libraries = read(file);
+        let Some(entry) = libraries.iter_mut().find(|entry| entry.path == path) else {
+            return Ok(());
+        };
+        entry.name = name.to_string();
+        write(file, libraries)
+    }
+
     /// Take `path` off the list. The library itself is not touched.
     pub fn forget(&self, path: &Path) -> Result<()> {
         let file = self.file.lock().unwrap_or_else(|e| e.into_inner());
@@ -211,6 +230,44 @@ mod tests {
         recent.forget(&learning).unwrap();
         assert_eq!(paths(&recent), [russian]);
         assert!(learning.is_dir(), "forgetting a library must not touch it");
+    }
+
+    #[test]
+    fn a_renamed_library_is_listed_by_its_new_name_in_the_same_place() {
+        let (_dir, recent, [learning, russian, _]) = setup();
+        recent.opened(&learning, "Learning").unwrap();
+        recent.opened(&russian, "Russian").unwrap();
+        let before = recent.list();
+
+        recent.renamed(&learning, "Nutrition").unwrap();
+
+        let after = recent.list();
+        assert_eq!(after.len(), 2);
+        assert_eq!(
+            after[1].path, learning,
+            "renaming is not opening: it keeps its place"
+        );
+        assert_eq!(after[1].name, "Nutrition");
+        assert_eq!(after[1].opened, before[1].opened, "nor its date");
+        assert_eq!(after[0], before[0], "and nothing else changes");
+    }
+
+    #[test]
+    fn renaming_a_library_that_is_not_listed_does_not_list_it() {
+        let (_dir, recent, [learning, russian, _]) = setup();
+        recent.opened(&learning, "Learning").unwrap();
+        recent.renamed(&russian, "Russian").unwrap();
+        assert_eq!(paths(&recent), [learning]);
+    }
+
+    #[test]
+    fn a_renamed_library_is_found_under_another_spelling_of_its_path() {
+        let (_dir, recent, [learning, russian, _]) = setup();
+        recent.opened(&learning, "Learning").unwrap();
+        recent
+            .renamed(&russian.join("..").join("learning").join(""), "Nutrition")
+            .unwrap();
+        assert_eq!(recent.list()[0].name, "Nutrition");
     }
 
     #[test]

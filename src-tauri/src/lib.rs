@@ -35,6 +35,7 @@ pub fn run() {
             commands::library_close,
             commands::library_status,
             commands::library_rebuild_index,
+            commands::library_rename,
             commands::recent_libraries,
             commands::forget_library,
             commands::topic_tree,
