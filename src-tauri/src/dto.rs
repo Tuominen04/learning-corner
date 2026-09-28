@@ -71,6 +71,52 @@ pub struct Document {
     pub revision: Revision,
 }
 
+/// What a topic holds, so that deleting it can be a decision rather than a surprise.
+///
+/// Documents named rather than counted: "3 documents" is a number somebody agrees to, and a
+/// list of titles is a thing they recognise.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub struct TopicContents {
+    /// Topics nested anywhere below this one.
+    pub topics: u32,
+    /// Every document anywhere below this one.
+    pub documents: Vec<DocumentRef>,
+}
+
+impl From<plc_engine::api::TopicContents> for TopicContents {
+    fn from(contents: plc_engine::api::TopicContents) -> Self {
+        TopicContents {
+            topics: u32::try_from(contents.topics).unwrap_or(u32::MAX),
+            documents: contents
+                .documents
+                .into_iter()
+                .map(DocumentRef::from)
+                .collect(),
+        }
+    }
+}
+
+/// What becomes of what is inside a topic being deleted. There is no default, on purpose.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "kebab-case")]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub enum Contents {
+    /// Delete the topic and everything under it.
+    Delete,
+    /// Move what is directly inside up to the parent, then delete the empty topic.
+    MoveUp,
+}
+
+impl From<Contents> for plc_engine::api::Contents {
+    fn from(contents: Contents) -> Self {
+        match contents {
+            Contents::Delete => plc_engine::api::Contents::Delete,
+            Contents::MoveUp => plc_engine::api::Contents::MoveUp,
+        }
+    }
+}
+
 /// The two documents a split leaves behind.
 ///
 /// Both, because the interface has to redraw both: the one being written now carries a link
@@ -653,6 +699,8 @@ mod export_bindings {
         Locator::export_all(&config).unwrap();
         CitationRequest::export_all(&config).unwrap();
         Split::export_all(&config).unwrap();
+        TopicContents::export_all(&config).unwrap();
+        Contents::export_all(&config).unwrap();
     }
 }
 

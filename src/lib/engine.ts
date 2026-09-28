@@ -25,6 +25,8 @@ import type { Split } from "./bindings/Split";
 import type { SourceDate } from "./bindings/SourceDate";
 import type { SourceType } from "./bindings/SourceType";
 import type { Topic } from "./bindings/Topic";
+import type { TopicContents } from "./bindings/TopicContents";
+import type { Contents } from "./bindings/Contents";
 
 export type {
   Appraisal,
@@ -46,6 +48,8 @@ export type {
   SourceType,
   Split,
   Topic,
+  TopicContents,
+  Contents,
 };
 
 /** The opaque token carried between a read and a write. Never inspected. */
@@ -115,6 +119,20 @@ export const engine = {
       call<string>("topic_create", { parent, name }),
     rename: (topic: string, name: string) =>
       call<void>("topic_rename", { topic, name }),
+    /**
+     * What deleting this topic would reach: every document anywhere below it, by name.
+     *
+     * Always asked before `delete`, never after — the person is shown this first.
+     */
+    deletePlan: (topic: string) => call<TopicContents>("topic_delete_plan", { topic }),
+    /**
+     * Delete a topic, having been told what becomes of what is inside.
+     *
+     * There is no default for `contents`. The contract has said since M0 that deleting a
+     * topic never deletes documents implicitly, and a default would be exactly that.
+     */
+    delete: (topic: string, contents: Contents) =>
+      call<void>("topic_delete", { topic, contents }),
   },
   document: {
     create: (topic: string, title: string) =>

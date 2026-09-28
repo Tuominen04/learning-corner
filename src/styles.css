@@ -194,8 +194,8 @@ button.hit:hover { background: #23262f; }
 .pencil:hover { color: #e6e4de; background: #2b2e38; }
 
 /* A document's name already fills the row, so there is no "just past" it — its pencil
-   overlays the far end instead. */
-.doc-row .pencil { left: auto; right: 0.15rem; }
+   overlays the far end instead, just short of the bin. */
+.doc-row .pencil { left: auto; right: 1.7rem; }
 
 /* Sized by the row it replaces, so the name does not jump when it becomes editable. */
 .rename-input {
@@ -570,6 +570,52 @@ p.uses { font-size: 0.88em; max-width: 42rem; }
 .appraisal { margin: 1.5rem 0; }
 .appraisal summary { cursor: pointer; font-size: 0.85em; color: var(--ink-soft); }
 .appraisal summary:hover { color: var(--accent); }
+
+/* ---- deleting ---- */
+
+/* Quiet, like the pencil beside it: deleting is something people look for when they want it,
+   not something the tree should shout about on every row. Red only under the pointer, which
+   is the moment it is worth saying what the button does. */
+button.delete {
+  display: flex;
+  align-items: center;
+  border: none;
+  background: none;
+  color: var(--ink-soft);
+  padding: 0.15rem 0.25rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+button.delete:hover { color: var(--error); background: #2b2e38; }
+
+/* On a document row the bin overlays the far end, where the pencil used to be; the row is
+   positioned so that "the far end" means this row and not the sidebar. */
+.doc-row { position: relative; }
+.doc-row > button.delete {
+  position: absolute;
+  right: 0.15rem;
+  top: 0;
+  bottom: 0;
+  opacity: 0;
+}
+.doc-row:hover > button.delete,
+.doc-row > button.delete:focus-visible { opacity: 1; }
+
+/* The confirming button looks like what it does. Everywhere else a filled button means "the
+   thing you came here for"; this is the one place that must not look inviting. */
+button.danger { border-color: var(--error); color: var(--error); }
+button.danger:hover:not(:disabled) { background: var(--error); color: var(--ground); }
+
+.delete-confirm { max-width: 42rem; }
+.delete-confirm .field-label {
+  display: block;
+  font-size: 0.85em;
+  color: var(--ink-soft);
+  margin: 0.9rem 0 0.4rem;
+}
+.delete-confirm .hint { font-size: 0.85em; color: var(--ink-soft); }
+/* A choice that cannot be made here, shown rather than hidden so the reason can be read. */
+.choice.unavailable { opacity: 0.55; }
 
 .confirm {
   border: 1px solid var(--warning);

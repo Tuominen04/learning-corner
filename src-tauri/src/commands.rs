@@ -14,7 +14,7 @@ use tauri::State;
 
 use crate::dto::{
     CitationRequest, Document, DocumentRef, EngineError, Field, Form, Keep, LibraryStatus, Locator,
-    SavedSource, SearchHit, Source, SourceType, Split, Topic,
+    SavedSource, SearchHit, Source, SourceType, Split, Topic, TopicContents,
 };
 
 /// The open library, or none. The interface holds no durable state of its own.
@@ -104,6 +104,27 @@ pub fn topic_create(
 #[tauri::command]
 pub fn topic_rename(state: State<'_, OpenLibrary>, topic: String, name: String) -> Answer<()> {
     with(&state, |e| e.topic_rename(id(&topic)?, name))
+}
+
+/// What deleting this topic would reach — every document anywhere below it, by name.
+///
+/// Asked before `topic_delete`, never after. The interface shows this and has to be told
+/// what to do with the contents before anything is removed.
+#[tauri::command]
+pub fn topic_delete_plan(state: State<'_, OpenLibrary>, topic: String) -> Answer<TopicContents> {
+    with(&state, |e| {
+        Ok(TopicContents::from(e.topic_delete_plan(id(&topic)?)?))
+    })
+}
+
+/// Delete a topic, having been told what becomes of what is inside it.
+#[tauri::command]
+pub fn topic_delete(
+    state: State<'_, OpenLibrary>,
+    topic: String,
+    contents: crate::dto::Contents,
+) -> Answer<()> {
+    with(&state, |e| e.topic_delete(id(&topic)?, contents.into()))
 }
 
 // ---- documents -----------------------------------------------------------------

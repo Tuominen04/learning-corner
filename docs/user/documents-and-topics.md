@@ -49,7 +49,7 @@ like.
 | Rename it | Double-click the name, or click the pencil that appears when you hover it. Links and citations keep working |
 | Move it | Drag it onto another topic, or out to the top level |
 | Split it | Make a topic inside it and drag documents in |
-| Delete it | Right-click → **Delete**. The app asks what to do with what is inside, and never deletes documents without saying so |
+| Delete it | Hover it and click the bin. The app shows you every document inside, however deep, and asks what should happen to them |
 
 ## Documents
 
@@ -100,6 +100,21 @@ topics you thought were separate have been talking to each other for a while.
 **Renaming.** Double-click the title — in the sidebar or above the page you are writing —
 or click the pencil that appears when you hover it. Enter keeps the new name, Escape throws it
 away, and clicking away keeps it. Safe at any time. Links follow.
+
+**Deleting.** Hover a document or a topic in the sidebar and click the bin. Nothing is deleted
+until you have seen what goes with it.
+
+- **A document** — you are shown every document that links to it. Those links stay in your
+  writing and say the document is missing, so you can see what needs fixing. Any pictures it
+  shows are left in the topic's folder: your library may hold the only copy of a picture you
+  moved in, so removing those is left to you.
+- **A topic** — you are shown every document inside it, however deeply nested, by name. Then
+  you choose: **keep them**, which moves them up into the topic above before the empty topic
+  goes, or **delete them too**. Keeping them is already chosen for you when it is possible.
+  Deleting them never is — you have to pick it yourself.
+
+A topic at the top level has nowhere above it for documents to go, so keeping them is not
+possible there. Move the documents somewhere first, or choose to delete them.
 
 ## Claims: what you verified, and what you assumed
 
