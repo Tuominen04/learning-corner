@@ -1,8 +1,8 @@
 # Libraries and your files
 
 > **Audience:** People using Personal Learning Corner
-> **Status:** Planned
-> **Last reviewed:** 2026-09-06
+> **Status:** In progress
+> **Last reviewed:** 2026-09-28
 
 ## What a library is
 
@@ -18,13 +18,27 @@ tomorrow, your work would not go with it.
 
 ## More than one library
 
-You can keep several libraries and switch between them from **File → Open library**. That is
-usually the right choice when two subjects have nothing to do with each other:
+You can keep several libraries and switch between them. That is usually the right choice when
+two subjects have nothing to do with each other:
 
 ```
 ~/Learning/            ← nutrition, biology, history
 ~/Documents/Russian/   ← language study, texts, songs
 ```
+
+**Switch library**, at the top of the sidebar, closes the library you are in and takes you back
+to the start screen. The libraries you have opened before are listed there, the most recent
+first, and one click opens any of them; making a new library or opening another folder is on
+the same screen. Whatever you had just typed is saved before the library closes.
+
+When you start the app, it opens the library you had open last. If it cannot — the folder was
+moved or renamed, or it is on a drive that is not plugged in — it says so on the start screen
+and leaves the choice to you. A library that cannot be found stays on the list, marked, until
+you take it off with **×**. Taking it off the list does nothing to the library itself.
+
+The list is kept in the app's own settings folder — usually
+`~/.config/personal-learning-corner/` — and not in any library, so it never travels with one. Deleting it costs you the list and nothing
+else: the next start opens on the start screen, and your libraries are all where they were.
 
 Sources are shared *within* a library, not between libraries. If you cite the same book in
 two libraries, you save it in each. That is a fair trade for libraries that can be moved,
@@ -39,7 +53,9 @@ A library is just a folder, so moving it is just moving a folder:
 1. Close the app.
 2. Move or copy the folder wherever you want — another disk, another computer, a memory
    stick.
-3. Open the app and choose **File → Open library**, then point it at the new location.
+3. Open the app. It will say it cannot find the library where it used to be; choose **Open an
+   existing one…** and point it at the new location. Take the old entry off the list with
+   **×** whenever you like.
 
 Everything comes with it, including your sources and citations, and any PDFs you kept with a
 source — those live in `sources/files/` inside the library, so they travel with it. Nothing is

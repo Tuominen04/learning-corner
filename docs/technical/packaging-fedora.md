@@ -2,7 +2,7 @@
 
 > **Audience:** People building and releasing Personal Learning Corner
 > **Status:** In progress — M0 implemented
-> **Last reviewed:** 2026-09-06
+> **Last reviewed:** 2026-09-28
 
 Fedora is the first target ([ADR 0001](adr/0001-tauri-rust-stack.md)). Windows and macOS come
 after the Linux build is solid, and are packaging work rather than a rewrite.
@@ -54,6 +54,18 @@ opening it on another machine needs nothing else.
 
 **Recent libraries** in application settings is a convenience only. Losing that file must cost
 the user a file-picker dialog and nothing more.
+
+The file is `recent-libraries.toml`: the ten libraries opened most recently, each with its path,
+the name it had then, and when. The shell reads and writes it and the engine never sees it —
+the list is about this computer, not about any library. Everything else follows from its being
+a convenience:
+
+- A file that cannot be read is an empty list, and is replaced the next time a library opens.
+- A list that cannot be written is reported to the log and nowhere else. It never stops a
+  library from opening.
+- A library whose folder is missing stays listed, marked as not found. It may be on a drive
+  that is not plugged in, and only the user can tell that from a library that is gone.
+- The same folder reached by another path — a symlink, a trailing slash — is one entry.
 
 ## Flatpak and the filesystem
 

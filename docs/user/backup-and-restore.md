@@ -50,7 +50,8 @@ On a new computer, or after a disaster:
 Everything comes back: documents, sources, citations, texts, maps.
 
 You can also skip the app entirely and copy the folder off the drive by hand, then open it
-with **File → Open library**. It works. There is nothing magic in the backup.
+with **Open an existing one…** on the start screen. It works. There is nothing magic in the
+backup.
 
 ## When both copies changed
 

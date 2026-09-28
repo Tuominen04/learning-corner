@@ -36,6 +36,23 @@ pub struct LibraryProblem {
     pub message: String,
 }
 
+/// A library this computer has opened before, for the start screen.
+///
+/// Not an engine type. The list is the shell's own, kept in the application's settings folder
+/// rather than in any library — see `recent.rs`.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub struct RecentLibrary {
+    pub path: String,
+    /// What it was called when it was last opened.
+    pub name: String,
+    /// When it was last opened, as RFC 3339.
+    pub opened: String,
+    /// Whether its folder is there now. A library on a drive that is not plugged in is not
+    /// found, and is listed all the same.
+    pub found: bool,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "../../src/lib/bindings/")]
 pub struct Topic {
@@ -689,6 +706,7 @@ mod export_bindings {
     fn typescript_bindings_are_current() {
         let config = ts_rs::Config::default();
         LibraryStatus::export_all(&config).unwrap();
+        RecentLibrary::export_all(&config).unwrap();
         Topic::export_all(&config).unwrap();
         Document::export_all(&config).unwrap();
         SearchHit::export_all(&config).unwrap();

@@ -1,8 +1,8 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { DeleteConfirm, type Deleting } from "./components/DeleteConfirm";
 import { Editor } from "./components/Editor";
-import { LibraryPicker } from "./components/LibraryPicker";
+import { LibraryPicker, type Opened } from "./components/LibraryPicker";
 import { Search } from "./components/Search";
 import { Sources } from "./components/Sources";
 import { TopicTree } from "./components/TopicTree";
@@ -10,13 +10,119 @@ import {
   engine,
   EngineFailure,
   isDesktopRuntime,
+  shell,
   type Document,
   type LibraryStatus,
   type Topic,
 } from "./lib/engine";
+import { couldNotOpen } from "./lib/recent";
+import { saveEverything } from "./lib/saving";
+
+/** What the window is showing. */
+type Screen =
+  /** Just started, and finding out whether there is a library to go back to. */
+  | { kind: "starting"; reopening: string | null }
+  /** The start screen, perhaps saying why the last library did not open again. */
+  | { kind: "picking"; notice: string | null }
+  | { kind: "open"; opened: Opened };
 
 export function App() {
-  const [library, setLibrary] = useState<LibraryStatus | null>(null);
+  const [screen, setScreen] = useState<Screen>({ kind: "starting", reopening: null });
+
+  // The library that was open last, opened again — when the application starts, and only
+  // then. Coming back to the start screen later is somebody choosing another library, and
+  // reopening the last one at them would be the opposite of what they asked for.
+  useEffect(() => {
+    if (!isDesktopRuntime()) return;
+    let live = true;
+    void reopenLast((name) => {
+      if (live) setScreen({ kind: "starting", reopening: name });
+    })
+      // Whatever goes wrong, starting ends somewhere a library can be chosen. A start screen
+      // with nothing to say is a small thing; a window stuck on "Opening…" is not.
+      .catch((): Screen => ({ kind: "picking", notice: null }))
+      .then((next) => {
+        if (live) setScreen(next);
+      });
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  if (!isDesktopRuntime()) {
+    // Opening http://localhost:5173 in a browser gives you the page and nothing behind it:
+    // no engine, no folder dialog. Every button would silently do nothing, which reads as a
+    // broken application rather than as the wrong window.
+    return (
+      <main className="picker">
+        <h1>Open the desktop window</h1>
+        <p className="lede">
+          This page is being served to a browser, which has no access to your files. The
+          interface only works inside the application window.
+        </p>
+        <p className="note">
+          Run <code>npm run tauri dev</code> and use the window it opens. The address bar you
+          can see above is the giveaway — the real window has none.
+        </p>
+      </main>
+    );
+  }
+
+  switch (screen.kind) {
+    case "starting":
+      // Deliberately almost empty. Showing the start screen's buttons for the moment it takes
+      // to find the last library would offer a choice that is about to be taken away.
+      return (
+        <main className="picker">
+          <h1>Personal Learning Corner</h1>
+          {screen.reopening !== null && <p className="lede">Opening “{screen.reopening}”…</p>}
+        </main>
+      );
+    case "picking":
+      return (
+        <LibraryPicker
+          notice={screen.notice}
+          onOpened={(opened) => setScreen({ kind: "open", opened })}
+        />
+      );
+    case "open":
+      return (
+        <Workspace
+          // Keyed by library, so nothing about one — the open document, the search, a
+          // half-made deletion — can ever be shown against another.
+          key={screen.opened.path}
+          opened={screen.opened}
+          onClosed={() => setScreen({ kind: "picking", notice: null })}
+        />
+      );
+  }
+}
+
+/**
+ * Open the library that was open last, if there is one and it can be.
+ *
+ * Every way this can fail ends in the same place — the start screen, saying why — and the
+ * first time the application runs there is nothing to say at all.
+ */
+async function reopenLast(reopening: (name: string) => void): Promise<Screen> {
+  const [last] = await shell.recentLibraries().catch(() => []);
+  if (!last) return { kind: "picking", notice: null };
+  // Not tried, when the folder is not there: the engine could only say it found no library,
+  // and what to do about a drive that is not plugged in is a better thing to be told.
+  if (!last.found) return { kind: "picking", notice: couldNotOpen(last, null) };
+
+  reopening(last.name);
+  try {
+    const status = await engine.library.open(last.path);
+    return { kind: "open", opened: { path: last.path, status } };
+  } catch (thrown) {
+    return { kind: "picking", notice: couldNotOpen(last, thrown) };
+  }
+}
+
+/** An open library: the tree beside, and whatever is being worked on. */
+function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void }) {
+  const [library, setLibrary] = useState<LibraryStatus>(opened.status);
   const [topics, setTopics] = useState<Topic[]>([]);
   const [open, setOpen] = useState<Document | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -34,6 +140,8 @@ export function App() {
   // rather than a corner of the sidebar, because it has a list of titles to show and the
   // sidebar is too narrow to read one in.
   const [deleting, setDeleting] = useState<Deleting | null>(null);
+
+  const [closing, setClosing] = useState(false);
 
   /**
    * Open a document, from wherever somebody asked.
@@ -69,37 +177,48 @@ export function App() {
     }
   }, []);
 
-  if (!isDesktopRuntime()) {
-    // Opening http://localhost:5173 in a browser gives you the page and nothing behind it:
-    // no engine, no folder dialog. Every button would silently do nothing, which reads as a
-    // broken application rather than as the wrong window.
-    return (
-      <main className="picker">
-        <h1>Open the desktop window</h1>
-        <p className="lede">
-          This page is being served to a browser, which has no access to your files. The
-          interface only works inside the application window.
-        </p>
-        <p className="note">
-          Run <code>npm run tauri dev</code> and use the window it opens. The address bar you
-          can see above is the giveaway — the real window has none.
-        </p>
-      </main>
-    );
-  }
+  // The tree, when the library opens. This component is made afresh for every library, so
+  // mounting *is* opening one; the status came with the opening and is already current.
+  useEffect(() => {
+    let live = true;
+    engine.topic
+      .tree()
+      .then((tree) => {
+        if (live) setTopics(tree);
+      })
+      .catch((thrown: unknown) => {
+        if (live) setError(thrown instanceof EngineFailure ? thrown.message : String(thrown));
+      });
+    return () => {
+      live = false;
+    };
+  }, []);
 
-  if (!library) {
-    // Loading the tree happens here rather than in an effect keyed on the library. An effect
-    // would need `library` as a dependency, and `refresh` sets `library` — which is a loop.
-    // Opening is an event, so treat it as one.
-    return (
-      <LibraryPicker
-        onOpened={(status) => {
-          setLibrary(status);
-          void refresh();
-        }}
-      />
-    );
+  /**
+   * Back to the start screen, to open another library or make a new one.
+   *
+   * Everything typed goes to disk first. The editor writes after a pause in the typing, and
+   * closing the library inside that pause would leave the last few words with nowhere to go.
+   * If they cannot be written the library stays open, with the words still on screen and the
+   * editor saying why beside them, so there is a chance to copy them somewhere. Asked a second
+   * time it closes: by then nothing is waiting that could still be written.
+   */
+  async function close() {
+    setClosing(true);
+    setError(null);
+    try {
+      await saveEverything();
+    } catch {
+      setError(
+        "Your latest changes could not be saved, so the library is still open. Switching again closes it without them.",
+      );
+      setClosing(false);
+      return;
+    }
+    // Closing cannot fail in a way that matters: whichever library opens next takes this
+    // one's place in the shell regardless.
+    await engine.library.close().catch(() => {});
+    onClosed();
   }
 
   /**
@@ -153,7 +272,17 @@ export function App() {
     <div className="app">
       <aside>
         <div className="library">
-          <strong>{library.name}</strong>
+          <div className="library-head">
+            <strong title={opened.path}>{library.name}</strong>
+            <button
+              className="ghost switch"
+              onClick={() => void close()}
+              disabled={closing}
+              title="Close this library and go back to the start screen, to open another one or make a new one"
+            >
+              {closing ? "Closing…" : "Switch library"}
+            </button>
+          </div>
           <span className="counts">
             {library.topics} topics · {library.documents} documents
           </span>
@@ -260,7 +389,10 @@ export function App() {
             document={open}
             topics={topics}
             onSaved={(saved) => {
-              setOpen(saved);
+              // Only while it is still the open document. The editor writes what is waiting
+              // as it goes, so a save can land after somebody has moved on to another one,
+              // and must not bring the one they left back on screen.
+              setOpen((current) => (current?.id === saved.id ? saved : current));
               void refresh();
             }}
             onRename={renameDocument}
