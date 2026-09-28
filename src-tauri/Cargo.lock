@@ -2557,6 +2557,7 @@ dependencies = [
  "tauri-plugin-dialog",
  "tauri-plugin-opener",
  "tempfile",
+ "toml 1.1.5+spec-1.1.0",
  "ts-rs",
 ]
 

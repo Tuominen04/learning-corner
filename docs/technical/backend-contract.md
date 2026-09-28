@@ -61,6 +61,11 @@ loses the source altogether. See [Citation model](citation-model.md).
 | `library.status` | — | counts, index freshness, unresolved conflicts, incomplete sources |
 | `library.rebuildIndex` | — | progress events, then a summary |
 
+Which libraries have been opened before is not part of this contract. The shell keeps that list
+for the start screen, in the application's settings rather than in any library
+([Packaging](packaging-fedora.md#directories)), and a command-line client would have no use for
+it.
+
 ## Topics and documents
 
 | Operation | Takes | Returns |

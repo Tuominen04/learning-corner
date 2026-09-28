@@ -4,6 +4,7 @@
 //! that appears here is logic in the wrong repository — the rule is in `architecture.md`, and
 //! the reason is that nothing here can be tested without a window.
 
+use std::path::Path;
 use std::sync::Mutex;
 
 use base64::Engine as _;
@@ -14,8 +15,9 @@ use tauri::State;
 
 use crate::dto::{
     CitationRequest, Document, DocumentRef, EngineError, Field, Form, Keep, LibraryStatus, Locator,
-    SavedSource, SearchHit, Source, SourceType, Split, Topic, TopicContents,
+    RecentLibrary, SavedSource, SearchHit, Source, SourceType, Split, Topic, TopicContents,
 };
+use crate::recent::Recent;
 
 /// The open library, or none. The interface holds no durable state of its own.
 #[derive(Default)]
@@ -45,21 +47,39 @@ fn id(raw: &str) -> Result<Id, Error> {
 #[tauri::command]
 pub fn library_create(
     state: State<'_, OpenLibrary>,
+    recent: State<'_, Recent>,
     path: String,
     name: String,
 ) -> Answer<LibraryStatus> {
     let engine = Engine::create(&path, name).map_err(EngineError::from)?;
     let status = engine.status().map_err(EngineError::from)?;
+    remember(&recent, &path, &status.name);
     *state.0.lock().unwrap() = Some(engine);
     Ok(status.into())
 }
 
 #[tauri::command]
-pub fn library_open(state: State<'_, OpenLibrary>, path: String) -> Answer<LibraryStatus> {
+pub fn library_open(
+    state: State<'_, OpenLibrary>,
+    recent: State<'_, Recent>,
+    path: String,
+) -> Answer<LibraryStatus> {
     let engine = Engine::open(&path).map_err(EngineError::from)?;
     let status = engine.status().map_err(EngineError::from)?;
+    remember(&recent, &path, &status.name);
     *state.0.lock().unwrap() = Some(engine);
     Ok(status.into())
+}
+
+/// Put a library that has just opened at the top of the start screen's list.
+///
+/// A failure goes to the log and nowhere else. The list is a convenience, and a library that
+/// opened must not be reported as having failed to because a settings file could not be
+/// written.
+fn remember(recent: &Recent, path: &str, name: &str) {
+    if let Err(e) = recent.opened(Path::new(path), name) {
+        eprintln!("the list of recent libraries was not updated: {e}");
+    }
 }
 
 #[tauri::command]
@@ -78,6 +98,32 @@ pub fn library_rebuild_index(state: State<'_, OpenLibrary>) -> Answer<LibrarySta
         e.rebuild_index()?;
         e.status().map(LibraryStatus::from)
     })
+}
+
+// ---- the start screen ------------------------------------------------------------
+//
+// Not engine operations. The list of recently opened libraries is the shell's own, kept in the
+// application's settings folder, and a command-line client would have no use for it.
+
+/// The libraries this computer has opened, most recent first.
+#[tauri::command]
+pub fn recent_libraries(recent: State<'_, Recent>) -> Vec<RecentLibrary> {
+    recent
+        .list()
+        .into_iter()
+        .map(|entry| RecentLibrary {
+            found: entry.path.is_dir(),
+            path: entry.path.to_string_lossy().into_owned(),
+            name: entry.name,
+            opened: entry.opened.to_string(),
+        })
+        .collect()
+}
+
+/// Take a library off the start screen's list. The library itself is not touched.
+#[tauri::command]
+pub fn forget_library(recent: State<'_, Recent>, path: String) -> Answer<()> {
+    recent.forget(Path::new(&path)).map_err(EngineError::from)
 }
 
 // ---- topics --------------------------------------------------------------------

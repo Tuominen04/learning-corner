@@ -2,7 +2,7 @@
 
 > **Audience:** People building Personal Learning Corner
 > **Status:** In progress — M0 implemented
-> **Last reviewed:** 2026-09-06
+> **Last reviewed:** 2026-09-28
 
 ## Principles
 
@@ -57,7 +57,10 @@ the engine. It holds no durable state: everything it displays came from an engin
 everything it changes goes back through one. Losing the interface process loses nothing.
 
 **Desktop shell** — Tauri v2. Owns the window, the menus, the file dialogs, the second window
-for mind maps, and the packaging. It is glue, not logic.
+for mind maps, and the packaging. It is glue, not logic. The one thing it keeps for itself
+between runs is the list of libraries this computer has opened, which lives in the
+application's settings rather than in any library
+([Packaging](packaging-fedora.md#directories)).
 
 **Engine** — Rust, in [its own repository](repositories.md). Owns the library: reading and
 writing files, maintaining the index, parsing and formatting citations, aligning parallel
@@ -85,6 +88,7 @@ The boundary is the thing most likely to erode, so state it plainly:
 | Map node positions | ✅ (persisted) | ✅ (dragging) |
 | Undo/redo | ✅ | ❌ |
 | Window management, dialogs, menus | ❌ | ✅ (shell) |
+| Which libraries this computer has opened | ❌ | ✅ (shell) |
 
 The rule of thumb: **if getting it wrong could corrupt or lose a user's library, it belongs
 in the engine.** The interface is allowed to be wrong about pixels, never about data.

@@ -35,7 +35,7 @@ run.
 ## 2. Choose where your library lives
 
 The first time you open the app, it asks you to pick a folder. Everything you write goes in
-there and nowhere else.
+there and nowhere else. After that, the app opens straight into the library you used last.
 
 Pick somewhere you will remember and that is easy to back up — your home folder or a
 documents folder is ideal. A good habit is a folder named after the thing you are learning:

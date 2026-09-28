@@ -16,6 +16,7 @@ import type { Field } from "./bindings/Field";
 import type { Form } from "./bindings/Form";
 import type { LibraryStatus } from "./bindings/LibraryStatus";
 import type { Locator } from "./bindings/Locator";
+import type { RecentLibrary } from "./bindings/RecentLibrary";
 import type { Role } from "./bindings/Role";
 import type { Keep } from "./bindings/Keep";
 import type { SavedSource } from "./bindings/SavedSource";
@@ -40,6 +41,7 @@ export type {
   Keep,
   LibraryStatus,
   Locator,
+  RecentLibrary,
   Role,
   SavedSource,
   SearchHit,
@@ -236,4 +238,18 @@ export const engine = {
       call<string[]>("citation_reference_list", { document }),
   },
   search: (query: string) => call<SearchHit[]>("search", { query }),
+};
+
+/**
+ * What the shell keeps for itself between runs: the libraries this computer has opened.
+ *
+ * Not the engine, and not in any library. The list lives in the application's settings folder
+ * and is a convenience only — losing it costs a folder dialog — so it is no part of the engine
+ * contract, and opening a library is what adds one to it.
+ */
+export const shell = {
+  /** Most recent first, including any whose folder cannot be found just now. */
+  recentLibraries: () => call<RecentLibrary[]>("recent_libraries"),
+  /** Take a library off the list. The library itself is not touched. */
+  forgetLibrary: (path: string) => call<void>("forget_library", { path }),
 };

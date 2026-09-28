@@ -28,6 +28,7 @@ import {
 } from "../lib/engine";
 import { insertLink, titlesOf } from "../lib/links";
 import { insertImage } from "../lib/pictures";
+import { holdUntilSaved } from "../lib/saving";
 import { Backlinks } from "./Backlinks";
 import { CitationView, RenderedCitations } from "./CitationView";
 import { CitePicker } from "./CitePicker";
@@ -108,6 +109,21 @@ export function Editor({
   // place to write it, which is what react-hooks 7 objects to doing during a render.
   const revision = useRef(document.revision);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // What has been typed and not yet handed to a write, or `null` when nothing is waiting. The
+  // whole body, because every write is the whole body.
+  const pending = useRef<string | null>(null);
+
+  // The writes, one after another. Two at once would carry the same revision, and the engine
+  // would rightly refuse the second as a conflict — the one with the newest typing in it. So
+  // each waits for the last to land, and carries the revision that one came back with.
+  const writes = useRef<Promise<unknown>>(Promise.resolve());
+
+  // `save`, as of the latest render. It is a new function every render, and what the typing
+  // timer and the rest of the application are handed has to stay the same one from mount to
+  // unmount, so they go through this. Filled in by an effect below, before anything can be
+  // typed.
+  const saveNow = useRef<() => Promise<void>>(async () => {});
 
   useEffect(() => {
     revision.current = document.revision;
@@ -191,11 +207,15 @@ export function Editor({
       // everything expensive on this screen is already memoised against its own inputs.
       shouldRerenderOnTransaction: true,
       onUpdate: ({ editor }) => {
-        if (timer.current) clearTimeout(timer.current);
         const json = editor.getJSON();
         refreshCitations(json);
-        const body = serializeBody(json);
-        timer.current = setTimeout(() => void save(body), SAVE_AFTER_IDLE_MS);
+        pending.current = serializeBody(json);
+        if (timer.current) clearTimeout(timer.current);
+        // A failure is on screen by the time this settles, which is all there is to do with it.
+        timer.current = setTimeout(
+          () => void saveNow.current().catch(() => {}),
+          SAVE_AFTER_IDLE_MS,
+        );
       },
     },
     [document.id],
@@ -319,13 +339,39 @@ export function Editor({
     };
   }, [cited, document.id]);
 
-  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+  /** Write `body`, once any write already on its way has landed. */
+  function write(body: string): Promise<Doc> {
+    const id = document.id;
+    const next = writes.current.then(async () => {
+      const saved = await engine.document.write(id, body, revision.current);
+      revision.current = saved.revision;
+      return saved;
+    });
+    writes.current = next.catch(() => undefined);
+    return next;
+  }
 
-  async function save(body: string) {
+  /**
+   * Write what is waiting now, instead of after the pause.
+   *
+   * Resolves once everything typed is on disk — a write already on its way included, so
+   * "saved" means all of it rather than only the newest part. Rejects when what was waiting
+   * could not be written, having said why on screen, so that closing the library can stop
+   * instead of taking the words with it.
+   */
+  async function save() {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = null;
+    const body = pending.current;
+    pending.current = null;
+    if (body === null) {
+      await writes.current;
+      return;
+    }
+
     setState("saving");
     try {
-      const saved = await engine.document.write(document.id, body, revision.current);
-      revision.current = saved.revision;
+      const saved = await write(body);
       setState("clean");
       setMessage(null);
       onSaved(saved);
@@ -337,12 +383,31 @@ export function Editor({
         setMessage(
           "This document changed on disk while you were editing. Nothing has been overwritten. Reopen it to see the version on disk.",
         );
-        return;
+      } else {
+        setState("error");
+        setMessage(thrown instanceof EngineFailure ? thrown.message : String(thrown));
       }
-      setState("error");
-      setMessage(thrown instanceof EngineFailure ? thrown.message : String(thrown));
+      throw thrown;
     }
   }
+
+  useEffect(() => {
+    saveNow.current = save;
+  });
+
+  // Whatever takes the editor away gets what was typed first.
+  useEffect(() => {
+    const release = holdUntilSaved(() => saveNow.current());
+    return () => {
+      release();
+      // Going, so the pause is over: write what is waiting now rather than dropping it. It
+      // used to be dropped, which lost the last few words to anybody who clicked another
+      // document straight after typing them. A failure has nowhere to be shown — this editor
+      // is what would have shown it — and the next one to open the document reads the file
+      // as it is on disk, which is the truth either way.
+      void saveNow.current().catch(() => {});
+    };
+  }, []);
 
   function insert(chosen: Chosen) {
     setCiting(false);
@@ -394,16 +459,13 @@ export function Editor({
     setMessage(null);
 
     try {
-      // Whatever is on screen, on disk, before anything is measured against it.
+      // Whatever is on screen, on disk, before anything is measured against it — behind any
+      // write already on its way, so it carries the revision that one came back with.
       if (timer.current) clearTimeout(timer.current);
+      timer.current = null;
+      pending.current = null;
       const json = editor.getJSON();
-      const saved = await engine.document.write(
-        document.id,
-        serializeBody(json),
-        revision.current,
-      );
-      revision.current = saved.revision;
-
+      const saved = await write(serializeBody(json));
 
       // Widened, if it has to be, so the split cuts no citation, link or picture in half.
       // The person was shown this on the panel before they pressed anything.
