@@ -27,6 +27,8 @@ pub fn run() {
             commands::document_delete,
             commands::document_attach_image,
             commands::document_image,
+            commands::document_backlinks,
+            commands::document_split,
             commands::search,
             commands::source_create,
             commands::source_read,

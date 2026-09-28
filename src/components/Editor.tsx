@@ -1,3 +1,4 @@
+import type { Editor as TipTapEditor, JSONContent } from "@tiptap/core";
 import { EditorContent, useEditor } from "@tiptap/react";
 import Document from "@tiptap/extension-document";
 import Heading from "@tiptap/extension-heading";
@@ -6,22 +7,37 @@ import Text from "@tiptap/extension-text";
 import History from "@tiptap/extension-history";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { collectCitations, collectImages, parseBody, serializeBody } from "../lib/body";
+import {
+  collectCitations,
+  collectImages,
+  headingMarker,
+  offsetOf,
+  parseBody,
+  serializeBody,
+  wholeConstructs,
+} from "../lib/body";
 import { citationKey, insertCitation, toLocator, type Chosen } from "../lib/citation";
 import {
   engine,
   EngineFailure,
   type CitationRequest,
   type Document as Doc,
+  type DocumentRef,
   type Form,
+  type Topic,
 } from "../lib/engine";
+import { insertLink, titlesOf } from "../lib/links";
 import { insertImage } from "../lib/pictures";
+import { Backlinks } from "./Backlinks";
 import { CitationView, RenderedCitations } from "./CitationView";
 import { CitePicker } from "./CitePicker";
+import { DocumentLinks, type LinkTargets } from "./DocumentLinkView";
 import { DocumentImages } from "./ImageView";
 import { ImagePicker } from "./ImagePicker";
+import { LinkPicker } from "./LinkPicker";
 import { ReferenceList } from "./ReferenceList";
 import { RenameableName } from "./RenameableName";
+import { SplitPicker } from "./SplitPicker";
 import { Citation, DocumentImage, DocumentLink } from "./nodes";
 
 /** The levels the toolbar offers. Deeper ones are still read, and still written back. */
@@ -39,17 +55,28 @@ const SAVE_AFTER_IDLE_MS = 600;
 
 export function Editor({
   document,
+  topics,
   onSaved,
   onRename,
+  onOpenDocument,
 }: {
   document: Doc;
+  /** The whole library, for drawing links as titles and for choosing what to link to. */
+  topics: Topic[];
   onSaved: (d: Doc) => void;
   onRename: (id: string, title: string) => void;
+  onOpenDocument: (id: string) => void;
 }) {
   const [state, setState] = useState<"clean" | "saving" | "conflict" | "error">("clean");
   const [message, setMessage] = useState<string | null>(null);
   const [citing, setCiting] = useState(false);
   const [picturing, setPicturing] = useState(false);
+  const [linking, setLinking] = useState(false);
+  const [splitting, setSplitting] = useState<{ from: number; to: number } | null>(null);
+  const [splittingNow, setSplittingNow] = useState(false);
+
+  // The documents linking here. Asked for once, when a document opens.
+  const [backlinks, setBacklinks] = useState<DocumentRef[]>([]);
 
   // What each citation in this document reads as. Empty until the engine answers.
   const [rendered, setRendered] = useState<Map<string, string | null>>(new Map());
@@ -157,6 +184,12 @@ export function Editor({
         DocumentImage,
       ],
       content: parseBody(document.body),
+      // A toolbar that reports where the cursor is has to be redrawn when the cursor moves.
+      // Without this the editor re-renders only when React has some other reason to, so the
+      // heading buttons showed the block you were in *when you last pressed one*, and Split
+      // stayed switched off however much you selected. It costs a render per transaction, and
+      // everything expensive on this screen is already memoised against its own inputs.
+      shouldRerenderOnTransaction: true,
       onUpdate: ({ editor }) => {
         if (timer.current) clearTimeout(timer.current);
         const json = editor.getJSON();
@@ -211,6 +244,41 @@ export function Editor({
       live = false;
     };
   }, [document.body, document.id]);
+
+  /**
+   * The documents linking here, asked for when this one opens.
+   *
+   * Not on every save, because saving *this* document cannot change who links *to* it —
+   * that only changes when somebody else's document does, which means leaving this screen.
+   * Navigating away and back is the invalidation, as it is everywhere else here.
+   */
+  useEffect(() => {
+    let live = true;
+    engine.document
+      .backlinks(document.id)
+      .then((found) => {
+        if (live) setBacklinks(found ?? []);
+      })
+      .catch(() => {
+        // Keep showing what we have. A failed lookup is no reason to tell somebody
+        // mid-sentence that nothing links to their document any more.
+      });
+    return () => {
+      live = false;
+    };
+  }, [document.id]);
+
+  /**
+   * What a link in the text reads as, and what following one does.
+   *
+   * Titles come from the tree the application already holds rather than from an engine call:
+   * every document in the library is in it, so drawing a link costs nothing and cannot
+   * disagree with the sidebar beside it.
+   */
+  const links = useMemo<LinkTargets>(
+    () => ({ titles: titlesOf(topics), open: onOpenDocument }),
+    [topics, onOpenDocument],
+  );
 
   // Which sources the document on disk cites, as one sorted string.
   //
@@ -305,6 +373,93 @@ export function Editor({
       });
   }
 
+  function linked(id: string) {
+    setLinking(false);
+    if (editor) insertLink(editor, id);
+  }
+
+  /**
+   * Take the selection out into a new document.
+   *
+   * The ordering is the whole of this. The engine splits the **file**, on character offsets
+   * into the body it has; the offsets here are computed from the editor's document. Those are
+   * the same text only once everything typed has been written — so the pending save is
+   * flushed first, deliberately and with its revision carried forward, rather than hoped
+   * about. Splitting on offsets into a stale file takes the wrong words out of somebody's
+   * writing, and the engine cannot tell that it happened.
+   */
+  async function split(title: string) {
+    if (!editor || !splitting) return;
+    setSplittingNow(true);
+    setMessage(null);
+
+    try {
+      // Whatever is on screen, on disk, before anything is measured against it.
+      if (timer.current) clearTimeout(timer.current);
+      const json = editor.getJSON();
+      const saved = await engine.document.write(
+        document.id,
+        serializeBody(json),
+        revision.current,
+      );
+      revision.current = saved.revision;
+
+
+      // Widened, if it has to be, so the split cuts no citation, link or picture in half.
+      // The person was shown this on the panel before they pressed anything.
+      const body = serializeBody(json);
+      const range = wholeConstructs(
+        body,
+        splitStart(editor, json, splitting.from),
+        offsetOf(json, splitting.to),
+      );
+
+      const result = await engine.document.split(
+        document.id,
+        range.start,
+        range.end,
+        title,
+        saved.revision,
+      );
+
+      // The document in the editor is not the document any more: the text that moved is gone
+      // and a link stands in its place. Set without emitting an update, or the change would
+      // look like typing and be written straight back.
+      revision.current = result.original.revision;
+      editor.commands.setContent(parseBody(result.original.body), { emitUpdate: false });
+      setSplitting(null);
+      setState("clean");
+      onSaved(result.original);
+    } catch (thrown) {
+      if (thrown instanceof EngineFailure && thrown.kind === "Conflict") {
+        setState("conflict");
+        setMessage(
+          "This document changed on disk while you were editing, so it has not been split. Nothing has been overwritten. Reopen it to see the version on disk.",
+        );
+      } else {
+        setState("error");
+        setMessage(thrown instanceof EngineFailure ? thrown.message : String(thrown));
+      }
+      setSplitting(null);
+    } finally {
+      setSplittingNow(false);
+    }
+  }
+
+  /** What the split would take, and what to call it, worked out from the selection. */
+  function proposeSplit() {
+    if (!editor) return;
+    const { from, to } = editor.state.selection;
+    if (from === to) return;
+    setSplitting({ from, to });
+  }
+
+  // Splitting needs something selected, and saying so by disabling the button beats letting
+  // somebody press it and be told. The editor re-renders on every transaction, selection
+  // included, which is the same thing that keeps the heading buttons showing where the cursor
+  // is.
+  const hasSelection = editor !== null && !editor.state.selection.empty;
+
   return (
     <section className="editor">
       <header>
@@ -343,6 +498,22 @@ export function Editor({
         >
           Picture
         </button>
+        <button
+          className="tool"
+          title="Link to another document"
+          onClick={() => setLinking(true)}
+          disabled={linking}
+        >
+          Link
+        </button>
+        <button
+          className="tool"
+          title="Take the selected text out into a document of its own"
+          onClick={proposeSplit}
+          disabled={splitting !== null || !hasSelection}
+        >
+          Split
+        </button>
       </div>
 
       {message && <p className={state === "conflict" ? "warning" : "error"}>{message}</p>}
@@ -357,13 +528,37 @@ export function Editor({
         />
       )}
 
+      {splitting && (
+        <SplitPicker
+          suggested={suggestedTitle(editor, splitting)}
+          preview={previewOf(editor, splitting)}
+          widened={widenedBy(editor, splitting)}
+          busy={splittingNow}
+          onSplit={(title) => void split(title)}
+          onCancel={() => setSplitting(null)}
+        />
+      )}
+
+      {linking && (
+        <LinkPicker
+          topics={topics}
+          exclude={document.id}
+          onChoose={linked}
+          onCancel={() => setLinking(false)}
+        />
+      )}
+
       <RenderedCitations.Provider value={rendered}>
         <DocumentImages.Provider value={shown}>
-          <EditorContent editor={editor} className="prose" />
+          <DocumentLinks.Provider value={links}>
+            <EditorContent editor={editor} className="prose" />
+          </DocumentLinks.Provider>
         </DocumentImages.Provider>
       </RenderedCitations.Provider>
 
       <ReferenceList entries={cited === "" ? [] : references} />
+
+      <Backlinks entries={backlinks} onOpen={onOpenDocument} />
 
       <footer className="note">
         Markdown with citations, links and pictures. Type <code># </code> for a heading, up to
@@ -372,6 +567,67 @@ export function Editor({
       </footer>
     </section>
   );
+}
+
+/**
+ * Where what moves begins, in the file.
+ *
+ * Almost always just the selection's own offset. The exception is a selection starting at the
+ * first letter of a heading: the hashes live *before* the content, so nobody can highlight
+ * them, and taking them at their word would leave `## [[link]]` behind — a heading wrapped
+ * round a link — and give the new document a first line that used to be a heading and is now
+ * prose. Dragging from the start of a heading means the heading.
+ */
+function splitStart(editor: TipTapEditor, doc: JSONContent, from: number): number {
+  const at = offsetOf(doc, from);
+  const here = editor.state.doc.resolve(from);
+  if (here.parent.type.name !== "heading" || from !== here.start()) return at;
+  return Math.max(0, at - headingMarker(Number(here.parent.attrs["level"] ?? 1)).length);
+}
+
+/**
+ * What to call the new document, guessed from what is moving.
+ *
+ * A heading at the top of the selection is almost always the answer — splitting off a section
+ * is the ordinary case, and the section already has a name. Anything else is left blank rather
+ * than guessed at from the prose, because a wrong suggestion in a text box is worse than an
+ * empty one: it is a thing to notice and delete rather than a thing to type.
+ *
+ * Asked of the block the selection starts in, not of the text it covers. A heading's hashes
+ * live before its content, so a person selecting a heading never selects them and looking for
+ * `## ` in what moves finds nothing.
+ */
+function suggestedTitle(
+  editor: TipTapEditor | null,
+  at: { from: number; to: number },
+): string {
+  if (!editor) return "";
+  const block = editor.state.doc.resolve(at.from).parent;
+  return block.type.name === "heading" ? block.textContent.trim() : "";
+}
+
+/**
+ * Whether the selection has to grow to keep a construct whole, and what kind.
+ *
+ * Worked out for the panel rather than only at the moment of splitting, because a selection
+ * quietly growing is a surprise, and a surprise about somebody's own writing is the one kind
+ * this application must not spring.
+ */
+function widenedBy(editor: TipTapEditor | null, at: { from: number; to: number }): boolean {
+  if (!editor) return false;
+  const json = editor.getJSON();
+  return wholeConstructs(
+    serializeBody(json),
+    splitStart(editor, json, at.from),
+    offsetOf(json, at.to),
+  ).widened;
+}
+
+/** The start of what would move, so the choice can be checked against the text. */
+function previewOf(editor: TipTapEditor | null, at: { from: number; to: number }): string {
+  if (!editor) return "";
+  const text = editor.state.doc.textBetween(at.from, at.to, " ").trim();
+  return text.length > 240 ? `${text.slice(0, 240)}…` : text;
 }
 
 /** Re-exported so the node can find its view without importing this module. */

@@ -21,6 +21,7 @@ import type { Keep } from "./bindings/Keep";
 import type { SavedSource } from "./bindings/SavedSource";
 import type { SearchHit } from "./bindings/SearchHit";
 import type { Source } from "./bindings/Source";
+import type { Split } from "./bindings/Split";
 import type { SourceDate } from "./bindings/SourceDate";
 import type { SourceType } from "./bindings/SourceType";
 import type { Topic } from "./bindings/Topic";
@@ -43,6 +44,7 @@ export type {
   Source,
   SourceDate,
   SourceType,
+  Split,
   Topic,
 };
 
@@ -142,6 +144,30 @@ export const engine = {
      */
     image: (document: string, name: string) =>
       call<string | null>("document_image", { document, name }),
+    /**
+     * The documents linking here.
+     *
+     * Derived from the `[[…]]` in other documents rather than stored anywhere, so it cannot
+     * go out of step with the writing: a link deleted in a text editor stops being a
+     * backlink the next time the library is read.
+     */
+    backlinks: (document: string) =>
+      call<DocumentRef[]>("document_backlinks", { document }),
+    /**
+     * Take part of a document out into a new one, leaving a link behind.
+     *
+     * `start` and `end` are **character offsets into the body last read**, not editor
+     * positions — see `offsetOf` in `body.ts` for why those are different things. The
+     * revision comes with them because offsets into a file that changed underneath address
+     * different text, and splitting on them takes the wrong words out of a document.
+     */
+    split: (
+      document: string,
+      start: number,
+      end: number,
+      title: string,
+      revision: Revision,
+    ) => call<Split>("document_split", { document, start, end, title, revision }),
   },
   source: {
     create: (source: Source) => call<SavedSource>("source_create", { source }),

@@ -73,14 +73,29 @@ document to another topic and its pictures move with it.
 
 **Saving.** Continuous. There is no save button and no unsaved state to lose.
 
-**Splitting.** Select part of a document and choose **Split into new document**. The
-selection moves into a new document in the same topic, its citations come with it, and a
-link is left where it used to be.
+**Splitting.** Select the part you want to move and click **Split** above the page. It asks
+what to call the new document — and if you started your selection at a heading, it has already
+filled that in — and shows you what will move before anything happens.
 
-**Linking.** Type `[[` and start typing a document's name to link to it. Links are
-two-directional: at the foot of every document, **Linked from** lists every document that
-points here. That list is how you notice that two topics you thought were separate have been
-talking to each other for a while.
+The selection moves into a new document in the same topic, its citations come with it, and a
+link is left where it used to be. Your pictures keep working, because the new document sits in
+the same folder as the one it came out of.
+
+Starting a selection at a heading takes the heading with it, even though you cannot highlight
+the `##` itself. That is almost always what you meant — you are moving a section, and the
+section has a name.
+
+**Linking.** Click **Link** above the page and choose a document. The link appears in your
+writing as that document's title, and clicking it takes you there.
+
+The link is stored as the document's identifier, not its name — so rename either document
+afterwards and the link still reads correctly, with nothing to go and fix. If you delete the
+document a link points at, the link says so plainly rather than disappearing: your sentence is
+still your sentence, and you can see what needs changing.
+
+Links are two-directional. At the foot of every document, **Linked from** lists every document
+that points here — you do nothing to make that happen. That list is how you notice that two
+topics you thought were separate have been talking to each other for a while.
 
 **Renaming.** Double-click the title — in the sidebar or above the page you are writing —
 or click the pencil that appears when you hover it. Enter keeps the new name, Escape throws it

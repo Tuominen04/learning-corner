@@ -145,11 +145,7 @@ export function serializeBody(doc: JSONContent): string {
 function serializeBlock(block: JSONContent): string {
   const text = (block.content ?? []).map(serializeInline).join("");
   if (block.type !== HEADING) return text;
-  // Clamped rather than trusted. A level outside 1-6 cannot come from `parseBody` or from the
-  // editor's own schema, and writing `####### ` would be a line no reader treats as a heading
-  // — so the document would silently stop saying what it said.
-  const level = Math.min(Math.max(Number(block.attrs?.["level"] ?? 1) || 1, 1), 6);
-  return `${"#".repeat(level)} ${text}`;
+  return `${headingPrefix(block)}${text}`;
 }
 
 function serializeInline(node: JSONContent): string {
@@ -171,6 +167,122 @@ function serializeInline(node: JSONContent): string {
     default:
       return "";
   }
+}
+
+/**
+ * The syntax a body carries that must never be cut in half.
+ *
+ * Deliberately more permissive than the patterns above. Those decide what the editor
+ * *renders*; this decides what must survive being cut, and the dangerous case is exactly the
+ * construct the editor did **not** render — `[^cite:…@page:44]`, a link to a document that is
+ * gone, anything hand-typed. Unrendered means it is ordinary text in the editor, so a person
+ * can put a selection boundary in the middle of it, and a split there leaves half an
+ * identifier lying in their file.
+ */
+const CONSTRUCTS = /\[\^cite:[^\]\n]*\]|\[\[[^\]\n]*\]\]|!\[[^\]\n]*\]\([^)\n]*\)/g;
+
+/** A range widened, if it needs it, so that it cuts nothing in half. */
+export type Whole = { start: number; end: number; widened: boolean };
+
+/**
+ * Push a range outwards until it breaks no construct.
+ *
+ * Outwards rather than inwards, and never refused. A whole citation moving somewhere the
+ * person did not quite intend is visible and undoable; half of one left behind is their file
+ * carrying text that means nothing, which is the outcome this whole file exists to prevent.
+ *
+ * `widened` is reported rather than done quietly, because it changes what moves and the
+ * person is about to be shown what moves.
+ */
+export function wholeConstructs(text: string, start: number, end: number): Whole {
+  let from = start;
+  let to = end;
+
+  for (const match of text.matchAll(CONSTRUCTS)) {
+    const opens = match.index;
+    const closes = opens + match[0].length;
+    if (from > opens && from < closes) from = opens;
+    if (to > opens && to < closes) to = closes;
+  }
+
+  return { start: from, end: to, widened: from !== start || to !== end };
+}
+
+/**
+ * Where a position in the editor lands in the text on disk.
+ *
+ * Two different coordinate systems, and the whole reason splitting needs care. ProseMirror
+ * counts **document positions**: entering a block costs one, leaving it costs one, a character
+ * costs one, and a citation costs **one** no matter that it is thirty characters on disk. The
+ * file counts characters. A selection handed to the engine as though the two agreed would cut
+ * somebody's document in the wrong place.
+ *
+ * Walking both at once is the only honest way to do it, because the relationship is not a
+ * formula: it depends on how many citations, links and pictures are in the way, and on whether
+ * the blocks passed are headings, whose hashes exist on disk and nowhere in the editor.
+ */
+export function offsetOf(doc: JSONContent, target: number): number {
+  let pos = 0;
+  let out = 0;
+
+  const blocks = doc.content ?? [];
+  for (let i = 0; i < blocks.length; i += 1) {
+    // At or before this block's opening token, which is the end of whatever came before it.
+    //
+    // Checked *before* the blank line between blocks is counted, and that order is the whole
+    // of it: a selection ending at a paragraph break would otherwise drag the blank line after
+    // it into what moves, and a split would take one more line than the person highlighted.
+    if (target <= pos) return out;
+
+    // Two characters on disk, and no positions at all in the editor.
+    if (i > 0) out += 2;
+    pos += 1; // entering the block
+
+    const block = blocks[i];
+    if (block?.type === HEADING) out += headingPrefix(block).length;
+
+    for (const child of block?.content ?? []) {
+      // A text node is as wide in the editor as it is on disk. Everything else is one
+      // position and however many characters its syntax takes.
+      const width = child.type === "text" ? (child.text ?? "").length : 1;
+      if (target < pos + width) {
+        return child.type === "text" ? out + (target - pos) : out;
+      }
+      pos += width;
+      out += serializeInline(child).length;
+    }
+
+    if (target <= pos) return out;
+    pos += 1; // leaving the block
+  }
+
+  return out;
+}
+
+/**
+ * The hashes and the space a heading carries on disk, and nowhere in the editor.
+ *
+ * One definition, used both to write a heading and to measure it. Two would be two chances to
+ * disagree, and a disagreement here is a split landing a character or two off.
+ *
+ * The level is clamped rather than trusted. A level outside 1-6 cannot come from `parseBody`
+ * or from the editor's own schema, and writing `####### ` would be a line no reader treats as
+ * a heading — so the document would silently stop saying what it said.
+ */
+function headingPrefix(block: JSONContent): string {
+  return headingMarker(Number(block.attrs?.["level"] ?? 1));
+}
+
+/**
+ * The hashes and the space, for a level.
+ *
+ * Exported because the editor needs the same answer when a selection starts at a heading: the
+ * marker is before the content, so a person dragging from the first letter of a heading never
+ * covers it, and a split has to reach back for it.
+ */
+export function headingMarker(level: number): string {
+  const clamped = Math.min(Math.max(level || 1, 1), 6);
+  return `${"#".repeat(clamped)} `;
 }
 
 /** One citation found in the editor's document, and where to look its rendering up. */

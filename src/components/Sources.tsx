@@ -29,6 +29,18 @@ export function Sources({ onOpenDocument }: { onOpenDocument: (id: string) => vo
   const [loading, setLoading] = useState(true);
   const [reloads, setReloads] = useState(0);
 
+  // Which sources are showing where they are used, and what came back.
+  //
+  // Asked for one source at a time, when somebody asks. The alternative — a count on every
+  // row — would be one call per source on every paint, which is the same objection the note
+  // at the top of this file makes about formatting the list.
+  //
+  // Kept for as long as this screen is open, and no longer: editing a document means leaving
+  // here, which unmounts this and throws the answers away. Navigating away and back *is* the
+  // invalidation, exactly as it is for the rendered citations in the editor.
+  const [opened, setOpened] = useState<Set<string>>(new Set());
+  const [citing, setCiting] = useState<Map<string, DocumentRef[]>>(new Map());
+
   /** Ask for the list again. Bumping a counter, so every reload goes down one path. */
   const refresh = useCallback(() => setReloads((n) => n + 1), []);
 
@@ -63,6 +75,46 @@ export function Sources({ onOpenDocument }: { onOpenDocument: (id: string) => vo
     } catch (thrown) {
       setError(thrown instanceof EngineFailure ? thrown.message : String(thrown));
     }
+  }
+
+  /**
+   * Show, or stop showing, the documents citing one source.
+   *
+   * Closing keeps what was fetched. Reopening a source you just looked at should not make
+   * you wait again for an answer that has not changed.
+   */
+  function toggleUses(source: Source) {
+    const id = source.id;
+    if (!id) return;
+
+    const closing = opened.has(id);
+    setOpened((open) => {
+      const next = new Set(open);
+      if (closing) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+    // Only an opening needs an answer, and only if we do not already have one. Closing while
+    // a lookup is still in flight would otherwise start a second.
+    if (closing || citing.has(id)) return;
+
+    setError(null);
+    engine.source
+      .citingDocuments(id)
+      .then((found) => setCiting((had) => new Map(had).set(id, found)))
+      .catch((thrown: unknown) => {
+        // Collapse, rather than sit on "Looking…" for a question that is not going to be
+        // answered. The error is then the only thing on screen making a claim — which beats
+        // a panel implying an answer is still coming, and beats an empty list implying the
+        // source is cited nowhere.
+        setOpened((open) => {
+          const next = new Set(open);
+          next.delete(id);
+          return next;
+        });
+        setError(thrown instanceof EngineFailure ? thrown.message : String(thrown));
+      });
   }
 
   function saved(missing: Field[], type: SourceType) {
@@ -135,6 +187,17 @@ export function Sources({ onOpenDocument }: { onOpenDocument: (id: string) => vo
                   </span>
                 </div>
                 <span className="source-actions">
+                  {/* Not hidden until hover, unlike Edit and Delete. "Which of these am I
+                      actually using" is a question you ask of the whole list, by looking down
+                      it — the same reason the PDF marker stays visible. */}
+                  <button
+                    className="ghost used-in"
+                    aria-expanded={source.id ? opened.has(source.id) : false}
+                    title="Which documents cite this"
+                    onClick={() => toggleUses(source)}
+                  >
+                    Used in
+                  </button>
                   {source.file && (
                     // Reading the paper is the point of keeping it, so it is one click from
                     // the list rather than something you go into an edit form to reach.
@@ -167,6 +230,13 @@ export function Sources({ onOpenDocument }: { onOpenDocument: (id: string) => vo
                   </button>
                 </span>
               </div>
+
+              {source.id && opened.has(source.id) && (
+                <Uses
+                  citing={citing.get(source.id)}
+                  onOpenDocument={onOpenDocument}
+                />
+              )}
             </li>
           ))}
         </ul>
@@ -177,6 +247,65 @@ export function Sources({ onOpenDocument }: { onOpenDocument: (id: string) => vo
         documents; correct a typo once and every one of them is right.
       </p>
     </section>
+  );
+}
+
+/**
+ * Where a source is used, in the list where the source is.
+ *
+ * The question this answers is the one that makes a library of sources worth keeping: a study
+ * is retracted, or you find out the second edition says something different, and you need the
+ * eleven places you leaned on it. Until now the only way to ask was to start deleting the
+ * source and read the warning — which is a terrible way to find out, because the answer
+ * arrives attached to a destructive action.
+ */
+function Uses({
+  citing,
+  onOpenDocument,
+}: {
+  citing: DocumentRef[] | undefined;
+  onOpenDocument: (id: string) => void;
+}) {
+  if (citing === undefined) return <p className="uses empty">Looking…</p>;
+
+  if (citing.length === 0) {
+    return (
+      <p className="uses empty">
+        Nothing cites this yet. Not a problem — a source saved before you need it is the whole
+        point of saving it when you find it.
+      </p>
+    );
+  }
+
+  return (
+    <div className="uses">
+      <p className="uses-count">
+        Cited in {citing.length} document{citing.length === 1 ? "" : "s"}.
+      </p>
+      <CitingList citing={citing} onOpenDocument={onOpenDocument} />
+    </div>
+  );
+}
+
+/** Documents citing a source, each one a way in. Shared, because both places that name them
+ *  want the same thing: the title, and a click that takes you there. */
+function CitingList({
+  citing,
+  onOpenDocument,
+}: {
+  citing: DocumentRef[];
+  onOpenDocument: (id: string) => void;
+}) {
+  return (
+    <ul>
+      {citing.map((doc) => (
+        <li key={doc.id}>
+          <button className="ghost" onClick={() => onOpenDocument(doc.id)}>
+            {doc.title}
+          </button>
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -196,8 +325,9 @@ function describe(source: Source): string {
 
 /**
  * Deleting a source orphans every citation of it, so the documents that would break are named
- * first. This is the screen you are glad of when a study is retracted and you need to find the
- * eleven places you leaned on it.
+ * first — and named as a warning rather than as information, which is the difference between
+ * this and `Uses` above. Asking where a source is used is not something anybody should have to
+ * do by starting to delete it.
  */
 function DeleteConfirmation({
   pending,
@@ -224,15 +354,7 @@ function DeleteConfirmation({
             {citing.length === 1 ? "s" : ""} this source. Deleting it leaves those citations
             pointing at nothing.
           </p>
-          <ul>
-            {citing.map((doc) => (
-              <li key={doc.id}>
-                <button className="ghost" onClick={() => onOpenDocument(doc.id)}>
-                  {doc.title}
-                </button>
-              </li>
-            ))}
-          </ul>
+          <CitingList citing={citing} onOpenDocument={onOpenDocument} />
         </>
       )}
 

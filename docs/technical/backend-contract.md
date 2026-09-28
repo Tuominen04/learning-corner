@@ -73,11 +73,11 @@ loses the source altogether. See [Citation model](citation-model.md).
 | `document.create` | topic id, title | document |
 | `document.read` | id | document, with resolved citations and links |
 | `document.write` | id, content, expected revision | document, or `Conflict` |
-| `document.split` | id, range, new title | both documents; citations in the range move; a link is left behind |
+| `document.split` | id, range, new title, expected revision | both documents; citations in the range move; a link is left behind |
 | `document.rename` | id, title | document |
 | `document.move` | id, topic id | document |
 | `document.delete` | id | `plan` / `apply` |
-| `document.backlinks` | id | documents linking here |
+| `document.backlinks` | id | documents linking here, derived from `[[…]]` and never stored |
 | `document.attachImage` | id, path, `copy`/`move` | the filename to write into the body |
 | `document.image` | id, filename | the picture, or `null` when there is nothing to show |
 
@@ -94,6 +94,18 @@ engine did not resolve, and the interface needs no filesystem permission of its 
 rather than an error when there is nothing to show — a body is plain text, so it may name a
 picture the user has since deleted, or something that is not a filename at all, and neither
 may fail the document around it.
+
+`document.split` is one operation rather than three calls, because a crash between writing the
+new document and rewriting the old one would lose writing. The order makes the worst outcome a
+duplicate rather than a hole: the new document is written first, so a failure afterwards leaves
+the text in two places, which is visible and fixable.
+
+Its `range` is a **character range into the body the caller last read**, which is why it takes
+a revision as well: offsets into a file that changed underneath address different text, and
+splitting on them takes the wrong words out of a document. The interface works in editor
+positions, which are a different thing entirely — a citation is one position and thirty-five
+characters — so the conversion happens on the interface side and arrives here in the file's own
+terms. A range landing inside a character is refused rather than panicking.
 
 `document.write` takes the **revision** the interface received from the last read: an opaque
 token the interface stores and passes back, never interprets. If the file changed underneath —
@@ -115,7 +127,7 @@ precisely the case this exists to catch.
 | `source.read` | id | source |
 | `source.list` | filter, sort | sources |
 | `source.delete` | id | `plan` (lists every citing document) / `apply` |
-| `source.citingDocuments` | id | documents citing it, with locators |
+| `source.citingDocuments` | id | the documents citing it, each once |
 | `source.requiredFields` | type | the fields APA 7 requires for that type |
 | `source.attach` | id, path, `copy`/`move` | source, now carrying the copy's filename |
 | `source.detach` | id | source, with the copy deleted |

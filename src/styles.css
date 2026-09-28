@@ -363,6 +363,77 @@ button.small { padding: 0.2rem 0.5rem; font-size: 0.85em; }
 .citation { background: #ecdcc6; color: #7a5220; }
 .doc-link { background: #dbe3ec; color: #35506e; }
 
+/* A link reads as the title of what it points at, and is a way of getting there. Styled to
+   disappear into the sentence apart from the underline on hover — it is part of the writing,
+   not a control sitting in it. */
+button.doc-link-open {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+button.doc-link-open:hover { text-decoration: underline; }
+
+/* A link to a document that is no longer there. The text still says what it said, and this
+   says plainly what needs fixing — deleting a document does not reach into somebody else's
+   sentences to tidy up after itself. */
+.doc-link.missing {
+  background: #f0d4d4;
+  color: #8a3030;
+  text-decoration: underline wavy currentColor;
+}
+
+/* ---- splitting ---- */
+
+/* What would move, shown rather than described. A split rewrites the document somebody is in
+   the middle of writing, and "is this the part you meant" is a better question than "are you
+   sure". */
+.split-preview {
+  border-left: 2px solid var(--line);
+  padding-left: 0.9rem;
+  margin: 0.8rem 0;
+}
+.split-preview .field-label {
+  display: block;
+  font-size: 0.85em;
+  color: var(--ink-soft);
+  margin-bottom: 0.3rem;
+}
+.split-preview p {
+  margin: 0;
+  font-size: 0.9em;
+  max-height: 7rem;
+  overflow-y: auto;
+}
+
+/* ---- linked from ---- */
+
+/* Under the document rather than beside it, like the reference list: this is part of what the
+   document is, not a panel about it. Quieter than the references, because it is something the
+   library noticed rather than something the writer did. */
+.backlinks {
+  max-width: 42rem;
+  margin-top: 1rem;
+  padding: 0.8rem 1.4rem 1rem;
+  border-top: 1px solid var(--line);
+}
+.backlinks h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.82em;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+}
+.backlinks ul { list-style: none; margin: 0; padding: 0; }
+.backlinks li button {
+  font-size: 0.92em;
+  padding: 0.15rem 0;
+  text-align: left;
+}
+.backlinks li button:hover { text-decoration: underline; }
+
 /* ---- messages ---- */
 
 .empty, .note { color: var(--ink-soft); font-size: 0.88em; max-width: 42rem; }
@@ -414,8 +485,34 @@ button.view.selected { background: #2a2d38; color: #fff; border-color: var(--acc
 /* Edit and Delete are actions, and stay out of the way until the row is under the pointer.
    The PDF marker is not an action — it is the answer to "which of these do I actually have
    the paper for", which is a question you ask by scanning the list, never by hovering it. */
-.source-actions > :not(.paper-open) { opacity: 0; }
+.source-actions > :not(.paper-open):not(.used-in) { opacity: 0; }
 .source-row:hover .source-actions > * { opacity: 1; }
+
+/* ---- where a source is used ---- */
+
+/* Open, and it says so — the row stays legible as a row while one of them is expanded. */
+button.used-in[aria-expanded="true"] { color: var(--accent); }
+
+/* Indented under the source rather than beside it, because these belong to the row above.
+   The rule down the left is what says "still the same source" while you read the list. */
+.uses {
+  border-left: 2px solid var(--line);
+  margin: 0 0 0.8rem 0.9rem;
+  padding-left: 0.9rem;
+}
+.uses-count {
+  margin: 0 0 0.3rem;
+  font-size: 0.82em;
+  color: var(--ink-soft);
+}
+.uses ul { list-style: none; margin: 0; padding: 0; }
+.uses li button {
+  font-size: inherit;
+  padding: 0.15rem 0;
+  text-align: left;
+}
+.uses li button:hover { text-decoration: underline; }
+p.uses { font-size: 0.88em; max-width: 42rem; }
 
 .saved-note {
   border-left: 2px solid var(--accent);

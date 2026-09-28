@@ -17,6 +17,7 @@ import Text from "@tiptap/extension-text";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { parseBody, serializeBody } from "./body";
+import { insertLink } from "./links";
 import { insertImage } from "./pictures";
 import { Citation, DocumentImage, DocumentLink } from "../components/nodes";
 
@@ -88,6 +89,45 @@ describe("inserting a picture", () => {
     insertImage(editor, "d.png", "");
 
     expect(serializeBody(editor.getJSON())).toBe("![](d.png)");
+  });
+});
+
+describe("inserting a link", () => {
+  const TARGET = "01J8ZQ9C3P5R7T9V1X3Z5B7D9F";
+
+  it("keeps the words you selected and puts the link after them", () => {
+    // The third construct to need the collapse. `insertContent` replaces a live selection, so
+    // without it, linking a phrase you had selected would delete the phrase — and the autosave
+    // would write the loss to disk a moment later.
+    const editor = open("Protein repairs muscle tissue");
+
+    const text = "Protein repairs muscle tissue";
+    const from = 1 + text.indexOf("muscle tissue");
+    editor.commands.setTextSelection({ from, to: from + "muscle tissue".length });
+
+    insertLink(editor, TARGET);
+
+    expect(serializeBody(editor.getJSON())).toBe(
+      `Protein repairs muscle tissue[[${TARGET}]]`,
+    );
+  });
+
+  it("writes at the cursor when nothing is selected", () => {
+    const editor = open("See also ");
+    editor.commands.focus("end");
+
+    insertLink(editor, TARGET);
+
+    expect(serializeBody(editor.getJSON())).toBe(`See also [[${TARGET}]]`);
+  });
+
+  it("leaves the text after the cursor alone", () => {
+    const editor = open("One two three");
+    editor.commands.setTextSelection({ from: 1, to: 4 }); // "One"
+
+    insertLink(editor, TARGET);
+
+    expect(serializeBody(editor.getJSON())).toBe(`One[[${TARGET}]] two three`);
   });
 });
 
