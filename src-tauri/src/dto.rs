@@ -71,6 +71,29 @@ pub struct Document {
     pub revision: Revision,
 }
 
+/// The two documents a split leaves behind.
+///
+/// Both, because the interface has to redraw both: the one being written now carries a link
+/// where the text used to be, and the new one has to appear in the tree. Returning only the
+/// new document would leave the editor showing text that is no longer in the file.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub struct Split {
+    /// The document that was split, now carrying a link where the text used to be.
+    pub original: Document,
+    /// The new document, holding the text that was taken out.
+    pub taken: Document,
+}
+
+impl From<plc_engine::api::Split> for Split {
+    fn from(split: plc_engine::api::Split) -> Self {
+        Split {
+            original: split.original.into(),
+            taken: split.taken.into(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "../../src/lib/bindings/")]
 pub struct SearchHit {
@@ -629,6 +652,7 @@ mod export_bindings {
         Form::export_all(&config).unwrap();
         Locator::export_all(&config).unwrap();
         CitationRequest::export_all(&config).unwrap();
+        Split::export_all(&config).unwrap();
     }
 }
 
