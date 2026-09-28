@@ -68,7 +68,8 @@ loses the source altogether. See [Citation model](citation-model.md).
 | `topic.create` | parent topic (optional), name | topic |
 | `topic.rename` | id, name | topic |
 | `topic.move` | id, new parent | topic |
-| `topic.delete` | id, disposition for contents | `plan` / `apply` — never deletes documents implicitly |
+| `topic.deletePlan` | id | every document anywhere below it, by name, and how many topics |
+| `topic.delete` | id, `delete` / `move-up` | nothing — there is no default for the contents, on purpose |
 | `topic.tree` | — | the full topic tree |
 | `document.create` | topic id, title | document |
 | `document.read` | id | document, with resolved citations and links |

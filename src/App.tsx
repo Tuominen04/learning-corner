@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 
+import { DeleteConfirm, type Deleting } from "./components/DeleteConfirm";
 import { Editor } from "./components/Editor";
 import { LibraryPicker } from "./components/LibraryPicker";
 import { Search } from "./components/Search";
@@ -28,6 +29,11 @@ export function App() {
   // place you go. While there is a query the results stand in for the tree; clear it and the
   // tree is back, unchanged.
   const [query, setQuery] = useState("");
+
+  // What is being deleted, while the confirmation is up. The confirmation takes the main area
+  // rather than a corner of the sidebar, because it has a list of titles to show and the
+  // sidebar is too narrow to read one in.
+  const [deleting, setDeleting] = useState<Deleting | null>(null);
 
   /**
    * Open a document, from wherever somebody asked.
@@ -94,6 +100,30 @@ export function App() {
         }}
       />
     );
+  }
+
+  /**
+   * What happens after something is deleted.
+   *
+   * The open document may have been the thing deleted, or inside the topic that was, or
+   * *moved* by it — "keep them" lifts documents into the parent, which changes their topic
+   * and nothing else. Asking the engine is simpler and more honest than working out which of
+   * those happened from here: if it can still be read it is still there, and if it cannot,
+   * the editor must not go on showing text that no longer exists anywhere.
+   */
+  function afterDelete() {
+    setDeleting(null);
+    const was = open?.id;
+    void guard(async () => {
+      if (was) {
+        try {
+          setOpen(await engine.document.read(was));
+        } catch {
+          setOpen(null);
+        }
+      }
+      await refresh();
+    });
   }
 
   // Renaming a document reaches two places: the tree, and the open document's own header.
@@ -192,6 +222,7 @@ export function App() {
             })
           }
           onRenameDocument={renameDocument}
+          onDelete={setDeleting}
         />
         )}
 
@@ -212,7 +243,16 @@ export function App() {
 
       <main>
         {error && <p className="error">{error}</p>}
-        {view === "sources" ? (
+        {deleting ? (
+          <DeleteConfirm
+            // Keyed, so opening the confirmation for something else starts it afresh rather
+            // than showing the last thing's contents for a moment.
+            key={`${deleting.kind}:${deleting.id}`}
+            what={deleting}
+            onDeleted={afterDelete}
+            onCancel={() => setDeleting(null)}
+          />
+        ) : view === "sources" ? (
           <Sources onOpenDocument={openDocument} />
         ) : open ? (
           <Editor

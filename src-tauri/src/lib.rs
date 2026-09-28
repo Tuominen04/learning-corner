@@ -20,6 +20,8 @@ pub fn run() {
             commands::topic_tree,
             commands::topic_create,
             commands::topic_rename,
+            commands::topic_delete_plan,
+            commands::topic_delete,
             commands::document_create,
             commands::document_read,
             commands::document_write,
