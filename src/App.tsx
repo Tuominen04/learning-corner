@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { DeleteConfirm, type Deleting } from "./components/DeleteConfirm";
 import { Editor } from "./components/Editor";
 import { LibraryPicker, type Opened } from "./components/LibraryPicker";
+import { RenameableName } from "./components/RenameableName";
 import { Search } from "./components/Search";
 import { Sources } from "./components/Sources";
 import { TopicTree } from "./components/TopicTree";
@@ -273,7 +274,20 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
       <aside>
         <div className="library">
           <div className="library-head">
-            <strong title={opened.path}>{library.name}</strong>
+            {/* The folder, on hover: two libraries can share a name — a backup opened from a
+                drive is called exactly what the original is — and only where it is tells
+                them apart. */}
+            <span className="library-name" title={opened.path}>
+              <RenameableName
+                name={library.name}
+                label="library"
+                onRename={(name) =>
+                  void guard(async () => {
+                    setLibrary(await engine.library.rename(name));
+                  })
+                }
+              />
+            </span>
             <button
               className="ghost switch"
               onClick={() => void close()}

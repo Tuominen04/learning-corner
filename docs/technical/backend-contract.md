@@ -57,6 +57,7 @@ loses the source altogether. See [Citation model](citation-model.md).
 | `library.create` | path, name | library summary |
 | `library.open` | path | library summary, or `FormatTooNew` / `MigrationRequired` |
 | `library.close` | — | — |
+| `library.rename` | name | library summary. The name only: the library's folder is the user's, and is never renamed or moved |
 | `library.migrate` | path | summary, and the path of the pre-migration copy |
 | `library.status` | — | counts, index freshness, unresolved conflicts, incomplete sources |
 | `library.rebuildIndex` | — | progress events, then a summary |

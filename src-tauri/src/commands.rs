@@ -71,6 +71,32 @@ pub fn library_open(
     Ok(status.into())
 }
 
+/// Give the open library another name. Its folder keeps the one it has.
+#[tauri::command]
+pub fn library_rename(
+    state: State<'_, OpenLibrary>,
+    recent: State<'_, Recent>,
+    name: String,
+) -> Answer<LibraryStatus> {
+    with(&state, |e| rename_library(e, &recent, name)).map(LibraryStatus::from)
+}
+
+/// The rename, and the start screen's list hearing about it — the list shows libraries by
+/// name. Apart from the command so it can be tested without a window.
+fn rename_library(
+    engine: &mut Engine,
+    recent: &Recent,
+    name: String,
+) -> Result<plc_engine::api::Status, Error> {
+    engine.library_rename(name)?;
+    let status = engine.status()?;
+    // Logged and not reported, like everything about that list: the rename itself worked.
+    if let Err(e) = recent.renamed(engine.root(), &status.name) {
+        eprintln!("the list of recent libraries was not updated: {e}");
+    }
+    Ok(status)
+}
+
 /// Put a library that has just opened at the top of the start screen's list.
 ///
 /// A failure goes to the log and nowhere else. The list is a convenience, and a library that
@@ -560,6 +586,33 @@ pub fn citation_reference_list(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_renamed_library_is_listed_under_its_new_name() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path().join("learning");
+        let mut engine = Engine::create(&root, "Learning").unwrap();
+        let recent = Recent::at(Some(dir.path().join("settings").join(crate::recent::FILE)));
+        recent.opened(&root, "Learning").unwrap();
+
+        let status = rename_library(&mut engine, &recent, "Nutrition".into()).unwrap();
+
+        assert_eq!(status.name, "Nutrition");
+        assert_eq!(recent.list()[0].name, "Nutrition");
+        assert!(root.is_dir(), "the folder must keep its name");
+    }
+
+    #[test]
+    fn a_refused_name_is_not_listed() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path().join("learning");
+        let mut engine = Engine::create(&root, "Learning").unwrap();
+        let recent = Recent::at(Some(dir.path().join("settings").join(crate::recent::FILE)));
+        recent.opened(&root, "Learning").unwrap();
+
+        assert!(rename_library(&mut engine, &recent, "   ".into()).is_err());
+        assert_eq!(recent.list()[0].name, "Learning");
+    }
 
     fn png(dir: &std::path::Path, name: &str) -> std::path::PathBuf {
         let path = dir.join(name);

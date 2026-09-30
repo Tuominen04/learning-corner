@@ -109,14 +109,18 @@ aside {
   background: var(--panel);
 }
 .library { margin-bottom: 1.2rem; }
-.library-head { display: flex; align-items: baseline; gap: 0.4rem; }
-.library-head strong {
-  flex: 1;
-  min-width: 0;
+.library-head { display: flex; align-items: center; gap: 0.4rem; }
+.library-name { flex: 1; min-width: 0; }
+.library-name .name {
+  font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* In the flow rather than overlaid, as in the editor's heading: past the name is where the
+   Switch button is, and a pencil drawn over a button is two controls in one place. */
+.library-name .pencil { position: static; flex: none; margin-left: 0.2rem; }
+.library-name .rename-input { font-weight: 600; }
 .library-head .switch { flex: none; }
 .counts { font-size: 0.82em; color: var(--ink-soft); }
 
