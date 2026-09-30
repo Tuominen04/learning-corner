@@ -13,9 +13,11 @@ import {
   isDesktopRuntime,
   shell,
   type Document,
+  type LibraryFolder,
   type LibraryStatus,
   type Topic,
 } from "./lib/engine";
+import { basename } from "./lib/paths";
 import { couldNotOpen } from "./lib/recent";
 import { saveEverything } from "./lib/saving";
 
@@ -100,6 +102,24 @@ export function App() {
 }
 
 /**
+ * Why a renamed library's folder kept its old name — or nothing, when it followed.
+ *
+ * Said once, at the moment it happens. Somebody who renames a library and then finds the old
+ * name still on the folder in their file manager deserves to have been told why, rather than
+ * to decide the rename did not work.
+ */
+function folderNote(folder: LibraryFolder, path: string): string | null {
+  switch (folder) {
+    case "follows":
+      return null;
+    case "shared":
+      return `The folder keeps its name, ${basename(path)}: it holds other things as well as the library, and renaming it would move them too.`;
+    case "drive":
+      return "The folder keeps its name: it is the top of a drive, which is named for the drive.";
+  }
+}
+
+/**
  * Open the library that was open last, if there is one and it can be.
  *
  * Every way this can fail ends in the same place — the start screen, saying why — and the
@@ -144,6 +164,10 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
 
   const [closing, setClosing] = useState(false);
 
+  // Something worth knowing that is not a failure: why a renamed library's folder kept its
+  // name. Cleared by the next thing done, like an error.
+  const [note, setNote] = useState<string | null>(null);
+
   /**
    * Open a document, from wherever somebody asked.
    *
@@ -154,6 +178,7 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
    */
   const openDocument = useCallback((id: string) => {
     setError(null);
+    setNote(null);
     engine.document
       .read(id)
       .then((doc) => {
@@ -262,6 +287,7 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
 
   async function guard(work: () => Promise<void>) {
     setError(null);
+    setNote(null);
     try {
       await work();
     } catch (thrown) {
@@ -277,13 +303,15 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
             {/* The folder, on hover: two libraries can share a name — a backup opened from a
                 drive is called exactly what the original is — and only where it is tells
                 them apart. */}
-            <span className="library-name" title={opened.path}>
+            <span className="library-name" title={library.path}>
               <RenameableName
                 name={library.name}
                 label="library"
                 onRename={(name) =>
                   void guard(async () => {
-                    setLibrary(await engine.library.rename(name));
+                    const renamed = await engine.library.rename(name);
+                    setLibrary(renamed.status);
+                    setNote(folderNote(renamed.folder, renamed.status.path));
                   })
                 }
               />
@@ -386,6 +414,7 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
 
       <main>
         {error && <p className="error">{error}</p>}
+        {note && <p className="folder-note">{note}</p>}
         {deleting ? (
           <DeleteConfirm
             // Keyed, so opening the confirmation for something else starts it afresh rather

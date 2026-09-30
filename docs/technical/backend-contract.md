@@ -54,12 +54,12 @@ loses the source altogether. See [Citation model](citation-model.md).
 
 | Operation | Takes | Returns |
 | --------- | ----- | ------- |
-| `library.create` | path, name | library summary |
+| `library.create` | location, name | library summary. Made in a new folder named after the library, inside `location`; refused anywhere inside another library |
 | `library.open` | path | library summary, or `FormatTooNew` / `MigrationRequired` |
 | `library.close` | — | — |
-| `library.rename` | name | library summary. The name only: the library's folder is the user's, and is never renamed or moved |
+| `library.rename` | name | library summary, and what became of its folder: it follows the name while it holds nothing but the library; one that holds other things too, or is the top of a drive, keeps its name |
 | `library.migrate` | path | summary, and the path of the pre-migration copy |
-| `library.status` | — | counts, index freshness, unresolved conflicts, incomplete sources |
+| `library.status` | — | where the library is, counts, index freshness, unresolved conflicts, incomplete sources |
 | `library.rebuildIndex` | — | progress events, then a summary |
 
 Which libraries have been opened before is not part of this contract. The shell keeps that list

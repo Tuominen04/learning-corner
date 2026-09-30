@@ -57,7 +57,8 @@ the user a file-picker dialog and nothing more.
 
 The file is `recent-libraries.toml`: the ten libraries opened most recently, each with its path,
 its name, and when it was opened. Renaming a library renames it here too, without moving it up
-the list. The shell reads and writes it and the engine never sees it —
+the list, and if its folder followed the new name the entry follows the folder. The shell reads
+and writes it and the engine never sees it —
 the list is about this computer, not about any library. Everything else follows from its being
 a convenience:
 

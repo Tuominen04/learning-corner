@@ -22,6 +22,9 @@ pub type Id = String;
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "../../src/lib/bindings/")]
 pub struct LibraryStatus {
+    /// The library's folder. It can change while the library is open: renaming the library
+    /// renames its folder too, when the folder is the library's alone.
+    pub path: String,
     pub name: String,
     pub topics: usize,
     pub documents: usize,
@@ -112,6 +115,37 @@ impl From<plc_engine::api::TopicContents> for TopicContents {
                 .collect(),
         }
     }
+}
+
+/// What renaming a library did with its folder.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "kebab-case")]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub enum LibraryFolder {
+    /// Renamed to follow the name, or already called what the name would call it.
+    Follows,
+    /// Left as it is: it holds things that are not the library's.
+    Shared,
+    /// Left as it is: it is the top of a drive.
+    Drive,
+}
+
+impl From<plc_engine::api::LibraryFolder> for LibraryFolder {
+    fn from(folder: plc_engine::api::LibraryFolder) -> Self {
+        match folder {
+            plc_engine::api::LibraryFolder::Follows => LibraryFolder::Follows,
+            plc_engine::api::LibraryFolder::Shared => LibraryFolder::Shared,
+            plc_engine::api::LibraryFolder::Drive => LibraryFolder::Drive,
+        }
+    }
+}
+
+/// A library just renamed, and what became of its folder.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub struct RenamedLibrary {
+    pub status: LibraryStatus,
+    pub folder: LibraryFolder,
 }
 
 /// What becomes of what is inside a topic being deleted. There is no default, on purpose.
@@ -421,9 +455,12 @@ impl From<plc_engine::Error> for EngineError {
     }
 }
 
-impl From<Status> for LibraryStatus {
-    fn from(s: Status) -> Self {
-        LibraryStatus {
+impl LibraryStatus {
+    /// The open library's summary, and where it is.
+    pub fn of(engine: &plc_engine::api::Engine) -> Result<Self, plc_engine::Error> {
+        let s: Status = engine.status()?;
+        Ok(LibraryStatus {
+            path: engine.root().to_string_lossy().into_owned(),
             name: s.name,
             topics: s.topics,
             documents: s.documents,
@@ -436,7 +473,7 @@ impl From<Status> for LibraryStatus {
                     message: p.message,
                 })
                 .collect(),
-        }
+        })
     }
 }
 
@@ -706,6 +743,7 @@ mod export_bindings {
     fn typescript_bindings_are_current() {
         let config = ts_rs::Config::default();
         LibraryStatus::export_all(&config).unwrap();
+        RenamedLibrary::export_all(&config).unwrap();
         RecentLibrary::export_all(&config).unwrap();
         Topic::export_all(&config).unwrap();
         Document::export_all(&config).unwrap();

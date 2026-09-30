@@ -22,9 +22,15 @@ You can keep several libraries and switch between them. That is usually the righ
 two subjects have nothing to do with each other:
 
 ```
-~/Learning/            ← nutrition, biology, history
-~/Documents/Russian/   ← language study, texts, songs
+~/learning/            ← nutrition, biology, history
+~/Documents/russian/   ← language study, texts, songs
 ```
+
+To make one, give it a name on the start screen, choose **Create a library…**, and pick where
+it should go. The app makes a folder for it there, named after it — *Russian* chosen for
+`~/Documents` becomes `~/Documents/russian/` — so the folder you pick is only ever where the
+library goes, and whatever else is in it stays as it was. A library cannot go inside another
+one; the app says so if you try.
 
 **Switch library**, at the top of the sidebar, closes the library you are in and takes you back
 to the start screen. The libraries you have opened before are listed there, the most recent
@@ -37,8 +43,9 @@ and leaves the choice to you. A library that cannot be found stays on the list, 
 you take it off with **×**. Taking it off the list does nothing to the library itself.
 
 The list is kept in the app's own settings folder — usually
-`~/.config/personal-learning-corner/` — and not in any library, so it never travels with one. Deleting it costs you the list and nothing
-else: the next start opens on the start screen, and your libraries are all where they were.
+`~/.config/personal-learning-corner/` — and not in any library, so it never travels with one.
+Deleting it costs you the list and nothing else: the next start opens on the start screen, and
+your libraries are all where they were.
 
 Sources are shared *within* a library, not between libraries. If you cite the same book in
 two libraries, you save it in each. That is a fair trade for libraries that can be moved,
@@ -78,10 +85,11 @@ called — often `untitled.md`, since that is what a new document starts as. Ren
 puts the file right, and renaming it to the name it already has counts: open the rename box
 and press Enter.
 
-**The library's own name** renames the same way, at the top of the sidebar. Its folder is the
-exception: it keeps the name it has, because you chose that folder and it may be one you use
-for other things too. Rename or move the folder yourself whenever you like — then open it from
-its new place, as in [Moving a library](#moving-a-library).
+**The library's own name** renames the same way, at the top of the sidebar, and its folder
+follows it — as long as the folder holds only the library. If you made a library straight into
+a folder that has other things in it too, that folder keeps its name, because renaming it would
+move everything else in it as well; the app says so when it happens. The same goes for a
+library at the very top of a drive, whose folder is named for the drive.
 
 Renaming files **outside** the app is a different matter, see below.
 

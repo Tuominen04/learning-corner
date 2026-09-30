@@ -15,7 +15,8 @@ use tauri::State;
 
 use crate::dto::{
     CitationRequest, Document, DocumentRef, EngineError, Field, Form, Keep, LibraryStatus, Locator,
-    RecentLibrary, SavedSource, SearchHit, Source, SourceType, Split, Topic, TopicContents,
+    RecentLibrary, RenamedLibrary, SavedSource, SearchHit, Source, SourceType, Split, Topic,
+    TopicContents,
 };
 use crate::recent::Recent;
 
@@ -44,18 +45,20 @@ fn id(raw: &str) -> Result<Id, Error> {
 
 // ---- library -------------------------------------------------------------------
 
+/// Make a new library in a folder of its own, named after it, inside `location`.
 #[tauri::command]
 pub fn library_create(
     state: State<'_, OpenLibrary>,
     recent: State<'_, Recent>,
-    path: String,
+    location: String,
     name: String,
 ) -> Answer<LibraryStatus> {
-    let engine = Engine::create(&path, name).map_err(EngineError::from)?;
-    let status = engine.status().map_err(EngineError::from)?;
-    remember(&recent, &path, &status.name);
+    let engine = Engine::create_in(&location, name).map_err(EngineError::from)?;
+    let status = LibraryStatus::of(&engine).map_err(EngineError::from)?;
+    // The folder the library was made in, not the one that was chosen to put it in.
+    remember(&recent, &status.path, &status.name);
     *state.0.lock().unwrap() = Some(engine);
-    Ok(status.into())
+    Ok(status)
 }
 
 #[tauri::command]
@@ -65,36 +68,42 @@ pub fn library_open(
     path: String,
 ) -> Answer<LibraryStatus> {
     let engine = Engine::open(&path).map_err(EngineError::from)?;
-    let status = engine.status().map_err(EngineError::from)?;
+    let status = LibraryStatus::of(&engine).map_err(EngineError::from)?;
     remember(&recent, &path, &status.name);
     *state.0.lock().unwrap() = Some(engine);
-    Ok(status.into())
+    Ok(status)
 }
 
-/// Give the open library another name. Its folder keeps the one it has.
+/// Give the open library another name — and its folder too, when the folder is its alone.
 #[tauri::command]
 pub fn library_rename(
     state: State<'_, OpenLibrary>,
     recent: State<'_, Recent>,
     name: String,
-) -> Answer<LibraryStatus> {
-    with(&state, |e| rename_library(e, &recent, name)).map(LibraryStatus::from)
+) -> Answer<RenamedLibrary> {
+    with(&state, |e| rename_library(e, &recent, name))
 }
 
-/// The rename, and the start screen's list hearing about it — the list shows libraries by
-/// name. Apart from the command so it can be tested without a window.
+/// The rename, and the start screen's list hearing about it: the list shows libraries by name
+/// and finds them by folder, and both can change. Apart from the command so it can be tested
+/// without a window.
 fn rename_library(
     engine: &mut Engine,
     recent: &Recent,
     name: String,
-) -> Result<plc_engine::api::Status, Error> {
-    engine.library_rename(name)?;
-    let status = engine.status()?;
+) -> Result<RenamedLibrary, Error> {
+    // Where the list knows it from, resolved while there is still something there to resolve.
+    let from = std::fs::canonicalize(engine.root()).unwrap_or_else(|_| engine.root().into());
+    let folder = engine.library_rename(name)?;
+    let status = LibraryStatus::of(engine)?;
     // Logged and not reported, like everything about that list: the rename itself worked.
-    if let Err(e) = recent.renamed(engine.root(), &status.name) {
+    if let Err(e) = recent.renamed(&from, engine.root(), &status.name) {
         eprintln!("the list of recent libraries was not updated: {e}");
     }
-    Ok(status)
+    Ok(RenamedLibrary {
+        status,
+        folder: folder.into(),
+    })
 }
 
 /// Put a library that has just opened at the top of the start screen's list.
@@ -115,14 +124,14 @@ pub fn library_close(state: State<'_, OpenLibrary>) {
 
 #[tauri::command]
 pub fn library_status(state: State<'_, OpenLibrary>) -> Answer<LibraryStatus> {
-    with(&state, |e| e.status().map(LibraryStatus::from))
+    with(&state, |e| LibraryStatus::of(e))
 }
 
 #[tauri::command]
 pub fn library_rebuild_index(state: State<'_, OpenLibrary>) -> Answer<LibraryStatus> {
     with(&state, |e| {
         e.rebuild_index()?;
-        e.status().map(LibraryStatus::from)
+        LibraryStatus::of(e)
     })
 }
 
@@ -588,18 +597,42 @@ mod tests {
     use super::*;
 
     #[test]
-    fn a_renamed_library_is_listed_under_its_new_name() {
+    fn a_renamed_library_is_listed_under_its_new_name_where_its_folder_went() {
         let dir = tempfile::tempdir().unwrap();
         let root = dir.path().join("learning");
         let mut engine = Engine::create(&root, "Learning").unwrap();
         let recent = Recent::at(Some(dir.path().join("settings").join(crate::recent::FILE)));
         recent.opened(&root, "Learning").unwrap();
 
-        let status = rename_library(&mut engine, &recent, "Nutrition".into()).unwrap();
+        let renamed = rename_library(&mut engine, &recent, "Nutrition".into()).unwrap();
 
-        assert_eq!(status.name, "Nutrition");
-        assert_eq!(recent.list()[0].name, "Nutrition");
-        assert!(root.is_dir(), "the folder must keep its name");
+        let moved = dir.path().join("nutrition");
+        assert_eq!(renamed.folder, crate::dto::LibraryFolder::Follows);
+        assert_eq!(renamed.status.name, "Nutrition");
+        assert_eq!(renamed.status.path, moved.to_string_lossy());
+        let listed = &recent.list()[0];
+        assert_eq!(listed.name, "Nutrition");
+        assert_eq!(listed.path, std::fs::canonicalize(&moved).unwrap());
+    }
+
+    #[test]
+    fn a_library_sharing_its_folder_is_listed_under_its_new_name_where_it_was() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path().join("learning-corner");
+        let mut engine = Engine::create(&root, "Learning").unwrap();
+        std::fs::write(root.join("somebody-elses.txt"), "not the library's").unwrap();
+        let recent = Recent::at(Some(dir.path().join("settings").join(crate::recent::FILE)));
+        recent.opened(&root, "Learning").unwrap();
+
+        let renamed = rename_library(&mut engine, &recent, "Nutrition".into()).unwrap();
+
+        assert_eq!(renamed.folder, crate::dto::LibraryFolder::Shared);
+        assert_eq!(renamed.status.path, root.to_string_lossy());
+        let listed = &recent.list()[0];
+        assert_eq!(
+            (listed.name.as_str(), listed.path.clone()),
+            ("Nutrition", std::fs::canonicalize(&root).unwrap())
+        );
     }
 
     #[test]

@@ -14,9 +14,11 @@ import type { DocumentRef } from "./bindings/DocumentRef";
 import type { EngineError } from "./bindings/EngineError";
 import type { Field } from "./bindings/Field";
 import type { Form } from "./bindings/Form";
+import type { LibraryFolder } from "./bindings/LibraryFolder";
 import type { LibraryStatus } from "./bindings/LibraryStatus";
 import type { Locator } from "./bindings/Locator";
 import type { RecentLibrary } from "./bindings/RecentLibrary";
+import type { RenamedLibrary } from "./bindings/RenamedLibrary";
 import type { Role } from "./bindings/Role";
 import type { Keep } from "./bindings/Keep";
 import type { SavedSource } from "./bindings/SavedSource";
@@ -39,9 +41,11 @@ export type {
   Field,
   Form,
   Keep,
+  LibraryFolder,
   LibraryStatus,
   Locator,
   RecentLibrary,
+  RenamedLibrary,
   Role,
   SavedSource,
   SearchHit,
@@ -108,14 +112,18 @@ async function call<T>(command: string, args?: Record<string, unknown>): Promise
 
 export const engine = {
   library: {
-    create: (path: string, name: string) =>
-      call<LibraryStatus>("library_create", { path, name }),
+    /** A new library, in a folder of its own named after it, inside `location`. */
+    create: (location: string, name: string) =>
+      call<LibraryStatus>("library_create", { location, name }),
     open: (path: string) => call<LibraryStatus>("library_open", { path }),
     close: () => call<void>("library_close"),
     status: () => call<LibraryStatus>("library_status"),
     rebuildIndex: () => call<LibraryStatus>("library_rebuild_index"),
-    /** A new name for the open library. Its folder keeps the name it has. */
-    rename: (name: string) => call<LibraryStatus>("library_rename", { name }),
+    /**
+     * A new name for the open library, and for its folder too while the folder is the
+     * library's alone. The answer says which, and carries the folder's new path if it moved.
+     */
+    rename: (name: string) => call<RenamedLibrary>("library_rename", { name }),
   },
   topic: {
     tree: () => call<Topic[]>("topic_tree"),
