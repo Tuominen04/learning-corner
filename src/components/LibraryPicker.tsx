@@ -56,14 +56,25 @@ export function LibraryPicker({
       // The folder dialog belongs inside the try. It can fail — a missing permission, no
       // desktop runtime — and a failure outside here escapes as an unhandled rejection, which
       // the person experiences as a button that does nothing at all.
-      const picked = await openFolder({ directory: true, multiple: false });
+      const picked = await openFolder({
+        directory: true,
+        multiple: false,
+        // Two different questions — where a new library goes, and which folder is one — and
+        // the dialog is the place to say which of them is being asked.
+        title:
+          mode === "create"
+            ? "Choose where to put the new library"
+            : "Choose the library's folder",
+      });
       if (typeof picked !== "string") return; // dismissed the dialog
 
+      // A new library gets a folder of its own inside the one chosen, so the status says where
+      // it ended up rather than the chosen folder being it.
       const status =
         mode === "create"
           ? await engine.library.create(picked, name.trim() || "Learning")
           : await engine.library.open(picked);
-      onOpened({ path: picked, status });
+      onOpened({ path: status.path, status });
     } catch (thrown) {
       setError(
         thrown instanceof EngineFailure ? thrown.message : String(thrown),
@@ -78,7 +89,7 @@ export function LibraryPicker({
     setBusy(true);
     try {
       const status = await engine.library.open(library.path);
-      onOpened({ path: library.path, status });
+      onOpened({ path: status.path, status });
     } catch (thrown) {
       // Asked again rather than trusted: the folder may have gone since the list was shown,
       // or come back, and what the list says should agree with what just happened.
@@ -155,6 +166,9 @@ export function LibraryPicker({
           onChange={(e) => setName(e.target.value)}
           placeholder="Learning"
         />
+        <small className="hint">
+          A folder named after it is made wherever you choose to put it.
+        </small>
       </label>
 
       <div className="row">

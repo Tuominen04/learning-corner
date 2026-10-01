@@ -81,7 +81,8 @@ lexicographically sortable by creation time, generated locally without coordinat
   topic renames its folder. Free to do precisely because the ID is not in the name — and worth
   doing, because a folder of `untitled-2.md` keeps the letter of files-as-source-of-truth
   while losing the point of it. See [ADR 0003](adr/0003-files-as-source-of-truth.md). The
-  library itself is the one exception — see [`library.toml`](#librarytoml).
+  library's own folder follows its name as well, while it is the library's alone — see
+  [`library.toml`](#librarytoml).
 - Links and citations reference IDs, so renaming never breaks them.
 - Resolving an ID to a path is the [index](search-index.md)'s job, and a full scan of the
   library rebuilds that mapping — the ID→path relation is derived, never stored.
@@ -104,10 +105,18 @@ created        = 2026-09-06T10:14:00Z
 ```
 
 `name` is what the application calls the library: the heading of the sidebar, and its entry
-on the start screen. Renaming the library changes `name` and nothing else. Its folder keeps
-the name it has, unlike a topic's — the user chose that folder, it may be one they use for
-more than this library, their whole `Documents` even, and where a library lives is never the
-application's decision.
+on the start screen. The folder is named after it too. A new library is made in a folder of its
+own inside the one the user chose — "Nutrition" in `~/Documents` is `~/Documents/nutrition/`,
+by the same rule as a topic's folder, with a number on the end if the name is taken — and never
+anywhere inside another library, where backing up the outer one would copy the inner.
+
+Renaming the library renames its folder to match, but only while the folder holds nothing but
+the library: the entries in the layout above, and the notes a file manager leaves in any folder
+it shows, such as Dolphin's `.directory`. A folder that holds other things as well — somebody's
+whole `Documents`, or other libraries beside this one, as a library made before this worked
+might — keeps its name, and so does the top of a drive, which is named for the drive. Either
+way `name` changes. It is written before the folder moves, so a move that fails leaves the
+library rightly named where it was.
 
 `format_version` is the format's version, not the application's. On opening a library the
 engine compares it against what it supports:

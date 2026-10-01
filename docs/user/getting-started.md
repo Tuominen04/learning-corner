@@ -34,20 +34,20 @@ run.
 
 ## 2. Choose where your library lives
 
-The first time you open the app, it asks you to pick a folder. Everything you write goes in
-there and nowhere else. After that, the app opens straight into the library you used last.
+The first time you open the app, it asks what to call your library and where to put it. It
+makes a folder for the library there, named after it, and everything you write goes in that
+folder and nowhere else. After that, the app opens straight into the library you used last.
 
-Pick somewhere you will remember and that is easy to back up — your home folder or a
-documents folder is ideal. A good habit is a folder named after the thing you are learning:
+Put it somewhere you will remember and that is easy to back up — your home folder or a
+documents folder is ideal. Name it after the thing you are learning, and the folder follows:
 
 ```
-~/Learning/
-~/Documents/Russian/
+Learning, in your home folder         →  ~/learning/
+Russian, in your documents folder     →  ~/Documents/russian/
 ```
 
-The app creates the folder if it does not exist, and gives it a name you choose. That folder
-and its name are your **library**. You can have more than one, and you can move it later —
-see [Libraries and your files](libraries-and-files.md).
+That folder and its name are your **library**. You can have more than one, rename it — the
+folder follows — and move it later; see [Libraries and your files](libraries-and-files.md).
 
 > **Do not** put your library inside a folder that syncs automatically to a cloud service.
 > Automatic sync tools decide for themselves which copy wins, which is exactly the decision

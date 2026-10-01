@@ -94,22 +94,34 @@ impl Recent {
         write(file, libraries)
     }
 
-    /// Call the library at `path` by its new name, where it already is on the list.
+    /// The library that was at `from` is called `name` now, and lives at `to` — which is
+    /// `from` again unless its folder followed the name.
     ///
     /// It keeps its place and its date: being renamed is not being opened. A library that is
-    /// not on the list is not put there by this.
-    pub fn renamed(&self, path: &Path, name: &str) -> Result<()> {
+    /// not on the list is not put there by this. `from` is looked for as it is given, since
+    /// after a move there is nothing left there to resolve; the caller resolves it first.
+    pub fn renamed(&self, from: &Path, to: &Path, name: &str) -> Result<()> {
         let file = self.file.lock().unwrap_or_else(|e| e.into_inner());
         let Some(file) = file.as_deref() else {
             return Ok(());
         };
 
-        let path = fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf());
+        let from = fs::canonicalize(from).unwrap_or_else(|_| from.to_path_buf());
+        let to = fs::canonicalize(to).unwrap_or_else(|_| to.to_path_buf());
         let mut libraries = read(file);
-        let Some(entry) = libraries.iter_mut().find(|entry| entry.path == path) else {
+        let Some(at) = libraries.iter().position(|entry| entry.path == from) else {
             return Ok(());
         };
-        entry.name = name.to_string();
+        // An old entry for whatever used to be at `to` is about this library now.
+        if from != to {
+            libraries.retain(|entry| entry.path != to);
+        }
+        let at = libraries
+            .iter()
+            .position(|entry| entry.path == from)
+            .unwrap_or(at);
+        libraries[at].path = to;
+        libraries[at].name = name.to_string();
         write(file, libraries)
     }
 
@@ -239,7 +251,7 @@ mod tests {
         recent.opened(&russian, "Russian").unwrap();
         let before = recent.list();
 
-        recent.renamed(&learning, "Nutrition").unwrap();
+        recent.renamed(&learning, &learning, "Nutrition").unwrap();
 
         let after = recent.list();
         assert_eq!(after.len(), 2);
@@ -256,16 +268,52 @@ mod tests {
     fn renaming_a_library_that_is_not_listed_does_not_list_it() {
         let (_dir, recent, [learning, russian, _]) = setup();
         recent.opened(&learning, "Learning").unwrap();
-        recent.renamed(&russian, "Russian").unwrap();
+        recent.renamed(&russian, &russian, "Russian").unwrap();
         assert_eq!(paths(&recent), [learning]);
+    }
+
+    #[test]
+    fn a_library_whose_folder_followed_its_name_is_listed_where_it_went() {
+        let (dir, recent, [learning, russian, _]) = setup();
+        recent.opened(&learning, "Learning").unwrap();
+        recent.opened(&russian, "Russian").unwrap();
+        let nutrition = dir.path().join("nutrition");
+        fs::rename(&learning, &nutrition).unwrap();
+
+        recent.renamed(&learning, &nutrition, "Nutrition").unwrap();
+
+        let after = recent.list();
+        assert_eq!(after.len(), 2);
+        assert_eq!(after[1].path, fs::canonicalize(&nutrition).unwrap());
+        assert_eq!(after[1].name, "Nutrition");
+    }
+
+    #[test]
+    fn an_old_entry_for_the_folder_it_moved_into_is_not_kept_beside_it() {
+        // `nutrition` was a library once, was deleted, and is listed as not found. This one
+        // has just moved into a folder of that name: one entry, and it is this library.
+        let (dir, recent, [learning, _, _]) = setup();
+        let nutrition = dir.path().join("nutrition");
+        recent.opened(&learning, "Learning").unwrap();
+        fs::create_dir(&nutrition).unwrap();
+        recent.opened(&nutrition, "Old nutrition").unwrap();
+        fs::remove_dir(&nutrition).unwrap();
+        fs::rename(&learning, &nutrition).unwrap();
+
+        recent.renamed(&learning, &nutrition, "Nutrition").unwrap();
+
+        let after = recent.list();
+        assert_eq!(after.len(), 1, "{after:?}");
+        assert_eq!(after[0].name, "Nutrition");
     }
 
     #[test]
     fn a_renamed_library_is_found_under_another_spelling_of_its_path() {
         let (_dir, recent, [learning, russian, _]) = setup();
         recent.opened(&learning, "Learning").unwrap();
+        let roundabout = russian.join("..").join("learning").join("");
         recent
-            .renamed(&russian.join("..").join("learning").join(""), "Nutrition")
+            .renamed(&roundabout, &roundabout, "Nutrition")
             .unwrap();
         assert_eq!(recent.list()[0].name, "Nutrition");
     }
