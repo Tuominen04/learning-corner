@@ -32,6 +32,28 @@ type Screen =
 export function App() {
   const [screen, setScreen] = useState<Screen>({ kind: "starting", reopening: null });
 
+  // Closing the window waits for the last words typed to reach the disk. The editor writes
+  // after a pause in the typing, and closing inside that pause used to lose them.
+  useEffect(() => {
+    if (!isDesktopRuntime()) return;
+    let stop: (() => void) | null = null;
+    let gone = false;
+    shell
+      .beforeClose(saveEverything)
+      .then((unlisten) => {
+        if (gone) unlisten();
+        else stop = unlisten;
+      })
+      .catch(() => {
+        // Nothing to listen on. The window still closes — the shell closes it after two
+        // seconds whatever happens — it only loses the chance to save first.
+      });
+    return () => {
+      gone = true;
+      stop?.();
+    };
+  }, []);
+
   // The library that was open last, opened again — when the application starts, and only
   // then. Coming back to the start screen later is somebody choosing another library, and
   // reopening the last one at them would be the opposite of what they asked for.
@@ -99,6 +121,11 @@ export function App() {
         />
       );
   }
+}
+
+/** "1 topic", "3 topics". */
+function count(n: number, noun: string): string {
+  return `${n} ${noun}${n === 1 ? "" : "s"}`;
 }
 
 /**
@@ -326,7 +353,7 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
             </button>
           </div>
           <span className="counts">
-            {library.topics} topics · {library.documents} documents
+            {count(library.topics, "topic")} · {count(library.documents, "document")}
           </span>
           {!library.writable && (
             <p className="warning">

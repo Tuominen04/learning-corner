@@ -13,6 +13,7 @@ use plc_engine::store::Revision;
 use plc_engine::{Error, Id};
 use tauri::State;
 
+use crate::closing::Closing;
 use crate::dto::{
     CitationRequest, Document, DocumentRef, EngineError, Field, Form, Keep, LibraryStatus, Locator,
     RecentLibrary, RenamedLibrary, SavedSource, SearchHit, Source, SourceType, Split, Topic,
@@ -159,6 +160,14 @@ pub fn recent_libraries(recent: State<'_, Recent>) -> Vec<RecentLibrary> {
 #[tauri::command]
 pub fn forget_library(recent: State<'_, Recent>, path: String) -> Answer<()> {
     recent.forget(Path::new(&path)).map_err(EngineError::from)
+}
+
+// ---- the window ------------------------------------------------------------------
+
+/// The interface has written everything it was holding, so the window may close.
+#[tauri::command]
+pub fn ready_to_close(closing: State<'_, Closing>) {
+    closing.ready();
 }
 
 // ---- topics --------------------------------------------------------------------

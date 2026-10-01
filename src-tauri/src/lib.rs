@@ -7,8 +7,9 @@
 //! The one thing it keeps for itself is the list of libraries this computer has opened, in the
 //! application's settings folder — a convenience whose loss costs a folder dialog.
 
-use tauri::Manager;
+use tauri::{Emitter, Manager};
 
+pub mod closing;
 pub mod commands;
 pub mod dto;
 pub mod recent;
@@ -17,6 +18,25 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(commands::OpenLibrary::default())
+        .manage(closing::Closing::default())
+        // Held while the interface writes what it is holding, and closed when it answers or
+        // after two seconds — see `closing.rs`. `destroy` closes without asking again.
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                api.prevent_close();
+                let Some(heard) = window.state::<closing::Closing>().begin() else {
+                    return;
+                };
+                // Failing to tell the interface means there is nobody to wait for, and the
+                // limit below closes the window all the same.
+                let _ = window.emit(closing::EVENT, ());
+                let window = window.clone();
+                std::thread::spawn(move || {
+                    closing::wait(&heard, closing::LIMIT);
+                    let _ = window.destroy();
+                });
+            }
+        })
         .setup(|app| {
             // `$XDG_CONFIG_HOME/personal-learning-corner/`, as `packaging-fedora.md` names it:
             // a folder somebody can find by the application's name, rather than the
@@ -38,6 +58,7 @@ pub fn run() {
             commands::library_rename,
             commands::recent_libraries,
             commands::forget_library,
+            commands::ready_to_close,
             commands::topic_tree,
             commands::topic_create,
             commands::topic_rename,
