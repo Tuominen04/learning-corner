@@ -146,7 +146,8 @@ It looks **inside what you wrote**, not only at titles, and shows you the words 
 so you can tell one result from another without opening it. You do not have to finish a word:
 typing `tuttu` finds *tuttujuttu*. You do have to start it — `juttu` will not. Click a document to open it.
 Topics are listed too, marked as topics — there is nothing to open for a topic, but knowing one
-matched tells you where to look.
+matched tells you where to look. Sources have a search box of their own, on the **Sources**
+screen, where each one is shown with its authors and its paper.
 
 Your **sources** are not in these results. They have [their own screen](sources-and-citations.md),
 where a source can be shown with its authors, its year and its paper — a bare title in a list
