@@ -17,6 +17,7 @@ import {
   wholeConstructs,
 } from "../lib/body";
 import { citationKey, insertCitation, toLocator, type Chosen } from "../lib/citation";
+import { citedSources, findClaims } from "../lib/claims";
 import {
   engine,
   EngineFailure,
@@ -24,6 +25,7 @@ import {
   type Document as Doc,
   type DocumentRef,
   type Form,
+  type Source,
   type Topic,
 } from "../lib/engine";
 import { insertLink, titlesOf } from "../lib/links";
@@ -32,6 +34,8 @@ import { holdUntilSaved } from "../lib/saving";
 import { Backlinks } from "./Backlinks";
 import { CitationView, RenderedCitations } from "./CitationView";
 import { CitePicker } from "./CitePicker";
+import { ClaimSummary } from "./ClaimSummary";
+import { ClaimMarks, showClaims as markClaims } from "./claimMarks";
 import { DocumentLinks, type LinkTargets } from "./DocumentLinkView";
 import { DocumentImages } from "./ImageView";
 import { ImagePicker } from "./ImagePicker";
@@ -60,6 +64,8 @@ export function Editor({
   onSaved,
   onRename,
   onOpenDocument,
+  showClaims,
+  onShowClaims,
 }: {
   document: Doc;
   /** The whole library, for drawing links as titles and for choosing what to link to. */
@@ -67,6 +73,9 @@ export function Editor({
   onSaved: (d: Doc) => void;
   onRename: (id: string, title: string) => void;
   onOpenDocument: (id: string) => void;
+  /** Whether claims are marked. Kept above the editor, so it holds from document to document. */
+  showClaims: boolean;
+  onShowClaims: (show: boolean) => void;
 }) {
   const [state, setState] = useState<"clean" | "saving" | "conflict" | "error">("clean");
   const [message, setMessage] = useState<string | null>(null);
@@ -93,6 +102,11 @@ export function Editor({
 
   // The reference list, as the engine builds it from the file on disk.
   const [references, setReferences] = useState<string[]>([]);
+
+  // The library's sources, for naming the ones this document cites and saying how much each
+  // is trusted. Read once when the document opens: a citation can only name a source that
+  // exists already, and editing one means leaving this screen, which reads them again.
+  const [sources, setSources] = useState<Map<string, Source> | null>(null);
 
   // The revision travels from the last successful read or write into the next write. Kept in a
   // ref rather than state so a save in flight always sees the current one.
@@ -198,6 +212,7 @@ export function Editor({
         Citation,
         DocumentLink,
         DocumentImage,
+        ClaimMarks,
       ],
       content: parseBody(document.body),
       // A toolbar that reports where the cursor is has to be redrawn when the cursor moves.
@@ -395,6 +410,28 @@ export function Editor({
     saveNow.current = save;
   });
 
+  // The marks, as asked for. The setting is kept above this editor, which is made afresh for
+  // every document, so the next document's editor is given it the moment it exists.
+  useEffect(() => {
+    if (editor) markClaims(editor, showClaims);
+  }, [editor, showClaims]);
+
+  useEffect(() => {
+    let live = true;
+    engine.source
+      .list()
+      .then((all) => {
+        if (live) setSources(new Map(all.flatMap((s) => (s.id ? [[s.id, s] as const] : []))));
+      })
+      .catch(() => {
+        // The summary still counts; it only cannot say how much each source is trusted.
+        // Interrupting somebody's writing to report that would be worse than leaving it out.
+      });
+    return () => {
+      live = false;
+    };
+  }, [document.id]);
+
   // Whatever takes the editor away gets what was typed first.
   useEffect(() => {
     const release = holdUntilSaved(() => saveNow.current());
@@ -522,6 +559,13 @@ export function Editor({
   // is.
   const hasSelection = editor !== null && !editor.state.selection.empty;
 
+  // The claims and the sources behind them, from the document as it is on screen — so the
+  // summary follows the typing, as the marks do. A new value only when the text changes; the
+  // cursor moving re-renders this without changing the document.
+  const content = editor?.state.doc;
+  const claims = useMemo(() => (content ? findClaims(content).length : 0), [content]);
+  const cites = useMemo(() => (content ? citedSources(content) : []), [content]);
+
   return (
     <section className="editor">
       <header>
@@ -577,6 +621,14 @@ export function Editor({
           Split
         </button>
       </div>
+
+      <ClaimSummary
+        claims={claims}
+        sources={cites}
+        records={sources}
+        shown={showClaims}
+        onShow={onShowClaims}
+      />
 
       {message && <p className={state === "conflict" ? "warning" : "error"}>{message}</p>}
 
