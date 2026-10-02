@@ -1,0 +1,60 @@
+// What a document can be exported as, and what the file is called.
+//
+// The engine makes the file and the shell writes it; this side only offers the choice and
+// suggests a name. The order is the order the panel offers them in: a web page first, because
+// it keeps the most — italics, pictures, the reference list's hanging indent — and opens on
+// any computer without this application.
+
+import type { ExportFormat } from "./engine";
+
+export const EXPORT_FORMATS: {
+  value: ExportFormat;
+  label: string;
+  extension: string;
+  hint: string;
+}[] = [
+  {
+    value: "html",
+    label: "Web page",
+    extension: "html",
+    hint: "Opens in any browser, pictures and all. Print it from there for paper.",
+  },
+  {
+    value: "text",
+    label: "Plain text",
+    extension: "txt",
+    hint: "Pastes into anything. Italics are lost, and pictures are named rather than shown.",
+  },
+];
+
+export function formatOf(value: ExportFormat) {
+  const found = EXPORT_FORMATS.find((f) => f.value === value);
+  if (!found) throw new Error(`no export format ${value}`);
+  return found;
+}
+
+/** What a file name cannot hold on Windows, macOS or Linux and only decorates a title. */
+const DROPPED = '?*"<>|';
+
+/**
+ * The file name the save dialog suggests: the document's title, with the extension.
+ *
+ * Only what a file name cannot hold on some system is changed — a title in Finnish or Russian
+ * is a perfectly good file name, and turning it into a slug would make the export harder to
+ * recognise in a folder, not easier. A colon becomes a dash between spaces, as a title's
+ * subtitle reads; a slash becomes a dash; a question mark or quotation marks are left out.
+ */
+export function exportName(title: string, format: ExportFormat): string {
+  const base = Array.from(title.replace(/\s*:\s*/gu, " - "))
+    .map((c) => {
+      if (DROPPED.includes(c)) return "";
+      if (c === "/" || c === "\\" || (c.codePointAt(0) ?? 0) < 0x20) return "-";
+      return c;
+    })
+    .join("")
+    .replace(/\s+/gu, " ")
+    .trim()
+    .replace(/^\.+/u, "")
+    .trim();
+  return `${base || "Document"}.${formatOf(format).extension}`;
+}

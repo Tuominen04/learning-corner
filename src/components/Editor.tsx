@@ -34,6 +34,7 @@ import { holdUntilSaved } from "../lib/saving";
 import { Backlinks } from "./Backlinks";
 import { CitationView, RenderedCitations } from "./CitationView";
 import { CitePicker } from "./CitePicker";
+import { ExportPanel } from "./ExportPanel";
 import { ClaimSummary } from "./ClaimSummary";
 import { ClaimMarks, showClaims as markClaims } from "./claimMarks";
 import { DocumentLinks, type LinkTargets } from "./DocumentLinkView";
@@ -80,6 +81,7 @@ export function Editor({
   const [state, setState] = useState<"clean" | "saving" | "conflict" | "error">("clean");
   const [message, setMessage] = useState<string | null>(null);
   const [citing, setCiting] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [picturing, setPicturing] = useState(false);
   const [linking, setLinking] = useState(false);
   const [splitting, setSplitting] = useState<{ from: number; to: number } | null>(null);
@@ -582,6 +584,14 @@ export function Editor({
         <button className="cite-action" onClick={() => setCiting(true)} disabled={citing}>
           Cite
         </button>
+        <button
+          className="secondary export-action"
+          onClick={() => setExporting(true)}
+          disabled={exporting}
+          title="Save this document as a file to share or print"
+        >
+          Export
+        </button>
       </header>
 
       <div className="toolbar" role="toolbar" aria-label="Formatting">
@@ -633,6 +643,8 @@ export function Editor({
       {message && <p className={state === "conflict" ? "warning" : "error"}>{message}</p>}
 
       {citing && <CitePicker onChoose={insert} onCancel={() => setCiting(false)} />}
+
+      {exporting && <ExportPanel document={document} onClose={() => setExporting(false)} />}
 
       {picturing && (
         <ImagePicker

@@ -719,6 +719,7 @@ button.danger:hover:not(:disabled) { background: var(--error); color: var(--grou
 
 .editor header { gap: 1rem; }
 button.cite-action { margin-left: auto; padding: 0.35rem 0.8rem; font-size: 0.9em; }
+button.export-action { margin-left: 0.4rem; padding: 0.35rem 0.8rem; font-size: 0.9em; }
 
 /* The three states a citation can be in are genuinely different things to a reader: rendered,
    still being worked out, and pointing at a source that is gone. */
@@ -797,6 +798,7 @@ button.cite-option.chosen { background: #2a2d38; color: #fff; }
 .choice input { margin-top: 0.3rem; }
 .choice span { display: block; font-size: 0.88em; color: var(--ink-soft); }
 .choice strong { display: block; color: #e6e4de; font-weight: 600; }
+.choice strong .extension { display: inline; margin-left: 0.3rem; font-weight: 400; }
 .choice em {
   display: block;
   font-style: normal;

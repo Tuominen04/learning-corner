@@ -88,6 +88,7 @@ pub fn run() {
             commands::citation_format,
             commands::citation_format_many,
             commands::citation_reference_list,
+            commands::document_export,
         ])
         .run(tauri::generate_context!())
         .expect("the application failed to start");

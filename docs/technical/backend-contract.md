@@ -2,7 +2,7 @@
 
 > **Audience:** People building Personal Learning Corner
 > **Status:** In progress — M0 implemented
-> **Last reviewed:** 2026-09-06
+> **Last reviewed:** 2026-10-02
 
 Every operation the interface may ask of the engine. This document is normative for both
 repositories and is the specification the engine is built against — see
@@ -213,6 +213,11 @@ apply step carries their decisions. Rules in [Backup and synchronisation](backup
 | --------- | ----- | ------- |
 | `export.document` | id, format | the exported bytes, reference list included |
 | `export.map` | id, format | an image |
+
+The engine writes nothing for an export: it returns the bytes, and the shell writes them
+wherever the save dialog put them, through the engine's own temp-fsync-rename — so an export
+that fails part way leaves whatever file was there before, and never half a document. The
+formats are `text` and `html` today; Word, OpenDocument and PDF follow.
 
 ## Events
 
