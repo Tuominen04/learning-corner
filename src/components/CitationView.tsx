@@ -3,6 +3,7 @@ import { createContext, useContext } from "react";
 
 import { citationKey } from "../lib/citation";
 import type { Form } from "../lib/engine";
+import { readEmphasis } from "../lib/references";
 
 // A citation as it reads in the text.
 //
@@ -45,7 +46,11 @@ export function CitationView({ node }: NodeViewProps) {
       : [
           form === "narrative" ? "citation narrative" : "citation",
           "A claim anchored to a source",
-          text,
+          // A title standing in for an author comes back in italics, `(*Kalevala*, 1849)`,
+          // marked the way the reference list marks them.
+          readEmphasis(text).map((segment, i) =>
+            segment.emphasis ? <em key={i}>{segment.text}</em> : segment.text,
+          ),
         ]
     : [
         "citation pending",
