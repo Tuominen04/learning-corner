@@ -109,6 +109,21 @@ format each citation against it.
 The locator is stored raw and formatted by kind: `p. 44`, `pp. 44-46`, `para. 3`,
 `Chapter 2`, `1:14:22` for a timestamp. Ranges use an en dash on output.
 
+## Claims
+
+A **claim** is the sentence a citation belongs to. A citation belongs to the sentence it sits
+in, or — sitting exactly between two sentences — to the one before it, because citations
+follow the claims they support and that is where the editor puts them. Several citations
+behind one sentence make one claim.
+
+Sentences are found with the platform's own sentence rules (`Intl.Segmenter`), so a decimal
+point ends nothing and Finnish and Russian are split the way English is; plain punctuation is
+the fallback where those rules are missing.
+
+Claims are worked out by the interface from the text on screen, and never stored: a claim is a
+reading of a document, not a fact about its file. What the engine stores is the citation, and
+the claim follows from where it was put.
+
 ## The reference list
 
 Generated per document from the sources it actually cites.
