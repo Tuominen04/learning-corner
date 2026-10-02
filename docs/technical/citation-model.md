@@ -2,7 +2,7 @@
 
 > **Audience:** People building Personal Learning Corner
 > **Status:** In progress
-> **Last reviewed:** 2026-09-10
+> **Last reviewed:** 2026-10-01
 
 APA 7 is a specification, and this is the part of the product where being approximately right
 is the same as being wrong. This document is what the engine implements and what the
@@ -27,11 +27,23 @@ actually cites, and extend from the APA manual's reference examples as needed.
 | ---- | -------- | --------- |
 | `book` | authors, year, title, publisher | edition, translators, DOI/URL |
 | `book-chapter` | authors, year, title, editors, container, publisher, pages | edition, DOI/URL |
-| `journal-article` | authors, year, title, container, volume | issue, pages, DOI |
-| `web-page` | authors, date, title, site | URL, retrieval date |
-| `video` | authors, date, title, site | URL, timestamp |
-| `audio` | authors, date, title, container | URL |
-| `report` | authors, year, title, publisher | series number, DOI/URL |
+| `journal-article` | authors, year, title, container, volume | issue, pages, DOI/URL |
+| `web-page` | authors, date, title, site | DOI/URL, retrieval date |
+| `video` | authors, date, title, site | DOI/URL, retrieval date, timestamp |
+| `audio` | authors, date, title, container | episode number, publisher, DOI/URL, retrieval date |
+| `report` | authors, year, title, publisher | edition, report number, DOI/URL |
+
+The form offers exactly these fields for each type and no others. A box the reference entry
+never reads would keep whatever was typed into it and never show it.
+
+`audio` is a **podcast episode**, the audio a learner cites most: the container is the podcast,
+and the entry says `[Audio podcast episode]`. Other audio — a song, a radio broadcast — has its
+own APA form, and is not modelled yet.
+
+`number` is a report's number or an episode's. A bare number takes the usual label —
+`(Report No. 935)`, `(No. 443)` — and one written with its own label prints exactly as typed:
+`(NIH Publication No. 18-2059)`. An `edition` written as a number becomes an ordinal: `2` prints
+as `2nd ed.`; anything else (`Rev. ed.`) prints as typed.
 
 ### Contributors
 
@@ -39,6 +51,12 @@ Stored as roles, not one string: `author`, `editor`, `translator`, `director`, `
 has `family` and `given`, and a `literal` alternative for group authors ("World Health
 Organization") and for names that do not decompose into family and given. Assuming every name
 in the world splits into two Western parts is a bug, not a simplification.
+
+**A podcast's host stands where its author would.** An `audio` source with no author is cited
+by its hosts, and they count as its authors wherever authors matter — disambiguation, ordering,
+and whether the source is complete. The reference list says so: `Glass, I. (Host).`
+
+Initials keep a hyphen: Jean-Paul is `J.-P.`
 
 ### Dates
 
@@ -74,11 +92,16 @@ The rules the engine must implement:
 | Three or more | `(Nieminen et al., 2021)` | `Nieminen et al. (2021)` |
 | Group author, first use | `(World Health Organization [WHO], 2019)` | `World Health Organization (WHO, 2019)` |
 | Group author, later uses | `(WHO, 2019)` | `WHO (2019)` |
-| No author | `("Protein requirements," 2021)` | title in the author position |
+| No author, title in italics in the list | `(*Kalevala*, 1849)` | `*Kalevala* (1849)` |
+| No author, any other title | `(“Protein requirements,” 2021)` | `“Protein requirements” (2021)` |
 | No date | `(Nieminen, n.d.)` | `Nieminen (n.d.)` |
 
 Note the ampersand: `&` inside parentheses, the word `and` in narrative form. This is APA 7,
 and it is exactly the kind of detail a person should never have to think about.
+
+A title standing in for an absent author is in italics where the reference list italicises it,
+and in quotation marks where it does not. The comma inside the closing quote separates it from
+the year, so it appears in the parenthetical form only.
 
 Three or more authors abbreviate to *et al.* from the **first** citation onwards. This
 changed in APA 7 from APA 6, and anyone reviewing this code against memory will assume the
@@ -91,7 +114,8 @@ source must cite identically everywhere:
 
 **Same author, same year, different works.** Suffix the year `a`, `b`, `c`, assigned by
 alphabetical order of the reference-list titles, and applied consistently everywhere — in
-text and in the reference list.
+text and in the reference list. The titles are ordered as the list orders them, passing over a
+leading *A*, *An* or *The*. Undated works take the letter after a hyphen: `(Nieminen, n.d.-a)`.
 
 **Different authors, same surname.** Include initials in text: `(A. Nieminen, 2021)` and
 `(J. Nieminen, 2019)`.
@@ -109,19 +133,57 @@ format each citation against it.
 The locator is stored raw and formatted by kind: `p. 44`, `pp. 44-46`, `para. 3`,
 `Chapter 2`, `1:14:22` for a timestamp. Ranges use an en dash on output.
 
+## Claims
+
+A **claim** is the sentence a citation belongs to. A citation belongs to the sentence it sits
+in, or — sitting exactly between two sentences — to the one before it, because citations
+follow the claims they support and that is where the editor puts them. Several citations
+behind one sentence make one claim.
+
+Sentences are found with the platform's own sentence rules (`Intl.Segmenter`), so a decimal
+point ends nothing and Finnish and Russian are split the way English is; plain punctuation is
+the fallback where those rules are missing.
+
+Claims are worked out by the interface from the text on screen, and never stored: a claim is a
+reading of a document, not a fact about its file. What the engine stores is the citation, and
+the claim follows from where it was put.
+
 ## The reference list
 
 Generated per document from the sources it actually cites.
 
-**Ordering.** Alphabetically by the first contributor's family name, then by year ascending,
-then by title. Group authors alphabetise by their full name. Sources with no author
-alphabetise by title. Sorting is locale-aware — this is a multilingual application, and byte
-order is not alphabetical order in Finnish or Russian.
+**Ordering.** Alphabetically by the authors — the whole list, so `Nieminen, A.` comes before
+`Nieminen, A., & Kallio, K.` — then by year ascending, with undated works first, then by title
+without a leading *The*, *A* or *An*. Group authors alphabetise by their full name, never their
+abbreviation. Sources with no author alphabetise by title, passing over the same articles.
+
+Comparison is case-folded and in Unicode character order. That files Finnish `ä` and `ö` after
+`z`, where they belong, and Cyrillic in alphabetical order. It is not yet full locale
+collation, which differs in three places a user of this application could meet:
+
+- Finnish files `å` before `ä`; character order puts `ä` first.
+- Russian files `ё` with `е`; character order puts it after `я`.
+- An accented Latin letter files with its base letter, *Lévy* before *Lewis*; character order
+  puts it after `z`.
 
 **Formatting**, per type, from the APA manual's examples:
 
-- Article and chapter and book titles in sentence case; journal and site names in title case.
-- Book titles and journal names italicised, along with the volume number.
+- **Who, when, what.** With no author, the title takes the author's place and the date follows
+  it: `*Kalevala*. (1849). Suomalaisen Kirjallisuuden Seura.`
+- **Italics for works that stand alone** — books, reports, web pages, videos — and not for parts
+  of something larger: articles, chapters, episodes. The journal, the edited book and the
+  podcast they sit in are italicised, along with a journal's volume number.
+- **Titles exactly as typed.** APA wants titles in sentence case, and the form says so; the
+  engine never changes case itself, because it cannot tell a proper noun from an ordinary
+  word, and *Finnish* turned into *finnish* is worse than a title left as typed.
+- **What travels with the title**, in APA's order: translators then edition for a book —
+  `(H. Weaver, Trans.; 2nd ed.)`; edition then number for a report; the episode number and
+  `[Audio podcast episode]` for audio; `[Video]` for a video.
+- **Editors** with initials first, joined by an ampersand: `In R. F. Subotnik, P.
+  Olszewski-Kubilius, & F. C. Worrell (Eds.), *Book title* (2nd ed., pp. 345–359).`
+- **A publisher or site that is the author over again is left out**: the World Health
+  Organization's own page names it once.
+- **No full stop after a title that ends in `?` or `!`.**
 - DOIs as `https://doi.org/10.xxxx/yyyy`.
 - A retrieval date **only** where content is designed to change and is not archived — not on
   every web page. Getting this wrong is the most common APA 7 error in the wild.
@@ -130,6 +192,17 @@ order is not alphabetical order in Finnish or Russian.
 
 **Hanging indent** of 0.5 inch on export. It is the reference list's most recognisable
 feature and the thing a reader notices missing.
+
+### Not yet modelled
+
+Each of these is printed by the rule above rather than wrongly, but a reviewer comparing
+against the manual will find them:
+
+- **In-text titles are not title-cased.** APA title-cases a title standing in for an author in
+  the text. Titles are printed as typed everywhere, for the reason above.
+- **Original publication dates** — `(Original work published 1943)` — have no field.
+- **Locale collation**, in the three places named under *Ordering*.
+- **Audio other than podcast episodes.**
 
 ## Structure of the implementation
 
@@ -150,6 +223,11 @@ Table-driven fixtures: a source record, the expected parenthetical form, the exp
 narrative form, and the expected reference entry — taken from the APA manual's own examples
 so the expectations have an authority behind them. Every rule on this page gets at least one
 fixture, and every disambiguation case gets a multi-source one. See [Testing](testing.md).
+
+In the engine they are `tests/apa/`, one file per type, each case the source exactly as a
+library stores it. Adding an example from the manual is a few lines of TOML, not a new test.
+The rules that need more than one source to see — disambiguation and ordering — are in
+`tests/citations.rs`.
 
 ## Related
 

@@ -92,14 +92,20 @@ function RenameInput({
   // the blur that follows would otherwise commit the name Escape just refused.
   const settled = useRef(false);
 
-  function commit() {
+  /**
+   * Keep what was typed.
+   *
+   * An empty name is "never mind" however it arrives: the engine refuses an empty title, and
+   * reporting that back as an error for something plainly meant as a cancel is noise on a
+   * screen the user is only passing through. An unchanged name is "never mind" too when you
+   * click away — but not when you press Enter. That is asking for the name again, and asking
+   * is what puts an old `untitled.md` right: the file takes the name it should have had.
+   */
+  function commit(explicit: boolean) {
     if (settled.current) return;
     settled.current = true;
     const next = value.trim();
-    // An empty or unchanged name is "never mind", not a rename. The engine refuses an empty
-    // title, and reporting that back as an error for something plainly meant as a cancel is
-    // noise on a screen the user is only passing through.
-    if (next === "" || next === initial) onCancel();
+    if (next === "" || (next === initial && !explicit)) onCancel();
     else onCommit(next);
   }
 
@@ -120,7 +126,7 @@ function RenameInput({
       onKeyDown={(event) => {
         if (event.key === "Enter") {
           event.preventDefault();
-          commit();
+          commit(true);
         } else if (event.key === "Escape") {
           event.preventDefault();
           cancel();
@@ -128,7 +134,7 @@ function RenameInput({
       }}
       // Clicking away keeps what you typed, the way a file manager does. Escape is the way to
       // throw it away, and it has already run by the time this fires.
-      onBlur={commit}
+      onBlur={() => commit(false)}
     />
   );
 }

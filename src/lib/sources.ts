@@ -20,7 +20,11 @@ export const SOURCE_TYPES: { value: SourceType; label: string; hint: string }[] 
   },
   { value: "web-page", label: "Web page", hint: "Anything you read on the web" },
   { value: "video", label: "Video", hint: "A talk, lecture or anything else you watched" },
-  { value: "audio", label: "Audio", hint: "A podcast episode, recording or broadcast" },
+  {
+    value: "audio",
+    label: "Audio",
+    hint: "A podcast episode. Its host goes in as Host, where APA puts an author",
+  },
   { value: "report", label: "Report", hint: "Published by an organisation rather than a person" },
 ];
 
@@ -41,6 +45,7 @@ export type Editable =
   | "issue"
   | "pages"
   | "edition"
+  | "number"
   | "doi"
   | "url";
 
@@ -52,9 +57,33 @@ export const EDITABLE_ORDER: Editable[] = [
   "issue",
   "pages",
   "edition",
+  "number",
   "doi",
   "url",
 ];
+
+/**
+ * The fields each type's reference entry prints, in form order.
+ *
+ * Offering a box the citation never reads is worse than not offering it: whatever is typed
+ * into it is kept and never shown, and nothing says so. A volume means nothing for a web
+ * page, and a number belongs only to reports and episodes. This mirrors what the engine's
+ * formatter prints for each type, so a field added there is added here too.
+ */
+const FIELDS_FOR: Record<SourceType, Editable[]> = {
+  book: ["publisher", "edition", "doi", "url"],
+  "book-chapter": ["container", "publisher", "pages", "edition", "doi", "url"],
+  "journal-article": ["container", "volume", "issue", "pages", "doi", "url"],
+  "web-page": ["site", "doi", "url"],
+  video: ["site", "doi", "url"],
+  audio: ["container", "publisher", "number", "doi", "url"],
+  report: ["publisher", "edition", "number", "doi", "url"],
+};
+
+/** The fields a form for this type offers, in the order they read best. */
+export function fieldsFor(type: SourceType): Editable[] {
+  return EDITABLE_ORDER.filter((field) => FIELDS_FOR[type].includes(field));
+}
 
 /**
  * What to call each field, and what to say when the name alone is not enough.
@@ -70,12 +99,13 @@ export function labelFor(field: Editable, type: SourceType): string {
       case "book-chapter":
         return "Book title";
       case "audio":
-        return "Series or programme";
+        return "Podcast";
       default:
         return "Part of";
     }
   }
-  const labels: Record<Exclude<Editable, "container">, string> = {
+  if (field === "number") return type === "audio" ? "Episode number" : "Report number";
+  const labels: Record<Exclude<Editable, "container" | "number">, string> = {
     publisher: "Publisher",
     site: "Site name",
     volume: "Volume",
@@ -96,6 +126,10 @@ export function hintFor(field: Editable): string | null {
       return "The permanent identifier a journal assigns. Prefer it to a web address.";
     case "site":
       return "Whose site it is, not the page title: BBC News, Wikipedia";
+    case "edition":
+      return "A number is enough: 2 prints as 2nd ed.";
+    case "number":
+      return "A number on its own, or the whole label as printed: NIH Publication No. 18-2059";
     default:
       return null;
   }
@@ -163,6 +197,17 @@ export function contributorName(contributor: Contributor): string {
   return given ? `${family}, ${given}` : family;
 }
 
+/**
+ * A source named in a few words, for a line that lists several of them: who and when, the
+ * way a person would say it — "Nieminen 2021" — or the title when nobody is credited.
+ */
+export function shortName(source: Source): string {
+  const first = source.contributors.find((c) => c.role === "author") ?? source.contributors[0];
+  const who = first ? (isGroup(first) ? (first.literal ?? "") : (first.family ?? "")) : "";
+  const when = source.date.kind === "no-date" ? "n.d." : String(source.date.year);
+  return `${who.trim() || `“${source.title || "Untitled"}”`} ${when}`;
+}
+
 /** A blank source of the given type. */
 export function blankSource(type: SourceType): Source {
   return {
@@ -181,6 +226,7 @@ export function blankSource(type: SourceType): Source {
     issue: null,
     pages: null,
     edition: null,
+    number: null,
     doi: null,
     url: null,
     retrieved: null,
@@ -231,6 +277,7 @@ export function tidy(source: Source): Source {
     issue: text(source.issue),
     pages: text(source.pages),
     edition: text(source.edition),
+    number: text(source.number),
     doi: text(source.doi),
     url: text(source.url),
     appraisal,

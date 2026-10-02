@@ -345,6 +345,38 @@ button.tool { padding: 0.25rem 0.6rem; font-size: 0.85em; }
    filled, and pale text on that amber is the least readable pairing in the palette. */
 button.tool.on { background: var(--accent); color: var(--ground); border-color: var(--accent); }
 
+/* ---- claims ---- */
+
+/* What the document stands on, in one quiet line above the text. */
+.claim-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.8rem;
+  margin: 0 0 0.9rem;
+  font-size: 0.85em;
+  color: var(--ink-soft);
+}
+.claim-sources {
+  flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 1rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.claim-sources .who { color: #c9c6be; }
+.claim-sources .trust::before { content: " — "; }
+.claim-sources .trust.unrated { color: var(--warning); font-style: italic; }
+
+/* A claim, on the page: tinted and underlined in the accent, quietly enough to write in. */
+.prose .claim {
+  background: rgba(198, 138, 74, 0.16);
+  border-bottom: 1px solid rgba(198, 138, 74, 0.6);
+  border-radius: 2px;
+}
+
 /* ---- a source's paper ---- */
 
 .paper { margin: 1.2rem 0 0.4rem; }

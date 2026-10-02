@@ -2,7 +2,7 @@
 
 > **Audience:** People using Personal Learning Corner
 > **Status:** In progress
-> **Last reviewed:** 2026-09-10
+> **Last reviewed:** 2026-10-02
 
 This is the part of the app that answers the question it was built around: *how do I know
 this is true?* You cannot answer it for everything you read. You can answer it for
@@ -52,6 +52,19 @@ Two habits worth having:
 Sources live in the library, not in a document. Save a book once and cite it from fifty
 documents.
 
+### Writing the details down
+
+- **Titles in sentence case.** A capital letter to start, after a colon, and on names:
+  *Protein in the Finnish diet: A review*. That is how APA prints titles, and the app prints
+  yours exactly as you type it. It never changes the case for you, because it cannot tell
+  which of your words are names.
+- **A podcast's host goes in as Host.** APA puts the host where an author would go, and so
+  does the app: *Glass, I. (Host).*
+- **Numbers as they are printed.** A report or a podcast episode can have a number. A number
+  on its own, like *935*, prints as *Report No. 935*. When the report gives its number a label
+  of its own, write the whole thing — *NIH Publication No. 18-2059* — and it prints exactly so.
+- **An edition can be just a number.** *2* prints as *2nd ed.*
+
 ### If you cannot find all the details
 
 Fill in what you have and save it. The app marks the source as **incomplete** and tells you
@@ -82,6 +95,20 @@ sentence:
 | ----- | ---------- | ----------- |
 | In brackets | …repairs muscle tissue (Nieminen, 2021, p. 44). | The fact matters, not who said it |
 | In the sentence | Nieminen (2021) found that… | Who said it is part of your point |
+
+A citation in brackets goes **inside the sentence it supports**, in front of the full stop —
+that is where APA 7 puts it. If you selected the whole sentence, full stop and all, the app
+steps back over the full stop for you: *repairs muscle tissue (Nieminen, 2021).*, never
+*repairs muscle tissue. (Nieminen, 2021)*. A question mark or an exclamation mark is stepped
+over the same way.
+
+Two full stops are left where they are, and the citation goes after them: one inside a
+quotation, which belongs to the quotation, and one that may end an abbreviation — *jne.*,
+*U.S.*, *Fig. 3.* — because stepping in front of it would cut the abbreviation short.
+
+A citation never runs into a word. When a word follows it straight away, a space goes in after
+it; a citation in the sentence also gets a space before it, after the word it follows. The
+editor would show a gap either way — the space is for the file, and for every export of it.
 
 The app handles the fiddly parts of APA 7 without you having to remember them: two authors
 joined correctly, three or more shortened to *et al.*, two different authors with the same

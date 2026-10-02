@@ -2,7 +2,7 @@
 
 > **Audience:** People building Personal Learning Corner
 > **Status:** In progress — M0 implemented
-> **Last reviewed:** 2026-09-06
+> **Last reviewed:** 2026-10-01
 
 The library on disk is the source of truth ([ADR 0003](adr/0003-files-as-source-of-truth.md)).
 This document specifies it. It is normative: the engine implements this, and the format is
@@ -309,6 +309,19 @@ note = "Peer reviewed, replicated by Kim et al."
 `type` selects which fields APA 7 requires; the full per-type field list is in
 [Citation model](citation-model.md). Missing required fields make the source *incomplete* —
 stored, citable, and reported — never silently defaulted or invented.
+
+An optional field is written only when it holds something, so a file says what is known about
+the source and nothing else. The other text fields are `publisher`, `site`, `edition`, `url`,
+and `number`: a report's number or a podcast episode's, kept as a string because the work's
+own label is as likely as a bare number:
+
+```toml
+type = "report"
+title = "Taking time: Support for people with cancer"
+number = "NIH Publication No. 18-2059"
+```
+
+`number` arrived before the first release, so `format_version` stays 1.
 
 ### Contributors
 

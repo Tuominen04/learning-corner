@@ -28,7 +28,7 @@ ts-rs = "12"
 # diff naming the old tag and the new one.
 plc-engine = { 
     git = "https://github.com/Tuominen04/personal-learning-corner-engine", 
-    tag = "v0.13.0" 
+    tag = "v0.14.0" 
 }
 
 [dev-dependencies]
