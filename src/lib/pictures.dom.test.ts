@@ -21,11 +21,14 @@ import { insertLink } from "./links";
 import { insertImage } from "./pictures";
 import { Citation, DocumentImage, DocumentLink } from "../components/nodes";
 
-let editor: Editor | null = null;
+// Every editor a test opens, so that all of them are destroyed when it ends — not only the
+// last. One left running keeps answering the selection changes of the others, and a timer it
+// sets can fire after the test file is over, failing a run whose tests all passed.
+const opened: Editor[] = [];
 
 /** The same schema the editor screen builds, so what is tested is what runs. */
 function open(body: string): Editor {
-  editor = new Editor({
+  const editor = new Editor({
     element: window.document.createElement("div"),
     extensions: [
       Document,
@@ -39,12 +42,12 @@ function open(body: string): Editor {
     ],
     content: parseBody(body),
   });
+  opened.push(editor);
   return editor;
 }
 
 afterEach(() => {
-  editor?.destroy();
-  editor = null;
+  for (const each of opened.splice(0)) each.destroy();
 });
 
 describe("inserting a picture", () => {
