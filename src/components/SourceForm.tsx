@@ -15,8 +15,8 @@ import { basename, folder } from "../lib/paths";
 import {
   blankSource,
   contributorName,
-  EDITABLE_ORDER,
   emptyContributor,
+  fieldsFor,
   fieldToEditable,
   hintFor,
   isGroup,
@@ -110,10 +110,9 @@ export function SourceForm({
   const requiredEditables = new Set(
     required.map(fieldToEditable).filter((f): f is Editable => f !== null),
   );
-  const shown = extras
-    ? EDITABLE_ORDER
-    : EDITABLE_ORDER.filter((f) => requiredEditables.has(f));
-  const hidden = EDITABLE_ORDER.length - shown.length;
+  const offered = fieldsFor(source.type);
+  const shown = extras ? offered : offered.filter((f) => requiredEditables.has(f));
+  const hidden = offered.length - shown.length;
 
   function set<K extends keyof Source>(key: K, value: Source[K]) {
     setSource((s) => ({ ...s, [key]: value }));
@@ -206,6 +205,11 @@ export function SourceForm({
           onChange={(e) => set("title", e.target.value)}
           placeholder="The title as it is printed"
         />
+        <small className="hint">
+          In sentence case, the way APA prints it: a capital letter to start, after a colon,
+          and on names — “Protein in the Finnish diet: A review”. It is printed exactly as you
+          type it.
+        </small>
       </label>
 
       <Contributors

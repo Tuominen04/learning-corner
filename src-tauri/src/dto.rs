@@ -338,6 +338,9 @@ pub struct Source {
     pub issue: Option<String>,
     pub pages: Option<String>,
     pub edition: Option<String>,
+    /// A report's number, or a podcast episode's: "935", or the whole label as the work prints
+    /// it — "NIH Publication No. 18-2059".
+    pub number: Option<String>,
     pub doi: Option<String>,
     pub url: Option<String>,
     /// Only where content is designed to change and is not archived — not on every web page.
@@ -665,6 +668,7 @@ impl From<engine_src::Source> for Source {
             issue: s.issue,
             pages: s.pages,
             edition: s.edition,
+            number: s.number,
             doi: s.doi,
             url: s.url,
             retrieved: s.retrieved.map(SourceDate::from),
@@ -701,6 +705,7 @@ impl Source {
             issue: self.issue,
             pages: self.pages,
             edition: self.edition,
+            number: self.number,
             doi: self.doi,
             url: self.url,
             retrieved: self.retrieved.map(engine_src::Date::from),
@@ -879,6 +884,7 @@ mod wire {
             issue: None,
             pages: None,
             edition: None,
+            number: None,
             doi: None,
             url: None,
             retrieved: None,
@@ -913,6 +919,27 @@ mod wire {
             Some("Anna Maria"),
             "given names carry the initials APA prints; losing them silently degrades every \
              citation of this source"
+        );
+    }
+
+    #[test]
+    fn a_report_number_survives_the_round_trip() {
+        // The newest field, and so the one a conversion written before it would drop.
+        let (_dir, mut engine) = library();
+        let mut report = a_book();
+        report.source_type = SourceType::Report;
+        report.number = Some("NIH Publication No. 18-2059".into());
+
+        let received: Source =
+            serde_json::from_str(&serde_json::to_string(&report).unwrap()).unwrap();
+        let (id, _) = engine
+            .source_create(received.into_engine().unwrap())
+            .unwrap();
+
+        let listed: Source = engine.source_read(id).unwrap().into();
+        assert_eq!(
+            listed.number.as_deref(),
+            Some("NIH Publication No. 18-2059")
         );
     }
 
