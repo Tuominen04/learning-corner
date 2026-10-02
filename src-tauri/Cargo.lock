@@ -2640,7 +2640,7 @@ checksum = "f6b464fbc74e149a392436b17d523f769e057cb6877f6a5c4618bc6f11800548"
 [[package]]
 name = "plc-engine"
 version = "0.1.0"
-source = "git+https://github.com/Tuominen04/personal-learning-corner-engine?tag=v0.13.0#7a5dffbbd193f2a1cbcc9549bb1e18942c2ab60e"
+source = "git+https://github.com/Tuominen04/personal-learning-corner-engine?tag=v0.14.0#2f78acc9c1847e3259cd00652204166e835a2a31"
 dependencies = [
  "blake3",
  "rusqlite",
