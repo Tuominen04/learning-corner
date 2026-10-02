@@ -12,7 +12,7 @@
 import type { Editor } from "@tiptap/core";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 
-import { CITATION } from "./body";
+import { CITATION, DOCUMENT_LINK } from "./body";
 import type { Form, Locator } from "./engine";
 
 /** Written prefix to wire kind. A page has no prefix, so it is absent here by design. */
@@ -93,15 +93,58 @@ export type Chosen = {
 export function insertCitation(editor: Editor, chosen: Chosen): void {
   const { to } = editor.state.selection;
   const at = chosen.form === "parenthetical" ? citationPosition(editor.state.doc, to) : to;
+  const space = spacing(editor.state.doc, at, chosen.form);
+  const citation = {
+    type: CITATION,
+    attrs: { source: chosen.source, locator: chosen.locator, form: chosen.form },
+  };
   editor
     .chain()
     .focus()
     .setTextSelection(at)
-    .insertContent({
-      type: CITATION,
-      attrs: { source: chosen.source, locator: chosen.locator, form: chosen.form },
-    })
+    .insertContent([
+      ...(space.before ? [{ type: "text", text: " " }] : []),
+      citation,
+      ...(space.after ? [{ type: "text", text: " " }] : []),
+    ])
     .run();
+}
+
+/** What opens a bracket or a quotation: a citation straight after one needs no space. */
+const OPENING = new Set(["(", "[", "{", "“", "‘", "„", "‚", "«"]);
+
+/**
+ * The spaces a citation needs so that it never runs into a word.
+ *
+ * Written into the text rather than left to the eye: a chip in this editor looks spaced
+ * either way, but the file is read elsewhere too, and an export prints exactly what is there —
+ * `Nieminen (2021)found` is what a missing space looks like once the chip is gone.
+ *
+ * - **After**, when a word or a link follows straight away. Not before punctuation or a space,
+ *   and not before another citation, which stands beside it.
+ * - **Before**, only for a narrative citation, which is a name in the sentence and so needs a
+ *   space after the word before it. A parenthetical citation sits against the claim it
+ *   supports; an export spaces it from there.
+ */
+function spacing(doc: ProseMirrorNode, at: number, form: Form): { before: boolean; after: boolean } {
+  const $at = doc.resolve(at);
+  const prev = $at.nodeBefore;
+  const next = $at.nodeAfter;
+
+  const after = next?.isText
+    ? /^[\p{L}\p{N}]/u.test(next.text ?? "")
+    : next?.type.name === DOCUMENT_LINK;
+
+  let before = false;
+  if (form === "narrative" && prev) {
+    if (prev.isText) {
+      const last = Array.from(prev.text ?? "").at(-1) ?? "";
+      before = last !== "" && !/\s/u.test(last) && !OPENING.has(last);
+    } else {
+      before = prev.type.name === DOCUMENT_LINK || prev.type.name === CITATION;
+    }
+  }
+  return { before, after };
 }
 
 /** What closes a sentence, one mark or several: `.`, `?!`, `…`. */

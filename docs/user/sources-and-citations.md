@@ -93,6 +93,10 @@ Two full stops are left where they are, and the citation goes after them: one in
 quotation, which belongs to the quotation, and one that may end an abbreviation — *jne.*,
 *U.S.*, *Fig. 3.* — because stepping in front of it would cut the abbreviation short.
 
+A citation never runs into a word. When a word follows it straight away, a space goes in after
+it; a citation in the sentence also gets a space before it, after the word it follows. The
+editor would show a gap either way — the space is for the file, and for every export of it.
+
 The app handles the fiddly parts of APA 7 without you having to remember them: two authors
 joined correctly, three or more shortened to *et al.*, two different authors with the same
 surname kept apart, and two works by the same author in the same year marked *2021a* and
