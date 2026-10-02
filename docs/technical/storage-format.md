@@ -1,8 +1,8 @@
 # Storage format
 
 > **Audience:** People building Personal Learning Corner
-> **Status:** In progress — M0 implemented
-> **Last reviewed:** 2026-10-01
+> **Status:** In progress — M1 implemented
+> **Last reviewed:** 2026-10-02
 
 The library on disk is the source of truth ([ADR 0003](adr/0003-files-as-source-of-truth.md)).
 This document specifies it. It is normative: the engine implements this, and the format is

@@ -2,7 +2,7 @@
 
 > **Audience:** People using Personal Learning Corner
 > **Status:** In progress
-> **Last reviewed:** 2026-09-22
+> **Last reviewed:** 2026-10-02
 
 Learning does not arrive organised. You start with one question and finish with a structure
 you could not have designed at the start. This part of the app is built for that: start
@@ -55,8 +55,11 @@ like.
 
 A document is a page you write, inside a topic.
 
-**Writing.** Plain writing with headings, lists, emphasis, and quotes. There is no page
-layout to fight with — this is for learning, not for typesetting.
+**Writing.** Plain writing, with headings and pictures. There is no page layout to fight
+with — this is for learning, not for typesetting. Lists, emphasis and quotes can be typed the
+usual Markdown way — `- `, `*a word*`, `> ` — and they are kept exactly as you typed them; the
+page shows them as typed rather than drawing bullets or italics, so that a document opened and
+closed again is always the same document, character for character.
 
 **Headings.** Click **H1**, **H2** or **H3** above the page, or just type `# ` at the start of
 a line. One `#` makes a heading, `##` a sub-heading, and you can go as deep as `######`.

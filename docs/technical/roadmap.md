@@ -1,8 +1,8 @@
 # Roadmap
 
 > **Audience:** People building Personal Learning Corner
-> **Status:** In progress — M0 implemented
-> **Last reviewed:** 2026-09-06
+> **Status:** In progress — M1 implemented
+> **Last reviewed:** 2026-10-02
 
 Milestones in order. Each is shippable on its own — a person could install it, use it, and get
 something out of it — and each has a definition of done that is checkable rather than a
@@ -66,15 +66,29 @@ pass while the product does not work.** Keep the last item on every milestone.
 The reason the product exists: [claims anchored to sources](architecture.md#principles), and
 APA 7 that is actually correct.
 
-- Sources: all seven types, structured contributors, the incomplete-source path.
-- The [disambiguation pass](citation-model.md#disambiguation) — all three cases, library-wide.
-- In-text citation in both forms; the generated reference list.
-- Citing while writing; `source.citingDocuments` in both directions.
-- Document splitting, `[[…]]` links, backlinks.
-- Claim marking — the visible difference between what is sourced and what is not.
-- Search across documents and sources.
-- Export to a formatted document and to plain text, hanging indent included.
-- The APA fixture suite passing in full.
+- [x] Sources: all seven types, structured contributors, the incomplete-source path.
+- [x] The [disambiguation pass](citation-model.md#disambiguation) — all three cases,
+      library-wide.
+- [x] In-text citation in both forms; the generated reference list.
+- [x] Citing while writing; `source.citingDocuments` in both directions.
+- [x] Document splitting, `[[…]]` links, backlinks.
+- [x] Claim marking — the visible difference between what is sourced and what is not.
+- [x] Search across documents and sources.
+- [x] Export to PDF, Word, OpenDocument, a web page and plain text, hanging indent included.
+- [x] The APA fixture suite passing in full.
+- [x] The [fixture libraries](testing.md#fixtures): an empty one, a damaged one, and the format
+      as M1 ships it, frozen as `v1`.
+- [ ] **Seen running by a person**, on Fedora: the M1 walkthrough, end to end — a library made,
+      sources of every kind saved and cited, one long document split into six, a source
+      corrected once and right everywhere, searches, all five exports opened, a window closed
+      mid-sentence, and the library renamed and switched.
+
+Built along the way, because using the application asked for them: headings and pictures in
+documents; deleting topics and documents after seeing what goes with them; the library's folder
+following its name; the last library reopened at start, with the recent ones listed.
+
+Not built yet, though the engine can do it: **moving** a topic or a document to another topic
+from inside the application.
 
 **Done when:** the protein example from the README can be worked end to end — one topic
 becoming six documents, sources saved and cited, a correct reference list on every one, and a

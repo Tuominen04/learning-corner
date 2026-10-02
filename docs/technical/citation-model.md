@@ -1,8 +1,8 @@
 # Citation model
 
 > **Audience:** People building Personal Learning Corner
-> **Status:** In progress
-> **Last reviewed:** 2026-10-01
+> **Status:** Implemented
+> **Last reviewed:** 2026-10-02
 
 APA 7 is a specification, and this is the part of the product where being approximately right
 is the same as being wrong. This document is what the engine implements and what the

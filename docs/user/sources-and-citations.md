@@ -1,7 +1,7 @@
 # Sources and citations
 
 > **Audience:** People using Personal Learning Corner
-> **Status:** In progress
+> **Status:** Implemented
 > **Last reviewed:** 2026-10-02
 
 This is the part of the app that answers the question it was built around: *how do I know

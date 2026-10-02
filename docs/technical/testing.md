@@ -1,8 +1,8 @@
 # Testing
 
 > **Audience:** People building Personal Learning Corner
-> **Status:** In progress — M0 implemented
-> **Last reviewed:** 2026-09-06
+> **Status:** In progress — M1 implemented
+> **Last reviewed:** 2026-10-02
 
 There is no server, no network, and one user. That removes whole categories of testing and
 concentrates the risk in one place: **the library on disk.** Test accordingly.
@@ -93,19 +93,29 @@ including the offline run and the uninstall check.
 
 ## Fixtures
 
-A set of small libraries checked into the engine repository:
+A set of small libraries checked into the engine repository, in
+`crates/plc-engine/tests/fixtures/`, each opened from a copy as a person's library is:
 
-| Fixture | Exercises |
-| ------- | --------- |
-| `minimal` | An empty library |
-| `citations` | Every source type, every disambiguation case |
-| `parallel` | The Russian/Finnish work, including misalignment and a repeated chorus |
-| `unicode` | Cyrillic and Finnish text, accented filenames, locale-sensitive sorting |
-| `damaged` | Broken front matter, duplicate identifiers, an orphaned citation |
-| `v1`, `v2`, … | One library per historical format version, frozen forever |
+| Fixture | Exercises | Exists |
+| ------- | --------- | ------ |
+| `minimal` | An empty library | Since M1 |
+| `damaged` | Broken front matter, duplicate identifiers, an orphaned citation, a broken source and topic, a person's own notes left beside the documents | Since M1 |
+| `v1`, `v2`, … | One library per historical format version, frozen forever | `v1` since M1 |
+| `parallel` | The Russian/Finnish work, including misalignment and a repeated chorus | With M3 |
+
+Two fixtures this page once planned are covered another way. Every source type and every
+disambiguation case is a case in the engine's APA suite (`tests/apa/`) and its citation tests,
+rule by rule, which shows exactly which rule broke; and `v1` holds every source type besides.
+Cyrillic and Finnish text and filenames are in `v1` and in the engine's shared test library;
+sorting by the rules of a language rather than by character is not modelled yet — see the
+[citation model](citation-model.md#the-reference-list).
 
 `damaged` is the one people skip. It is also the one that decides whether a user with a
 half-broken library gets a diagnostic or gets nothing.
+
+`v1` is frozen by a test that holds a hash of its bytes. A format change makes `v2` beside it,
+written by the engine that writes the new format; `v1` stays, and proves the old format still
+opens.
 
 ## In CI
 
