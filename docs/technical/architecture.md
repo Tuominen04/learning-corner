@@ -57,7 +57,9 @@ the engine. It holds no durable state: everything it displays came from an engin
 everything it changes goes back through one. Losing the interface process loses nothing.
 
 **Desktop shell** — Tauri v2. Owns the window, the menus, the file dialogs, the second window
-for mind maps, and the packaging. It is glue, not logic. The one thing it keeps for itself
+for mind maps, and the packaging. It is glue, not logic. Closing the window waits for the
+interface to write what it is holding — two seconds at most, so a hung interface can never
+keep the window open. The one thing it keeps for itself
 between runs is the list of libraries this computer has opened, which lives in the
 application's settings rather than in any library
 ([Packaging](packaging-fedora.md#directories)).

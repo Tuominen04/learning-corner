@@ -72,8 +72,8 @@ anywhere else: a text editor's preview, a file manager, anything that reads Mark
 document to another topic and its pictures move with it.
 
 **Saving.** Continuous. There is no save button and no unsaved state to lose. The last thing
-you typed is saved before you move to another document or another library, however quickly
-you go.
+you typed is saved before you move to another document or another library, or close the app,
+however quickly you go.
 
 **Splitting.** Select the part you want to move and click **Split** above the page. It asks
 what to call the new document — and if you started your selection at a heading, it has already
