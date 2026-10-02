@@ -5,6 +5,7 @@
 // interface imports `invoke`, so the whole surface is one file to read.
 
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 
 import type { Appraisal } from "./bindings/Appraisal";
 import type { CitationRequest } from "./bindings/CitationRequest";
@@ -262,4 +263,17 @@ export const shell = {
   recentLibraries: () => call<RecentLibrary[]>("recent_libraries"),
   /** Take a library off the list. The library itself is not touched. */
   forgetLibrary: (path: string) => call<void>("forget_library", { path }),
+  /**
+   * Run `save` when the window is about to close, then let it close.
+   *
+   * The shell holds the window until it hears back — for two seconds at most, so a `save`
+   * that hangs costs a moment, never a window that will not close.
+   */
+  beforeClose: (save: () => Promise<void>) =>
+    listen("save-before-close", async () => {
+      await save().catch(() => {
+        // Closing goes ahead regardless; the editor has already said why on screen.
+      });
+      await call<void>("ready_to_close").catch(() => {});
+    }),
 };

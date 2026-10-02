@@ -163,6 +163,17 @@ export function contributorName(contributor: Contributor): string {
   return given ? `${family}, ${given}` : family;
 }
 
+/**
+ * A source named in a few words, for a line that lists several of them: who and when, the
+ * way a person would say it — "Nieminen 2021" — or the title when nobody is credited.
+ */
+export function shortName(source: Source): string {
+  const first = source.contributors.find((c) => c.role === "author") ?? source.contributors[0];
+  const who = first ? (isGroup(first) ? (first.literal ?? "") : (first.family ?? "")) : "";
+  const when = source.date.kind === "no-date" ? "n.d." : String(source.date.year);
+  return `${who.trim() || `“${source.title || "Untitled"}”`} ${when}`;
+}
+
 /** A blank source of the given type. */
 export function blankSource(type: SourceType): Source {
   return {
