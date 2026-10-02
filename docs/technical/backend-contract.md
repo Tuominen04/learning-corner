@@ -217,7 +217,7 @@ apply step carries their decisions. Rules in [Backup and synchronisation](backup
 The engine writes nothing for an export: it returns the bytes, and the shell writes them
 wherever the save dialog put them, through the engine's own temp-fsync-rename — so an export
 that fails part way leaves whatever file was there before, and never half a document. The
-formats are `text`, `html`, `docx` and `odt` today; PDF follows.
+formats are `text`, `html`, `docx`, `odt` and `pdf`.
 
 ## Events
 

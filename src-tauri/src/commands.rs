@@ -673,11 +673,23 @@ mod tests {
                 "{name}"
             );
         }
+        // A PDF, written whole: it starts with its version and ends with its end-of-file mark.
+        export_to(
+            &engine,
+            doc,
+            ExportFormat::Pdf,
+            &exports.join("What protein is.pdf"),
+        )
+        .unwrap();
+        let bytes = std::fs::read(exports.join("What protein is.pdf")).unwrap();
+        assert!(bytes.starts_with(b"%PDF-1."));
+        assert!(bytes.trim_ascii_end().ends_with(b"%%EOF"));
+
         let names: Vec<String> = std::fs::read_dir(&exports)
             .unwrap()
             .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
             .collect();
-        assert_eq!(names.len(), 4, "nothing left behind beside them: {names:?}");
+        assert_eq!(names.len(), 5, "nothing left behind beside them: {names:?}");
     }
 
     #[test]

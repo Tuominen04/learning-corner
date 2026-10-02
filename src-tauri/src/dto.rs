@@ -414,6 +414,8 @@ pub enum ExportFormat {
     Docx,
     /// An OpenDocument text, LibreOffice's own format.
     Odt,
+    /// A PDF, laid out and paginated, its font inside it.
+    Pdf,
 }
 
 impl From<ExportFormat> for plc_engine::export::Format {
@@ -423,6 +425,7 @@ impl From<ExportFormat> for plc_engine::export::Format {
             ExportFormat::Html => plc_engine::export::Format::Html,
             ExportFormat::Docx => plc_engine::export::Format::Docx,
             ExportFormat::Odt => plc_engine::export::Format::Odt,
+            ExportFormat::Pdf => plc_engine::export::Format::Pdf,
         }
     }
 }

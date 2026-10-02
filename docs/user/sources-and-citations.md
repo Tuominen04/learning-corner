@@ -138,7 +138,8 @@ send, to print, or to keep. Pick a format, then where the file goes:
 
 | Format | Best for |
 | ------ | -------- |
-| **Web page** (`.html`) | Reading anywhere. It opens in any browser with its pictures inside it, and prints from there. |
+| **PDF** (`.pdf`) | Sending, handing in, or printing. It looks exactly the same on every computer and on paper. |
+| **Web page** (`.html`) | Reading anywhere. It opens in any browser with its pictures inside it, and fits any screen. |
 | **Word document** (`.docx`) | Going on editing in Word or Google Docs. |
 | **OpenDocument** (`.odt`) | Going on editing in LibreOffice, or any office suite. |
 | **Plain text** (`.txt`) | Pasting into anything. Italics are lost, and a picture is named rather than shown. |
@@ -146,7 +147,12 @@ send, to print, or to keep. Pick a format, then where the file goes:
 A Word or OpenDocument file is set in the document's own styles — Title, Heading 1 to 6, and a
 Bibliography style that holds the reference list's hanging indent — so it edits like any other
 document, and changing a style changes everything in it. Its pictures are inside it, sized to
-fit the page. PDF comes next.
+fit the page.
+
+A PDF is laid out ready to print: A4 pages with page numbers at the top right, headings in the
+sidebar of your PDF reader, and the reference list's web addresses clickable. It carries its own
+font, which has every Finnish, Swedish and Russian letter. A character it has no letter for — a
+Chinese word, an emoji — shows as an empty box, but still copies out of the PDF as itself.
 
 The file is your document, finished. Every citation is written out in APA 7 form, and the
 reference list follows your writing with its hanging indent. Two citations side by side become

@@ -19,7 +19,7 @@ export function ExportPanel({
   document: { id: string; title: string };
   onClose: () => void;
 }) {
-  const [format, setFormat] = useState<ExportFormat>("html");
+  const [format, setFormat] = useState<ExportFormat>(EXPORT_FORMATS[0].value);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState<string | null>(null);

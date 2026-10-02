@@ -1,23 +1,33 @@
 // What a document can be exported as, and what the file is called.
 //
 // The engine makes the file and the shell writes it; this side only offers the choice and
-// suggests a name. The order is the order the panel offers them in: a web page first, because
-// it opens on any computer without anything installed; then the two to go on editing in; then
-// plain text, which keeps the least.
+// suggests a name. The order is the order the panel offers them in, and the first is the one
+// chosen to begin with: a PDF, because it reads and prints the same on any computer, exactly as
+// laid out; a web page, which opens anywhere and fits the screen it is read on; then the two to
+// go on editing in; then plain text, which keeps the least.
 
 import type { ExportFormat } from "./engine";
 
-export const EXPORT_FORMATS: {
+type Offered = {
   value: ExportFormat;
   label: string;
   extension: string;
   hint: string;
-}[] = [
+};
+
+/** Never empty: the panel starts on the first. */
+export const EXPORT_FORMATS: [Offered, ...Offered[]] = [
+  {
+    value: "pdf",
+    label: "PDF",
+    extension: "pdf",
+    hint: "Exactly as it prints, on any computer. For sending, handing in, or paper.",
+  },
   {
     value: "html",
     label: "Web page",
     extension: "html",
-    hint: "Opens in any browser, pictures and all. Print it from there for paper.",
+    hint: "Opens in any browser, pictures and all, and fits any screen.",
   },
   {
     value: "docx",
