@@ -1,11 +1,12 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "What the interface is permitted to do. Deliberately short: the application makes no network requests, and the only filesystem access it needs is choosing a library folder, which goes through the dialog plugin.",
+  "description": "What the interface is permitted to do. Deliberately short: the application makes no network requests, and the only filesystem access it needs is choosing a library folder, a file to bring in, or where an export goes, all of which go through the dialog plugin.",
   "windows": ["main"],
   "permissions": [
     "core:default",
     "dialog:allow-open",
+    "dialog:allow-save",
     "dialog:allow-message"
   ]
 }

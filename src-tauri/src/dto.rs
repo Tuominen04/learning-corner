@@ -401,6 +401,35 @@ impl From<Keep> for plc_engine::api::Keep {
     }
 }
 
+/// What a document can be exported as.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "kebab-case")]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub enum ExportFormat {
+    /// Plain text, which pastes into anything.
+    Text,
+    /// One web page, with its pictures inside it.
+    Html,
+    /// A Word document, set in Word's own styles.
+    Docx,
+    /// An OpenDocument text, LibreOffice's own format.
+    Odt,
+    /// A PDF, laid out and paginated, its font inside it.
+    Pdf,
+}
+
+impl From<ExportFormat> for plc_engine::export::Format {
+    fn from(format: ExportFormat) -> Self {
+        match format {
+            ExportFormat::Text => plc_engine::export::Format::Text,
+            ExportFormat::Html => plc_engine::export::Format::Html,
+            ExportFormat::Docx => plc_engine::export::Format::Docx,
+            ExportFormat::Odt => plc_engine::export::Format::Odt,
+            ExportFormat::Pdf => plc_engine::export::Format::Pdf,
+        }
+    }
+}
+
 /// One citation the interface wants rendered.
 ///
 /// Batched rather than asked for one at a time. Every single `citation_format` reads the whole

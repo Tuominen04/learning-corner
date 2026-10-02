@@ -15,9 +15,9 @@ use tauri::State;
 
 use crate::closing::Closing;
 use crate::dto::{
-    CitationRequest, Document, DocumentRef, EngineError, Field, Form, Keep, LibraryStatus, Locator,
-    RecentLibrary, RenamedLibrary, SavedSource, SearchHit, Source, SourceType, Split, Topic,
-    TopicContents,
+    CitationRequest, Document, DocumentRef, EngineError, ExportFormat, Field, Form, Keep,
+    LibraryStatus, Locator, RecentLibrary, RenamedLibrary, SavedSource, SearchHit, Source,
+    SourceType, Split, Topic, TopicContents,
 };
 use crate::recent::Recent;
 
@@ -600,10 +600,107 @@ pub fn citation_reference_list(
     with(&state, |e| e.citation_reference_list(id(&document)?))
 }
 
+/// Write a document out as a file somebody else can read, wherever the save dialog put it.
+#[tauri::command]
+pub fn document_export(
+    state: State<'_, OpenLibrary>,
+    document: String,
+    format: ExportFormat,
+    path: String,
+) -> Answer<()> {
+    with(&state, |e| {
+        export_to(e, id(&document)?, format, Path::new(&path))
+    })
+}
+
+/// The engine makes the bytes and this puts them on disk, through the same temp-fsync-rename
+/// the library's own files go through: an export that fails part way leaves whatever file was
+/// there before, or none, and never half a document under the name somebody chose.
+fn export_to(
+    engine: &Engine,
+    document: Id,
+    format: ExportFormat,
+    path: &Path,
+) -> Result<(), Error> {
+    let bytes = engine.export_document(document, format.into())?;
+    plc_engine::atomic::write_bytes(path, &bytes)
+}
+
 /// The picture half of the wire, where it can be reached without a window.
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn an_export_lands_where_it_was_asked_to_and_replaces_what_was_there() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut engine = Engine::create(dir.path().join("learning"), "Learning").unwrap();
+        let topic = engine.topic_create(None, "Protein").unwrap();
+        let doc = engine.document_create(topic, "What protein is").unwrap();
+        let revision = engine.document_read(doc).unwrap().revision;
+        engine
+            .document_write(doc, "Protein is built from amino acids.", revision)
+            .unwrap();
+
+        let exports = dir.path().join("exports");
+        std::fs::create_dir_all(&exports).unwrap();
+        let target = exports.join("What protein is.html");
+        std::fs::write(&target, "an older export").unwrap();
+
+        export_to(&engine, doc, ExportFormat::Html, &target).unwrap();
+        let written = std::fs::read_to_string(&target).unwrap();
+        assert!(written.starts_with("<!DOCTYPE html>"), "{written}");
+        assert!(written.contains("Protein is built from amino acids."));
+
+        export_to(
+            &engine,
+            doc,
+            ExportFormat::Text,
+            &exports.join("What protein is.txt"),
+        )
+        .unwrap();
+        for (format, name) in [
+            (ExportFormat::Docx, "What protein is.docx"),
+            (ExportFormat::Odt, "What protein is.odt"),
+        ] {
+            export_to(&engine, doc, format, &exports.join(name)).unwrap();
+            // A zip, written whole: its last bytes are the end of its central directory.
+            let bytes = std::fs::read(exports.join(name)).unwrap();
+            assert!(bytes.starts_with(b"PK\x03\x04"), "{name}");
+            assert_eq!(
+                &bytes[bytes.len() - 22..bytes.len() - 18],
+                b"PK\x05\x06",
+                "{name}"
+            );
+        }
+        // A PDF, written whole: it starts with its version and ends with its end-of-file mark.
+        export_to(
+            &engine,
+            doc,
+            ExportFormat::Pdf,
+            &exports.join("What protein is.pdf"),
+        )
+        .unwrap();
+        let bytes = std::fs::read(exports.join("What protein is.pdf")).unwrap();
+        assert!(bytes.starts_with(b"%PDF-1."));
+        assert!(bytes.trim_ascii_end().ends_with(b"%%EOF"));
+
+        let names: Vec<String> = std::fs::read_dir(&exports)
+            .unwrap()
+            .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
+            .collect();
+        assert_eq!(names.len(), 5, "nothing left behind beside them: {names:?}");
+    }
+
+    #[test]
+    fn exporting_a_document_that_is_gone_writes_nothing() {
+        let dir = tempfile::tempdir().unwrap();
+        let engine = Engine::create(dir.path().join("learning"), "Learning").unwrap();
+        let target = dir.path().join("gone.txt");
+        let gone: Id = "01J8ZQ8D4Q6S8W0W2Y4A6C8E09".parse().unwrap();
+        assert!(export_to(&engine, gone, ExportFormat::Text, &target).is_err());
+        assert!(!target.exists());
+    }
 
     #[test]
     fn a_renamed_library_is_listed_under_its_new_name_where_its_folder_went() {

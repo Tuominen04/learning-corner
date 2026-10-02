@@ -13,6 +13,7 @@ import type { Contributor } from "./bindings/Contributor";
 import type { Document } from "./bindings/Document";
 import type { DocumentRef } from "./bindings/DocumentRef";
 import type { EngineError } from "./bindings/EngineError";
+import type { ExportFormat } from "./bindings/ExportFormat";
 import type { Field } from "./bindings/Field";
 import type { Form } from "./bindings/Form";
 import type { LibraryFolder } from "./bindings/LibraryFolder";
@@ -39,6 +40,7 @@ export type {
   Document,
   DocumentRef,
   EngineError,
+  ExportFormat,
   Field,
   Form,
   Keep,
@@ -175,6 +177,9 @@ export const engine = {
      */
     image: (document: string, name: string) =>
       call<string | null>("document_image", { document, name }),
+    /** Write the document out as `format`, to the file at `path` the save dialog chose. */
+    export: (document: string, format: ExportFormat, path: string) =>
+      call<void>("document_export", { document, format, path }),
     /**
      * The documents linking here.
      *
