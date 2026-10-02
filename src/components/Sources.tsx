@@ -20,6 +20,9 @@ import { SourceForm } from "./SourceForm";
 
 type Pending = { source: Source; citing: DocumentRef[] };
 
+/** As the sidebar's search: long enough not to query per letter, short enough to feel live. */
+const SEARCH_AFTER_IDLE_MS = 180;
+
 export function Sources({ onOpenDocument }: { onOpenDocument: (id: string) => void }) {
   const [sources, setSources] = useState<Source[]>([]);
   const [editing, setEditing] = useState<Source | null | "new">(null);
@@ -28,6 +31,13 @@ export function Sources({ onOpenDocument }: { onOpenDocument: (id: string) => vo
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [reloads, setReloads] = useState(0);
+
+  // Searching the list. The index the sidebar searches holds sources too; this is where they
+  // are shown, so this is where they are looked for. `matches` is the ids that matched, best
+  // first, or `null` while nothing is being looked for — and it is deliberately not cleared
+  // while the next answer is in flight, so the list does not empty under somebody typing.
+  const [query, setQuery] = useState("");
+  const [matches, setMatches] = useState<string[] | null>(null);
 
   // Which sources are showing where they are used, and what came back.
   //
@@ -67,6 +77,43 @@ export function Sources({ onOpenDocument }: { onOpenDocument: (id: string) => vo
       live = false;
     };
   }, [reloads]);
+
+  // Asked again after a save or a delete as well as on typing, so a source just added can be
+  // found by the search that is already showing.
+  useEffect(() => {
+    const looking = query.trim();
+    if (looking === "") return;
+    let live = true;
+    const timer = setTimeout(() => {
+      engine
+        .search(looking)
+        .then((hits) => {
+          if (live) setMatches(hits.filter((hit) => hit.kind === "source").map((hit) => hit.id));
+        })
+        .catch((thrown: unknown) => {
+          if (live) setError(thrown instanceof EngineFailure ? thrown.message : String(thrown));
+        });
+    }, SEARCH_AFTER_IDLE_MS);
+    return () => {
+      live = false;
+      clearTimeout(timer);
+    };
+  }, [query, reloads]);
+
+  function search(text: string) {
+    setQuery(text);
+    // An empty box shows the whole list whatever `matches` holds. Forgetting them here is for
+    // the next search, which should start from the whole list rather than flash the results
+    // of the last one while its own answer is on the way.
+    if (text.trim() === "") setMatches(null);
+  }
+
+  // What the list shows: everything, or the matches in the order the search ranked them.
+  const byId = new Map(sources.map((source) => [source.id ?? "", source]));
+  const shown =
+    query.trim() === "" || matches === null
+      ? sources
+      : matches.flatMap((id) => byId.get(id) ?? []);
 
   async function guard(work: () => Promise<void>) {
     setError(null);
@@ -168,6 +215,28 @@ export function Sources({ onOpenDocument }: { onOpenDocument: (id: string) => vo
         />
       )}
 
+      {sources.length > 0 && (
+        <div className="find source-find">
+          <input
+            className="find-input"
+            value={query}
+            onChange={(e) => search(e.target.value)}
+            placeholder="Search your sources — a title, an author, a journal"
+            aria-label="Search your sources"
+          />
+          {query !== "" && (
+            <button
+              className="ghost"
+              onClick={() => search("")}
+              title="Clear the search"
+              aria-label="Clear the search"
+            >
+              ×
+            </button>
+          )}
+        </div>
+      )}
+
       {loading ? (
         <p className="empty">Reading the library…</p>
       ) : sources.length === 0 ? (
@@ -175,9 +244,11 @@ export function Sources({ onOpenDocument }: { onOpenDocument: (id: string) => vo
           No sources yet. Save one when you find it, not when you need to cite it — the web
           page you meant to come back to has a way of not being there.
         </p>
+      ) : shown.length === 0 ? (
+        <p className="empty">No source matches “{query.trim()}”.</p>
       ) : (
         <ul className="source-list">
-          {sources.map((source) => (
+          {shown.map((source) => (
             <li key={source.id ?? source.title}>
               <div className="source-row">
                 <div>

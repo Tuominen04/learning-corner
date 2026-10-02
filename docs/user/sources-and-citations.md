@@ -140,6 +140,15 @@ The reference list comes with it, properly formatted, with the hanging indent AP
 for. Citations stay in the text as text. What you hand to someone else is a finished piece
 of writing, not something that needs this app to make sense.
 
+## Finding a source
+
+The **Sources** screen has its own search box. Type part of a title, an author's name, or a
+journal, and the list narrows to the sources that match, best match first. As with searching
+your writing, the start of a word is enough — `niem` finds Nieminen — and clearing the box
+brings the whole list back.
+
+A source found this way is the whole row: who wrote it, its paper, and where it is used.
+
 ## Working backwards from a source
 
 Under **Sources**, every source has a **Used in** button. Press it to see **every document
