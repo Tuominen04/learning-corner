@@ -659,11 +659,25 @@ mod tests {
             &exports.join("What protein is.txt"),
         )
         .unwrap();
+        for (format, name) in [
+            (ExportFormat::Docx, "What protein is.docx"),
+            (ExportFormat::Odt, "What protein is.odt"),
+        ] {
+            export_to(&engine, doc, format, &exports.join(name)).unwrap();
+            // A zip, written whole: its last bytes are the end of its central directory.
+            let bytes = std::fs::read(exports.join(name)).unwrap();
+            assert!(bytes.starts_with(b"PK\x03\x04"), "{name}");
+            assert_eq!(
+                &bytes[bytes.len() - 22..bytes.len() - 18],
+                b"PK\x05\x06",
+                "{name}"
+            );
+        }
         let names: Vec<String> = std::fs::read_dir(&exports)
             .unwrap()
             .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
             .collect();
-        assert_eq!(names.len(), 2, "nothing left behind beside them: {names:?}");
+        assert_eq!(names.len(), 4, "nothing left behind beside them: {names:?}");
     }
 
     #[test]

@@ -2,8 +2,8 @@
 //
 // The engine makes the file and the shell writes it; this side only offers the choice and
 // suggests a name. The order is the order the panel offers them in: a web page first, because
-// it keeps the most — italics, pictures, the reference list's hanging indent — and opens on
-// any computer without this application.
+// it opens on any computer without anything installed; then the two to go on editing in; then
+// plain text, which keeps the least.
 
 import type { ExportFormat } from "./engine";
 
@@ -18,6 +18,18 @@ export const EXPORT_FORMATS: {
     label: "Web page",
     extension: "html",
     hint: "Opens in any browser, pictures and all. Print it from there for paper.",
+  },
+  {
+    value: "docx",
+    label: "Word document",
+    extension: "docx",
+    hint: "To go on editing in Word or Google Docs. Headings and the reference list keep their styles.",
+  },
+  {
+    value: "odt",
+    label: "OpenDocument",
+    extension: "odt",
+    hint: "To go on editing in LibreOffice. The same as Word's, in an open standard.",
   },
   {
     value: "text",

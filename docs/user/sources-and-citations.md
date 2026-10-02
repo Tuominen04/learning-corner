@@ -139,9 +139,14 @@ send, to print, or to keep. Pick a format, then where the file goes:
 | Format | Best for |
 | ------ | -------- |
 | **Web page** (`.html`) | Reading anywhere. It opens in any browser with its pictures inside it, and prints from there. |
+| **Word document** (`.docx`) | Going on editing in Word or Google Docs. |
+| **OpenDocument** (`.odt`) | Going on editing in LibreOffice, or any office suite. |
 | **Plain text** (`.txt`) | Pasting into anything. Italics are lost, and a picture is named rather than shown. |
 
-Word, OpenDocument and PDF come next.
+A Word or OpenDocument file is set in the document's own styles — Title, Heading 1 to 6, and a
+Bibliography style that holds the reference list's hanging indent — so it edits like any other
+document, and changing a style changes everything in it. Its pictures are inside it, sized to
+fit the page. PDF comes next.
 
 The file is your document, finished. Every citation is written out in APA 7 form, and the
 reference list follows your writing with its hanging indent. Two citations side by side become

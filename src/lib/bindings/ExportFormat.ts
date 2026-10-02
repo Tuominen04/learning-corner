@@ -3,4 +3,4 @@
 /**
  * What a document can be exported as.
  */
-export type ExportFormat = "text" | "html";
+export type ExportFormat = "text" | "html" | "docx" | "odt";

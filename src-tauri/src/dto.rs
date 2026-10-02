@@ -410,6 +410,10 @@ pub enum ExportFormat {
     Text,
     /// One web page, with its pictures inside it.
     Html,
+    /// A Word document, set in Word's own styles.
+    Docx,
+    /// An OpenDocument text, LibreOffice's own format.
+    Odt,
 }
 
 impl From<ExportFormat> for plc_engine::export::Format {
@@ -417,6 +421,8 @@ impl From<ExportFormat> for plc_engine::export::Format {
         match format {
             ExportFormat::Text => plc_engine::export::Format::Text,
             ExportFormat::Html => plc_engine::export::Format::Html,
+            ExportFormat::Docx => plc_engine::export::Format::Docx,
+            ExportFormat::Odt => plc_engine::export::Format::Odt,
         }
     }
 }

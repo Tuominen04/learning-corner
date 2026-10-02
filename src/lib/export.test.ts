@@ -30,10 +30,17 @@ describe("the file an export suggests", () => {
 });
 
 describe("the formats offered", () => {
-  it("offers a web page first, then plain text, each with its own extension", () => {
+  it("offers a web page first, then the two to edit in, then plain text", () => {
     expect(EXPORT_FORMATS.map((f) => [f.value, f.extension])).toEqual([
       ["html", "html"],
+      ["docx", "docx"],
+      ["odt", "odt"],
       ["text", "txt"],
     ]);
+  });
+
+  it("suggests the right extension for an office file", () => {
+    expect(exportName("What protein is", "docx")).toBe("What protein is.docx");
+    expect(exportName("What protein is", "odt")).toBe("What protein is.odt");
   });
 });
