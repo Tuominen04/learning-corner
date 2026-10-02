@@ -153,6 +153,15 @@ document it leads to. Nothing in the file needs this app to make sense.
 What you typed a moment ago goes into the export too, because the app saves first. Exporting
 changes nothing in your library.
 
+## Finding a source
+
+The **Sources** screen has its own search box. Type part of a title, an author's name, or a
+journal, and the list narrows to the sources that match, best match first. As with searching
+your writing, the start of a word is enough — `niem` finds Nieminen — and clearing the box
+brings the whole list back.
+
+A source found this way is the whole row: who wrote it, its paper, and where it is used.
+
 ## Working backwards from a source
 
 Under **Sources**, every source has a **Used in** button. Press it to see **every document
