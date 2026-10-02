@@ -2,7 +2,7 @@
 
 > **Audience:** People using Personal Learning Corner
 > **Status:** In progress
-> **Last reviewed:** 2026-09-10
+> **Last reviewed:** 2026-10-02
 
 This is the part of the app that answers the question it was built around: *how do I know
 this is true?* You cannot answer it for everything you read. You can answer it for
@@ -82,6 +82,16 @@ sentence:
 | ----- | ---------- | ----------- |
 | In brackets | …repairs muscle tissue (Nieminen, 2021, p. 44). | The fact matters, not who said it |
 | In the sentence | Nieminen (2021) found that… | Who said it is part of your point |
+
+A citation in brackets goes **inside the sentence it supports**, in front of the full stop —
+that is where APA 7 puts it. If you selected the whole sentence, full stop and all, the app
+steps back over the full stop for you: *repairs muscle tissue (Nieminen, 2021).*, never
+*repairs muscle tissue. (Nieminen, 2021)*. A question mark or an exclamation mark is stepped
+over the same way.
+
+Two full stops are left where they are, and the citation goes after them: one inside a
+quotation, which belongs to the quotation, and one that may end an abbreviation — *jne.*,
+*U.S.*, *Fig. 3.* — because stepping in front of it would cut the abbreviation short.
 
 The app handles the fiddly parts of APA 7 without you having to remember them: two authors
 joined correctly, three or more shortened to *et al.*, two different authors with the same
