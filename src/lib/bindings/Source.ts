@@ -15,7 +15,12 @@ id: string | null, type: SourceType, title: string, date: SourceDate, contributo
 /**
  * The journal, book or collection this sits inside.
  */
-container: string | null, publisher: string | null, site: string | null, volume: string | null, issue: string | null, pages: string | null, edition: string | null, doi: string | null, url: string | null, 
+container: string | null, publisher: string | null, site: string | null, volume: string | null, issue: string | null, pages: string | null, edition: string | null, 
+/**
+ * A report's number, or a podcast episode's: "935", or the whole label as the work prints
+ * it — "NIH Publication No. 18-2059".
+ */
+number: string | null, doi: string | null, url: string | null, 
 /**
  * Only where content is designed to change and is not archived — not on every web page.
  */

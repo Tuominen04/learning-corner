@@ -2,7 +2,7 @@
 
 > **Audience:** People using Personal Learning Corner
 > **Status:** In progress
-> **Last reviewed:** 2026-09-10
+> **Last reviewed:** 2026-10-01
 
 This is the part of the app that answers the question it was built around: *how do I know
 this is true?* You cannot answer it for everything you read. You can answer it for
@@ -51,6 +51,19 @@ Two habits worth having:
 
 Sources live in the library, not in a document. Save a book once and cite it from fifty
 documents.
+
+### Writing the details down
+
+- **Titles in sentence case.** A capital letter to start, after a colon, and on names:
+  *Protein in the Finnish diet: A review*. That is how APA prints titles, and the app prints
+  yours exactly as you type it. It never changes the case for you, because it cannot tell
+  which of your words are names.
+- **A podcast's host goes in as Host.** APA puts the host where an author would go, and so
+  does the app: *Glass, I. (Host).*
+- **Numbers as they are printed.** A report or a podcast episode can have a number. A number
+  on its own, like *935*, prints as *Report No. 935*. When the report gives its number a label
+  of its own, write the whole thing — *NIH Publication No. 18-2059* — and it prints exactly so.
+- **An edition can be just a number.** *2* prints as *2nd ed.*
 
 ### If you cannot find all the details
 

@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import type { Source } from "./engine";
+import type { Field, Source, SourceType } from "./engine";
 import {
   blankSource,
   contributorName,
   emptyContributor,
+  fieldsFor,
   fieldToEditable,
   isGroup,
   labelFor,
@@ -30,6 +31,11 @@ describe("tidy", () => {
 
   it("keeps a field that only looks empty", () => {
     expect(tidy(book({ volume: "  12  " })).volume).toBe("12");
+  });
+
+  it("keeps a report's number, and drops an empty one", () => {
+    expect(tidy(book({ type: "report", number: " 935 " })).number).toBe("935");
+    expect(tidy(book({ type: "report", number: "  " })).number).toBeNull();
   });
 
   it("drops a contributor row nobody typed a name into", () => {
@@ -122,13 +128,18 @@ describe("naming the parts of a source", () => {
     // The same field is a journal, a book, or a series. One fixed label would be wrong twice.
     expect(labelFor("container", "journal-article")).toBe("Journal");
     expect(labelFor("container", "book-chapter")).toBe("Book title");
-    expect(labelFor("container", "audio")).toBe("Series or programme");
+    expect(labelFor("container", "audio")).toBe("Podcast");
   });
 
   it("names a missing field the same way the form does", () => {
     expect(missingLabel("publisher", "book")).toBe("publisher");
     expect(missingLabel("container", "journal-article")).toBe("journal");
     expect(missingLabel("authors", "book")).toBe("an author");
+  });
+
+  it("calls a number what it numbers", () => {
+    expect(labelFor("number", "report")).toBe("Report number");
+    expect(labelFor("number", "audio")).toBe("Episode number");
   });
 
   it("knows which required fields have a text box and which do not", () => {
@@ -164,5 +175,53 @@ describe("contributors", () => {
         abbreviation: "WHO",
       }),
     ).toBe("World Health Organization");
+  });
+});
+
+describe("the fields a type offers", () => {
+  // What the engine requires of each type, from `required_fields` in its source model.
+  const REQUIRED: Record<SourceType, Field[]> = {
+    book: ["authors", "date", "title", "publisher"],
+    "book-chapter": ["authors", "date", "title", "editors", "container", "publisher", "pages"],
+    "journal-article": ["authors", "date", "title", "container", "volume"],
+    "web-page": ["authors", "date", "title", "site"],
+    video: ["authors", "date", "title", "site"],
+    audio: ["authors", "date", "title", "container"],
+    report: ["authors", "date", "title", "publisher"],
+  };
+
+  it("never hides a field the type requires", () => {
+    for (const [type, fields] of Object.entries(REQUIRED) as [SourceType, Field[]][]) {
+      for (const field of fields) {
+        const box = fieldToEditable(field);
+        if (box) expect(fieldsFor(type), `${type} needs its ${box}`).toContain(box);
+      }
+    }
+  });
+
+  it("offers a number only where the reference prints one", () => {
+    const numbered = (Object.keys(REQUIRED) as SourceType[]).filter((type) =>
+      fieldsFor(type).includes("number"),
+    );
+    expect(numbered).toEqual(["audio", "report"]);
+  });
+
+  it("offers an edition where the entry prints one", () => {
+    // A chapter's edition is the book's, printed beside its pages: (4th ed., pp. 115–129).
+    const types = (Object.keys(REQUIRED) as SourceType[]).filter((type) =>
+      fieldsFor(type).includes("edition"),
+    );
+    expect(types).toEqual(["book", "book-chapter", "report"]);
+  });
+
+  it("does not ask a web page for a volume, or a book for a journal", () => {
+    expect(fieldsFor("web-page")).not.toContain("volume");
+    expect(fieldsFor("book")).not.toContain("container");
+  });
+
+  it("offers a web address and a DOI for everything", () => {
+    for (const type of Object.keys(REQUIRED) as SourceType[]) {
+      expect(fieldsFor(type)).toEqual(expect.arrayContaining(["doi", "url"]));
+    }
   });
 });
