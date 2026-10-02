@@ -123,8 +123,12 @@ possible there. Move the documents somewhere first, or choose to delete them.
 When you cite a source for something you wrote, that sentence becomes a **claim** — a thing
 you can point at the origin of. Everything else is just your writing.
 
-Turn on **Show claims** and the document tells you which is which. Cited sentences are
-marked; uncited ones are not.
+Turn on **Show claims**, just above the page, and the document tells you which is which.
+Cited sentences are marked; uncited ones are not. It stays on as you move from document to
+document, until you turn it off or close the app.
+
+A citation belongs to the sentence it follows — at the end of the sentence it supports, which
+is where **Cite** puts it. Two sources behind one sentence still make one claim.
 
 This is not a scolding feature and there is nothing wrong with an uncited sentence — your
 own thinking, a question to come back to, and a summary in your own words all belong in a
@@ -133,7 +137,9 @@ document. The point is that **six months later, you can tell them apart.** Witho
 the same on the page, and the whole reason you were careful is lost.
 
 A document also shows a short summary at the top: how many claims it makes, how many sources
-it draws on, and whether any of those sources are ones you marked as low quality.
+it draws on, and beside each source how much you said you trust it — in your own words, as you
+wrote them on the source. A source you have not said anything about yet says *not rated*,
+so a document leaning on something you never looked at closely tells you so.
 
 See [Sources and citations](sources-and-citations.md) for how citing works.
 

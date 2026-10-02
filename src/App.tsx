@@ -191,6 +191,10 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
 
   const [closing, setClosing] = useState(false);
 
+  // Whether claims are marked in the editor. Here rather than in the editor, so it holds as
+  // you move from one document to the next; for this window only, and never written down.
+  const [showClaims, setShowClaims] = useState(false);
+
   // Something worth knowing that is not a failure: why a renamed library's folder kept its
   // name. Cleared by the next thing done, like an error.
   const [note, setNote] = useState<string | null>(null);
@@ -467,6 +471,8 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
             }}
             onRename={renameDocument}
             onOpenDocument={openDocument}
+            showClaims={showClaims}
+            onShowClaims={setShowClaims}
           />
         ) : (
           <p className="empty">
