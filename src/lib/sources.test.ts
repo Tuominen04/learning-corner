@@ -10,6 +10,7 @@ import {
   isGroup,
   labelFor,
   missingLabel,
+  SOURCE_TYPES,
   tidy,
 } from "./sources";
 
@@ -184,11 +185,23 @@ describe("the fields a type offers", () => {
     book: ["authors", "date", "title", "publisher"],
     "book-chapter": ["authors", "date", "title", "editors", "container", "publisher", "pages"],
     "journal-article": ["authors", "date", "title", "container", "volume"],
-    "web-page": ["authors", "date", "title", "site"],
+    "web-page": ["date", "title", "site"],
     video: ["authors", "date", "title", "site"],
     audio: ["authors", "date", "title", "container"],
     report: ["authors", "date", "title", "publisher"],
+    pdf: ["date", "title"],
   };
+
+  it("offers every kind of source in the list to choose from", () => {
+    expect(SOURCE_TYPES.map((t) => t.value).sort()).toEqual(
+      (Object.keys(REQUIRED) as SourceType[]).sort(),
+    );
+  });
+
+  it("offers a PDF document, asking who published it and where it is", () => {
+    expect(SOURCE_TYPES.find((t) => t.value === "pdf")?.label).toBe("PDF document");
+    expect(fieldsFor("pdf")).toEqual(["publisher", "doi", "url"]);
+  });
 
   it("never hides a field the type requires", () => {
     for (const [type, fields] of Object.entries(REQUIRED) as [SourceType, Field[]][]) {

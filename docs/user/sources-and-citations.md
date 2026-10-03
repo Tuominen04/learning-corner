@@ -11,17 +11,22 @@ everything you keep.
 ## Saving a source
 
 A **source** is anything you learned from — a book, a journal article, a web page, a video,
-a lecture, a podcast, a chapter someone wrote in someone else's book.
+a lecture, a podcast, a chapter someone wrote in someone else's book. A PDF that is none of
+those — a guideline, a brochure, a set of slides — is a **PDF document**.
 
 Choose **New source**, pick what kind of thing it is, and fill in the form. The form changes
 with the kind: a book asks for a publisher, an article asks for the journal and the volume,
 a web page asks for the site and the date you read it. You are only ever asked for what a
 correct citation genuinely needs, which is usually fewer fields than you expect.
 
+Every source needs its title. A web page or a PDF document can name nobody at all — plenty
+don't — and is then cited by its title instead.
+
 ### Keeping the paper itself
 
 If you have the PDF — downloaded, or handed to you — choose **Add a PDF…** on the source and
-pick it. Then say what should happen to the file you picked:
+pick it, whatever kind of source it is: a report you downloaded is still a report. Then say
+what should happen to the file you picked:
 
 | | |
 | --- | --- |

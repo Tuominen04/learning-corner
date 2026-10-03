@@ -1,6 +1,6 @@
 [package]
 name = "personal-learning-corner"
-version = "0.16.1"
+version = "0.17.1"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "Local-first learning, with every claim anchored to a source you chose."
@@ -28,7 +28,7 @@ ts-rs = "12"
 # diff naming the old tag and the new one.
 plc-engine = { 
     git = "https://github.com/Tuominen04/personal-learning-corner-engine", 
-    tag = "v0.16.1" 
+    tag = "v0.17.1" 
 }
 
 [dev-dependencies]

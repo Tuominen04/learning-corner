@@ -49,6 +49,28 @@ import { Citation, DocumentImage, DocumentLink } from "./nodes";
 /** The levels the toolbar offers. Deeper ones are still read, and still written back. */
 const LEVELS = [1, 2, 3] as const;
 
+/**
+ * What a tool has opened, and for Split, what it would take.
+ *
+ * One at a time: each opens in the same place, by the tools, over the writing — so a second
+ * would cover the first, and choosing another tool means moving on from this one.
+ */
+type Panel =
+  | { tool: "cite" }
+  | { tool: "picture" }
+  | { tool: "link" }
+  | { tool: "split"; from: number; to: number };
+
+/**
+ * How near the top of the view the cursor may come, and where it is brought back to.
+ *
+ * The tools stay at the top of the view while the writing scrolls under them, so a cursor in
+ * the top of the view can be hidden behind them. These keep it clear: scrolled back out to
+ * below the tools, with a little room, rather than to the very edge.
+ */
+const SCROLL_THRESHOLD = { top: 64, right: 0, bottom: 0, left: 0 };
+const SCROLL_MARGIN = { top: 80, right: 5, bottom: 5, left: 5 };
+
 /** Pictures, and the document they were fetched for. */
 type Pictures = { document: string; urls: Map<string, string | null> };
 
@@ -80,11 +102,9 @@ export function Editor({
 }) {
   const [state, setState] = useState<"clean" | "saving" | "conflict" | "error">("clean");
   const [message, setMessage] = useState<string | null>(null);
-  const [citing, setCiting] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const [picturing, setPicturing] = useState(false);
-  const [linking, setLinking] = useState(false);
-  const [splitting, setSplitting] = useState<{ from: number; to: number } | null>(null);
+  const [panel, setPanel] = useState<Panel | null>(null);
+  const splitting = panel?.tool === "split" ? panel : null;
   const [splittingNow, setSplittingNow] = useState(false);
 
   // The documents linking here. Asked for once, when a document opens.
@@ -217,6 +237,7 @@ export function Editor({
         ClaimMarks,
       ],
       content: parseBody(document.body),
+      editorProps: { scrollThreshold: SCROLL_THRESHOLD, scrollMargin: SCROLL_MARGIN },
       // A toolbar that reports where the cursor is has to be redrawn when the cursor moves.
       // Without this the editor re-renders only when React has some other reason to, so the
       // heading buttons showed the block you were in *when you last pressed one*, and Split
@@ -449,7 +470,7 @@ export function Editor({
   }, []);
 
   function insert(chosen: Chosen) {
-    setCiting(false);
+    setPanel(null);
     if (editor) insertCitation(editor, chosen);
   }
 
@@ -461,7 +482,7 @@ export function Editor({
    * makes adding a picture feel like it did not work.
    */
   function inserted(name: string, alt: string) {
-    setPicturing(false);
+    setPanel(null);
     if (editor) insertImage(editor, name, alt);
 
     const id = document.id;
@@ -478,7 +499,7 @@ export function Editor({
   }
 
   function linked(id: string) {
-    setLinking(false);
+    setPanel(null);
     if (editor) insertLink(editor, id);
   }
 
@@ -528,7 +549,7 @@ export function Editor({
       // look like typing and be written straight back.
       revision.current = result.original.revision;
       editor.commands.setContent(parseBody(result.original.body), { emitUpdate: false });
-      setSplitting(null);
+      setPanel(closingSplit);
       setState("clean");
       onSaved(result.original);
     } catch (thrown) {
@@ -541,7 +562,7 @@ export function Editor({
         setState("error");
         setMessage(thrown instanceof EngineFailure ? thrown.message : String(thrown));
       }
-      setSplitting(null);
+      setPanel(closingSplit);
     } finally {
       setSplittingNow(false);
     }
@@ -552,7 +573,7 @@ export function Editor({
     if (!editor) return;
     const { from, to } = editor.state.selection;
     if (from === to) return;
-    setSplitting({ from, to });
+    setPanel({ tool: "split", from, to });
   }
 
   // Splitting needs something selected, and saying so by disabling the button beats letting
@@ -571,19 +592,18 @@ export function Editor({
   return (
     <section className="editor">
       <header>
-        <h2>
-          <RenameableName
-            name={document.title}
-            label="document"
-            onRename={(title) => onRename(document.id, title)}
-          />
-        </h2>
-        <span className={`state ${state}`}>
-          {state === "saving" ? "Saving…" : state === "clean" ? "Saved" : "Not saved"}
-        </span>
-        <button className="cite-action" onClick={() => setCiting(true)} disabled={citing}>
-          Cite
-        </button>
+        <div className="title">
+          <h2>
+            <RenameableName
+              name={document.title}
+              label="document"
+              onRename={(title) => onRename(document.id, title)}
+            />
+          </h2>
+          <span className={`state ${state}`}>
+            {state === "saving" ? "Saving…" : state === "clean" ? "Saved" : "Not saved"}
+          </span>
+        </div>
         <button
           className="secondary export-action"
           onClick={() => setExporting(true)}
@@ -594,42 +614,93 @@ export function Editor({
         </button>
       </header>
 
-      <div className="toolbar" role="toolbar" aria-label="Formatting">
-        {LEVELS.map((level) => (
+      {/* The tools, and what they open. Kept on screen while the writing scrolls, so adding a
+          citation halfway down a long document is a click rather than a trip to the top and
+          back — and what a tool opens appears by the tools, wherever they are. */}
+      <div className="insert">
+        <div className="toolbar" role="toolbar" aria-label="Writing tools">
+          <div className="levels" role="group" aria-label="Headings">
+            {LEVELS.map((level) => (
+              <button
+                key={level}
+                className={editor?.isActive("heading", { level }) ? "tool on" : "tool"}
+                aria-pressed={editor?.isActive("heading", { level }) ?? false}
+                title={level === 1 ? "Heading" : `Heading, level ${level}`}
+                onClick={() => editor?.chain().focus().toggleHeading({ level }).run()}
+              >
+                H{level}
+              </button>
+            ))}
+          </div>
           <button
-            key={level}
-            className={editor?.isActive("heading", { level }) ? "tool on" : "tool"}
-            aria-pressed={editor?.isActive("heading", { level }) ?? false}
-            title={level === 1 ? "Heading" : `Heading, level ${level}`}
-            onClick={() => editor?.chain().focus().toggleHeading({ level }).run()}
+            className="tool"
+            title="Add a picture"
+            onClick={() => setPanel({ tool: "picture" })}
+            disabled={panel?.tool === "picture"}
           >
-            H{level}
+            Picture
           </button>
-        ))}
-        <button
-          className="tool"
-          title="Add a picture"
-          onClick={() => setPicturing(true)}
-          disabled={picturing}
-        >
-          Picture
-        </button>
-        <button
-          className="tool"
-          title="Link to another document"
-          onClick={() => setLinking(true)}
-          disabled={linking}
-        >
-          Link
-        </button>
-        <button
-          className="tool"
-          title="Take the selected text out into a document of its own"
-          onClick={proposeSplit}
-          disabled={splitting !== null || !hasSelection}
-        >
-          Split
-        </button>
+          <button
+            className="tool"
+            title="Link to another document"
+            onClick={() => setPanel({ tool: "link" })}
+            disabled={panel?.tool === "link"}
+          >
+            Link
+          </button>
+          <button
+            className="tool"
+            title="Cite a source for what you wrote"
+            onClick={() => setPanel({ tool: "cite" })}
+            disabled={panel?.tool === "cite"}
+          >
+            Cite
+          </button>
+          <button
+            className="tool"
+            title="Take the selected text out into a document of its own"
+            onClick={proposeSplit}
+            disabled={splitting !== null || !hasSelection}
+          >
+            Split
+          </button>
+        </div>
+
+        {panel && (
+          <div className="insert-panel">
+            {panel.tool === "cite" && (
+              <CitePicker onChoose={insert} onCancel={() => setPanel(null)} />
+            )}
+
+            {panel.tool === "picture" && (
+              <ImagePicker
+                document={document.id}
+                onInserted={inserted}
+                onCancel={() => setPanel(null)}
+              />
+            )}
+
+            {panel.tool === "link" && (
+              <LinkPicker
+                topics={topics}
+                exclude={document.id}
+                onChoose={linked}
+                onCancel={() => setPanel(null)}
+              />
+            )}
+
+            {panel.tool === "split" && (
+              <SplitPicker
+                suggested={suggestedTitle(editor, panel)}
+                preview={previewOf(editor, panel)}
+                widened={widenedBy(editor, panel)}
+                busy={splittingNow}
+                onSplit={(title) => void split(title)}
+                onCancel={() => setPanel(null)}
+              />
+            )}
+          </div>
+        )}
       </div>
 
       <ClaimSummary
@@ -640,59 +711,41 @@ export function Editor({
         onShow={onShowClaims}
       />
 
-      {message && <p className={state === "conflict" ? "warning" : "error"}>{message}</p>}
+      <div className="sheet">
+        {message && <p className={state === "conflict" ? "warning" : "error"}>{message}</p>}
 
-      {citing && <CitePicker onChoose={insert} onCancel={() => setCiting(false)} />}
+        {exporting && <ExportPanel document={document} onClose={() => setExporting(false)} />}
 
-      {exporting && <ExportPanel document={document} onClose={() => setExporting(false)} />}
+        <RenderedCitations.Provider value={rendered}>
+          <DocumentImages.Provider value={shown}>
+            <DocumentLinks.Provider value={links}>
+              <EditorContent editor={editor} className="prose" />
+            </DocumentLinks.Provider>
+          </DocumentImages.Provider>
+        </RenderedCitations.Provider>
 
-      {picturing && (
-        <ImagePicker
-          document={document.id}
-          onInserted={inserted}
-          onCancel={() => setPicturing(false)}
-        />
-      )}
+        <ReferenceList entries={cited === "" ? [] : references} />
 
-      {splitting && (
-        <SplitPicker
-          suggested={suggestedTitle(editor, splitting)}
-          preview={previewOf(editor, splitting)}
-          widened={widenedBy(editor, splitting)}
-          busy={splittingNow}
-          onSplit={(title) => void split(title)}
-          onCancel={() => setSplitting(null)}
-        />
-      )}
+        <Backlinks entries={backlinks} onOpen={onOpenDocument} />
 
-      {linking && (
-        <LinkPicker
-          topics={topics}
-          exclude={document.id}
-          onChoose={linked}
-          onCancel={() => setLinking(false)}
-        />
-      )}
-
-      <RenderedCitations.Provider value={rendered}>
-        <DocumentImages.Provider value={shown}>
-          <DocumentLinks.Provider value={links}>
-            <EditorContent editor={editor} className="prose" />
-          </DocumentLinks.Provider>
-        </DocumentImages.Provider>
-      </RenderedCitations.Provider>
-
-      <ReferenceList entries={cited === "" ? [] : references} />
-
-      <Backlinks entries={backlinks} onOpen={onOpenDocument} />
-
-      <footer className="note">
-        Markdown with citations, links and pictures. Type <code># </code> for a heading, up to
-        six deep. Lists and emphasis are still written plainly — nothing is rendered here that
-        could not be written back to your file exactly as you typed it.
-      </footer>
+        <footer className="note">
+          Markdown with citations, links and pictures. Type <code># </code> for a heading, up to
+          six deep. Lists and emphasis are still written plainly — nothing is rendered here that
+          could not be written back to your file exactly as you typed it.
+        </footer>
+      </div>
     </section>
   );
+}
+
+/**
+ * The split's panel closed, and only that one.
+ *
+ * A split takes a moment — the file is written, then split — and a tool chosen meanwhile has
+ * opened its own panel, which the split finishing must not close.
+ */
+function closingSplit(open: Panel | null): Panel | null {
+  return open?.tool === "split" ? null : open;
 }
 
 /**
