@@ -127,6 +127,15 @@ aside {
 
 main { overflow-y: auto; padding: 1.5rem 2rem; }
 
+/* The space above the working area's contents is a block rather than padding. A bar that stays
+   on screen as you scroll sticks below its scrolling area's padding, not at its edge, and the
+   writing would scroll past in the gap above it. */
+.app > main { padding-top: 0; }
+.app > main::before { content: ""; display: block; height: 1.5rem; }
+
+/* Its width is what the document view lays itself out by — see "a wide view" below. */
+.app > main { container-type: inline-size; }
+
 /* ---- finding things ---- */
 
 .find { display: flex; align-items: center; gap: 0.2rem; margin: 0.9rem 0 0.2rem; }
@@ -255,8 +264,13 @@ button.hit:hover { background: #23262f; }
 
 /* ---- editor ---- */
 
-.editor header { display: flex; align-items: baseline; gap: 1rem; }
-.editor h2 { margin: 0 0 0.8rem; }
+/* One column, a page wide, in the middle of the room there is: the title over it, then the
+   tools, then what the document stands on, the writing, its references and what links to it. */
+.editor { max-width: 42rem; margin: 0 auto; }
+
+.editor > header { display: flex; align-items: baseline; gap: 1rem; }
+.editor .title { display: flex; align-items: baseline; gap: 1rem; min-width: 0; }
+.editor h2 { margin: 0 0 0.5rem; }
 .editor h2 .renameable { display: inline-flex; }
 .editor h2 .name { font: inherit; color: inherit; }
 .editor h2 .pencil { position: static; margin-left: 0.4rem; }
@@ -332,18 +346,41 @@ button.hit:hover { background: #23262f; }
   text-decoration: underline wavy currentColor;
 }
 
-/* ---- the formatting toolbar ---- */
+/* ---- the tools ---- */
 
-.toolbar {
-  display: flex;
-  gap: 0.3rem;
-  margin: 0.2rem 0 0.6rem;
+/* Stuck to the top of the view once the title has scrolled away, with the writing passing
+   under them: wherever you are in a long document, the tools are a click away. Drawn above the
+   page, so that what they open is over the writing rather than under it. */
+.insert {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--ground);
+  padding: 0.5rem 0 0.6rem;
 }
+.toolbar { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.toolbar .levels { display: flex; gap: 0.3rem; }
 button.tool { padding: 0.25rem 0.6rem; font-size: 0.85em; }
+
 /* The heading you are standing in, so the buttons say what the cursor is in as well as what
    it could become. Dark on the accent rather than light: this is the one button that is
    filled, and pale text on that amber is the least readable pairing in the palette. */
 button.tool.on { background: var(--accent); color: var(--ground); border-color: var(--accent); }
+
+/* What a tool opens: over the writing, just under the tools, wherever they are — not at the
+   top of the document, which would be a long way up from where the cursor is. Never taller
+   than the view, so its buttons can always be reached. */
+.insert-panel {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: calc(100vh - 5rem);
+  overflow-y: auto;
+  border-radius: 8px;
+  box-shadow: 0 0.6rem 1.6rem rgba(0, 0, 0, 0.55);
+}
+.insert-panel .cite-picker { margin: 0; max-width: none; }
 
 /* ---- claims ---- */
 
@@ -717,9 +754,7 @@ button.danger:hover:not(:disabled) { background: var(--error); color: var(--grou
 
 /* ---- citing ---------------------------------------------------------------- */
 
-.editor header { gap: 1rem; }
-button.cite-action { margin-left: auto; padding: 0.35rem 0.8rem; font-size: 0.9em; }
-button.export-action { margin-left: 0.4rem; padding: 0.35rem 0.8rem; font-size: 0.9em; }
+button.export-action { margin-left: auto; padding: 0.35rem 0.8rem; font-size: 0.9em; }
 
 /* The three states a citation can be in are genuinely different things to a reader: rendered,
    still being worked out, and pointing at a source that is gone. */
@@ -804,4 +839,58 @@ button.cite-option.chosen { background: #2a2d38; color: #fff; }
   font-style: normal;
   color: var(--accent);
   margin: 0.1rem 0 0.15rem;
+}
+
+/* ---- a wide view ---- */
+
+/* With room to spare, the page stays a page wide in the middle and the tools stand down its
+   left side, in the margin that would otherwise be empty — still on screen while the writing
+   scrolls. The title is centred over the page; Export stays at the top right.
+   The page is kept exactly in the middle by two margins of equal width, the tools sitting at
+   the inside edge of the left one. Wide enough is room for the page and, on both sides of it,
+   the tools and the gap beside them: 42 + 2 × (6.5 + 1.5). */
+@container (min-width: 58rem) {
+  .editor {
+    --columns: minmax(0, 1fr) minmax(0, 42rem) minmax(0, 1fr);
+    max-width: none;
+    display: grid;
+    grid-template-columns: var(--columns);
+    column-gap: 1.5rem;
+  }
+  .editor > header {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    display: grid;
+    grid-template-columns: var(--columns);
+    column-gap: 1.5rem;
+  }
+  .editor .title { grid-column: 2; justify-content: center; text-align: center; }
+  .editor > header .export-action { grid-column: 3; justify-self: end; margin-left: 0; }
+
+  .editor > .claim-summary { grid-column: 2; grid-row: 2; }
+
+  .editor > .insert {
+    grid-column: 1;
+    grid-row: 3;
+    justify-self: end;
+    align-self: start;
+    top: 1.5rem;
+    padding: 0;
+    background: none;
+  }
+  .editor > .sheet { grid-column: 2; grid-row: 3; }
+
+  /* A column of tools, the three heading levels side by side at the top of it. */
+  .toolbar { flex-direction: column; flex-wrap: nowrap; width: 6.5rem; }
+  .toolbar .levels { display: grid; grid-template-columns: repeat(3, 1fr); }
+  .toolbar .levels .tool { padding-inline: 0; }
+
+  /* Opened beside the tools, over the top of the page and the width of it. */
+  .insert-panel {
+    top: 0;
+    left: calc(100% + 1.5rem);
+    right: auto;
+    width: 42rem;
+    max-height: calc(100vh - 3rem);
+  }
 }

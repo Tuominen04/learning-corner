@@ -58,9 +58,14 @@ A document is a page you write, inside a topic.
 **Writing.** Plain writing with headings, lists, emphasis, and quotes. There is no page
 layout to fight with — this is for learning, not for typesetting.
 
-**Headings.** Click **H1**, **H2** or **H3** above the page, or just type `# ` at the start of
-a line. One `#` makes a heading, `##` a sub-heading, and you can go as deep as `######`.
-Clicking the same button again turns it back into ordinary writing.
+**The tools.** **H1**, **H2**, **H3**, **Picture**, **Link**, **Cite** and **Split** sit
+together above the page — or down its left side, when the window is wide enough — and stay in
+view as you scroll, so they are a click away wherever you are writing. What one of them asks
+you opens right next to them, over the page, and closes when you are done.
+
+**Headings.** Click **H1**, **H2** or **H3**, or just type `# ` at the start of a line. One `#`
+makes a heading, `##` a sub-heading, and you can go as deep as `######`. Clicking the same
+button again turns it back into ordinary writing.
 
 **Pictures.** Click **Picture**, choose a file, and it goes where your cursor is. A copy is
 kept in your library right next to the document, so the picture stays even if you empty the
@@ -75,9 +80,9 @@ document to another topic and its pictures move with it.
 you typed is saved before you move to another document or another library, or close the app,
 however quickly you go.
 
-**Splitting.** Select the part you want to move and click **Split** above the page. It asks
-what to call the new document — and if you started your selection at a heading, it has already
-filled that in — and shows you what will move before anything happens.
+**Splitting.** Select the part you want to move and click **Split**. It asks what to call the
+new document — and if you started your selection at a heading, it has already filled that in —
+and shows you what will move before anything happens.
 
 The selection moves into a new document in the same topic, its citations come with it, and a
 link is left where it used to be. Your pictures keep working, because the new document sits in
@@ -87,8 +92,8 @@ Starting a selection at a heading takes the heading with it, even though you can
 the `##` itself. That is almost always what you meant — you are moving a section, and the
 section has a name.
 
-**Linking.** Click **Link** above the page and choose a document. The link appears in your
-writing as that document's title, and clicking it takes you there.
+**Linking.** Click **Link** and choose a document. The link appears in your writing as that
+document's title, and clicking it takes you there.
 
 The link is stored as the document's identifier, not its name — so rename either document
 afterwards and the link still reads correctly, with nothing to go and fix. If you delete the
