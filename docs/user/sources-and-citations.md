@@ -1,7 +1,7 @@
 # Sources and citations
 
 > **Audience:** People using Personal Learning Corner
-> **Status:** In progress
+> **Status:** Implemented
 > **Last reviewed:** 2026-10-02
 
 This is the part of the app that answers the question it was built around: *how do I know
@@ -171,10 +171,12 @@ changes nothing in your library.
 
 ## Finding a source
 
-The **Sources** screen has its own search box. Type part of a title, an author's name, or a
-journal, and the list narrows to the sources that match, best match first. As with searching
-your writing, the start of a word is enough — `niem` finds Nieminen — and clearing the box
-brings the whole list back.
+The **Sources** screen has its own search box. Type part of a title; a name — the author's,
+or an editor's, a translator's, a host's; or where the source appeared — the journal, the book,
+the podcast, the publisher, the site. An organisation's short name works too: *WHO* finds the
+World Health Organization's report. The list narrows to the sources that match, best match
+first. As with searching your writing, the start of a word is enough — `niem` finds Nieminen —
+and clearing the box brings the whole list back.
 
 A source found this way is the whole row: who wrote it, its paper, and where it is used.
 

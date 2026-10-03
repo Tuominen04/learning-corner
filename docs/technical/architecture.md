@@ -1,8 +1,8 @@
 # Architecture
 
 > **Audience:** People building Personal Learning Corner
-> **Status:** In progress — M0 implemented
-> **Last reviewed:** 2026-09-28
+> **Status:** In progress — M1 implemented
+> **Last reviewed:** 2026-10-02
 
 ## Principles
 

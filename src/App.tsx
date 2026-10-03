@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { DeleteConfirm, type Deleting } from "./components/DeleteConfirm";
 import { Editor } from "./components/Editor";
 import { LibraryPicker, type Opened } from "./components/LibraryPicker";
+import { MovePicker } from "./components/MovePicker";
 import { RenameableName } from "./components/RenameableName";
 import { Search } from "./components/Search";
 import { Sources } from "./components/Sources";
@@ -17,6 +18,7 @@ import {
   type LibraryStatus,
   type Topic,
 } from "./lib/engine";
+import { canMove, nameOf, placeName, placeOf, type Moving, type Place } from "./lib/moving";
 import { basename } from "./lib/paths";
 import { couldNotOpen } from "./lib/recent";
 import { saveEverything } from "./lib/saving";
@@ -199,6 +201,14 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
   // name. Cleared by the next thing done, like an error.
   const [note, setNote] = useState<string | null>(null);
 
+  // What is being moved, while the move button's question is up. In the main area, like a
+  // deletion's confirmation: it lists every topic, and the sidebar is too narrow to read them.
+  const [moving, setMoving] = useState<Moving | null>(null);
+
+  // The move just made, and where it came from, so it can be undone. A drag that let go over
+  // the wrong topic is a moment's slip, and putting it back should cost a click, not a search.
+  const [moved, setMoved] = useState<{ what: Moving; from: Place; to: Place } | null>(null);
+
   /**
    * Open a document, from wherever somebody asked.
    *
@@ -210,6 +220,7 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
   const openDocument = useCallback((id: string) => {
     setError(null);
     setNote(null);
+    setMoved(null);
     engine.document
       .read(id)
       .then((doc) => {
@@ -316,9 +327,38 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
     });
   }
 
+  /**
+   * Move a topic or a document — by drag, by Ctrl+V, by the move button, or to undo the last.
+   *
+   * Whatever was typed last is written first, like closing a library: the document being moved
+   * may be the one open, with words still waiting for a pause in the typing. Then the open
+   * document is read again, because it may have been moved, or have been inside a topic that
+   * was; its words and its revision do not change, only where it is.
+   */
+  async function move(what: Moving, to: Place) {
+    setMoving(null);
+    const from = placeOf(topics, what);
+    if (from === undefined || !canMove(topics, what, to)) return;
+    await guard(async () => {
+      await saveEverything();
+      if (what.kind === "document") {
+        if (to === null) return;
+        const doc = await engine.document.move(what.id, to);
+        setOpen((current) => (current?.id === doc.id ? doc : current));
+      } else {
+        await engine.topic.move(what.id, to);
+        const was = open?.id;
+        if (was) setOpen(await engine.document.read(was));
+      }
+      await refresh();
+      setMoved({ what, from, to });
+    });
+  }
+
   async function guard(work: () => Promise<void>) {
     setError(null);
     setNote(null);
+    setMoved(null);
     try {
       await work();
     } catch (thrown) {
@@ -425,6 +465,8 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
           }
           onRenameDocument={renameDocument}
           onDelete={setDeleting}
+          onMove={setMoving}
+          onMoveTo={(what, to) => void move(what, to)}
         />
         )}
 
@@ -446,6 +488,15 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
       <main>
         {error && <p className="error">{error}</p>}
         {note && <p className="folder-note">{note}</p>}
+        {moved && (
+          <p className="folder-note moved" role="status">
+            Moved “{nameOf(moved.what)}”{" "}
+            {moved.to === null ? "to the top level" : `into ${placeName(topics, moved.to)}`}.{" "}
+            <button className="ghost undo" onClick={() => void move(moved.what, moved.from)}>
+              Undo
+            </button>
+          </p>
+        )}
         {deleting ? (
           <DeleteConfirm
             // Keyed, so opening the confirmation for something else starts it afresh rather
@@ -454,6 +505,14 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
             what={deleting}
             onDeleted={afterDelete}
             onCancel={() => setDeleting(null)}
+          />
+        ) : moving ? (
+          <MovePicker
+            key={`${moving.kind}:${moving.id}`}
+            what={moving}
+            topics={topics}
+            onMove={(to) => void move(moving, to)}
+            onCancel={() => setMoving(null)}
           />
         ) : view === "sources" ? (
           <Sources onOpenDocument={openDocument} />

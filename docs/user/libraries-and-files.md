@@ -1,13 +1,14 @@
 # Libraries and your files
 
 > **Audience:** People using Personal Learning Corner
-> **Status:** In progress
-> **Last reviewed:** 2026-09-28
+> **Status:** Implemented
+> **Last reviewed:** 2026-10-02
 
 ## What a library is
 
 A **library** is one folder on your computer holding everything about one area of study:
-your topics, your documents, your sources, your texts, your mind maps.
+your topics, your documents and your sources — and, as they arrive in the app, your texts and
+your mind maps.
 
 You choose the folder. The app does not hide your work in a location only it knows about,
 and it does not put your work in more than one place.
@@ -70,10 +71,10 @@ tied to the computer it was created on and nothing is tied to the folder's old p
 
 ## Renaming things
 
-Rename topics, documents, and sources freely inside the app — double-click a name, or use the
-pencil that appears when you hover it. Links between your documents and citations to your
-sources keep working: the app tracks them by an internal marker that does not change when a
-name does.
+Rename topics and documents freely inside the app — double-click a name, or use the pencil
+that appears when you hover it — and correct a source's title or details in its form on the
+**Sources** screen. Links between your documents and citations to your sources keep working:
+the app tracks them by an internal marker that does not change when a name does.
 
 **The file on disk is renamed too.** A document called *Protein, properly* is
 `protein-properly.md`, and a topic called *Protein* is a folder called `protein` — so going
@@ -120,8 +121,9 @@ it deletes your work.
 
 ## Backing up
 
-Covered fully in [Backup and restore](backup-and-restore.md). The short version: the app
-copies your library to a drive you choose, as ordinary folders and files.
+Backing up from inside the app comes next: it will copy your library to a drive you choose, as
+ordinary folders and files, and [Backup and restore](backup-and-restore.md) describes how. Until
+then, a library is a folder like any other — close the app and copy the folder to your drive.
 
 ---
 
