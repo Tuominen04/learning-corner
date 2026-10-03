@@ -1,8 +1,8 @@
 # Search index
 
 > **Audience:** People building Personal Learning Corner
-> **Status:** In progress — M0 implemented
-> **Last reviewed:** 2026-09-06
+> **Status:** In progress — M1 implemented
+> **Last reviewed:** 2026-10-02
 
 A SQLite database at `.plc/index.sqlite` inside the library. It is a **cache**. Everything in
 it is derived from the library files, and deleting it must never lose anything.

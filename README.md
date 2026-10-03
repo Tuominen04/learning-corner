@@ -37,9 +37,16 @@ which one is right rather than guessing — and never throws the other one away.
 
 ## Status
 
-**Planning.** No code yet. The documentation below is the specification we are building
-towards; every page is marked `Planned`, `In progress`, or `Implemented` so it is always
-clear which is which.
+**Milestone 1 is built.** Libraries, topics and documents; sources, with APA 7 citations and
+reference lists worked out for you; claims marked against what they cite; search; and export to
+PDF, Word, OpenDocument, a web page and plain text — all of it works. Milestone 1 is done when it
+has been walked through end to end on Fedora, and it then becomes the first release. Nothing is
+packaged to install yet.
+
+Parallel texts, mind maps and backup come in later milestones, in the order the
+[roadmap](docs/technical/roadmap.md) gives. The documentation below describes the whole
+application, and every page is marked `Planned`, `In progress`, or `Implemented` so it is
+always clear which parts exist.
 
 The first release targets **Fedora**, packaged natively. Windows and macOS come after the
 Linux build is solid — the application is built so that adding them is packaging work, not
