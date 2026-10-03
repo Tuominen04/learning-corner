@@ -2587,7 +2587,7 @@ checksum = "9b4f627cb1b25917193a259e49bdad08f671f8d9708acfd5fe0a8c1455d87220"
 
 [[package]]
 name = "personal-learning-corner"
-version = "0.16.0"
+version = "0.16.1"
 dependencies = [
  "base64 0.22.1",
  "plc-engine",
@@ -2681,7 +2681,7 @@ checksum = "f6b464fbc74e149a392436b17d523f769e057cb6877f6a5c4618bc6f11800548"
 [[package]]
 name = "plc-engine"
 version = "0.1.0"
-source = "git+https://github.com/Tuominen04/personal-learning-corner-engine?tag=v0.16.0#fc60115d0001a74a740f86c83c842c97e13e98d4"
+source = "git+https://github.com/Tuominen04/personal-learning-corner-engine?tag=v0.16.1#2a726c7a052982ff115606526aade03f2f5df7cc"
 dependencies = [
  "blake3",
  "flate2",
