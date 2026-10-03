@@ -20,7 +20,7 @@ becomes a second formatter over the same data rather than a re-entry of the whol
 
 ## Source types
 
-The type selects the required fields. Start with these seven, which cover what a learner
+The type selects the required fields. Start with these eight, which cover what a learner
 actually cites, and extend from the APA manual's reference examples as needed.
 
 | Type | Required | Also used |
@@ -28,13 +28,25 @@ actually cites, and extend from the APA manual's reference examples as needed.
 | `book` | authors, year, title, publisher | edition, translators, DOI/URL |
 | `book-chapter` | authors, year, title, editors, container, publisher, pages | edition, DOI/URL |
 | `journal-article` | authors, year, title, container, volume | issue, pages, DOI/URL |
-| `web-page` | authors, date, title, site | DOI/URL, retrieval date |
+| `web-page` | date, title, site | authors, DOI/URL, retrieval date |
 | `video` | authors, date, title, site | DOI/URL, retrieval date, timestamp |
 | `audio` | authors, date, title, container | episode number, publisher, DOI/URL, retrieval date |
 | `report` | authors, year, title, publisher | edition, report number, DOI/URL |
+| `pdf` | year, title | authors, publisher, DOI/URL |
 
 The form offers exactly these fields for each type and no others. A box the reference entry
 never reads would keep whatever was typed into it and never show it.
+
+Every type requires a title. A web page or a document need not name anybody — plenty name
+nobody — and the title then takes the author's place (§9.12).
+
+`pdf` is a **document** that is none of the others: a guideline, a brochure, a set of slides,
+the PDF somebody has and knows nothing more about. APA 7 has no type for a file format and
+cites a work as what it is; a document that is only itself is cited as a stand-alone work, the
+form a report takes without its number (§10.4) — the title in italics, then the publisher,
+which is left out when it is the author. Nothing says it is a PDF: APA 7 dropped the `[PDF]`
+that APA 6 put after the title. A PDF that *is* a report, an article or a book is that type,
+with the file attached.
 
 `audio` is a **podcast episode**, the audio a learner cites most: the container is the podcast,
 and the entry says `[Audio podcast episode]`. Other audio — a song, a radio broadcast — has its

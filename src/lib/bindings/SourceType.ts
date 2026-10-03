@@ -3,4 +3,4 @@
 /**
  * What kind of thing a source is. The type decides which fields APA 7 requires.
  */
-export type SourceType = "book" | "book-chapter" | "journal-article" | "web-page" | "video" | "audio" | "report";
+export type SourceType = "book" | "book-chapter" | "journal-article" | "web-page" | "video" | "audio" | "report" | "pdf";

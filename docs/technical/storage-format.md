@@ -321,7 +321,8 @@ title = "Taking time: Support for people with cancer"
 number = "NIH Publication No. 18-2059"
 ```
 
-`number` arrived before the first release, so `format_version` stays 1.
+`number` arrived before the first release, so `format_version` stays 1. So did the `pdf` type,
+a document that is none of the others.
 
 ### Contributors
 
