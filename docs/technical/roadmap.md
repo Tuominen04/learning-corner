@@ -66,7 +66,7 @@ pass while the product does not work.** Keep the last item on every milestone.
 The reason the product exists: [claims anchored to sources](architecture.md#principles), and
 APA 7 that is actually correct.
 
-- [x] Sources: all seven types, structured contributors, the incomplete-source path.
+- [x] Sources: all eight types, structured contributors, the incomplete-source path.
 - [x] The [disambiguation pass](citation-model.md#disambiguation) — all three cases,
       library-wide.
 - [x] In-text citation in both forms; the generated reference list.
@@ -85,7 +85,9 @@ APA 7 that is actually correct.
 
 Built along the way, because using the application asked for them: headings and pictures in
 documents; deleting topics and documents after seeing what goes with them; the library's folder
-following its name; the last library reopened at start, with the recent ones listed.
+following its name; the last library reopened at start, with the recent ones listed; the PDF
+document, an eighth kind of source; the writing tools staying in reach down a long document,
+with the page centred on a wide window.
 
 Not built yet, though the engine can do it: **moving** a topic or a document to another topic
 from inside the application.
