@@ -891,6 +891,31 @@ mod wire {
             .expect("a revision that crossed the wire must still be accepted");
     }
 
+    #[test]
+    fn a_document_moved_while_it_is_open_still_saves() {
+        // The editor holds the revision it last read, and goes on writing with it. Moving the
+        // document, or the topic it is in, must not make that revision stale: the next keystroke
+        // after a move would be refused as somebody else's change on disk.
+        let (_dir, mut engine) = library();
+        let protein = engine.topic_create(None, "Protein").unwrap();
+        let inside = engine.topic_create(Some(protein), "In the body").unwrap();
+        let id = engine.document_create(protein, "What protein is").unwrap();
+        let held: Document = engine.document_read(id).unwrap().into();
+
+        let moved: Document = engine.document_move(id, inside).unwrap().into();
+        assert_eq!(
+            moved.revision, held.revision,
+            "moving a file is not editing it"
+        );
+
+        // And then the topic it is now in, to the top level.
+        engine.topic_move(inside, None).unwrap();
+        let held: Document = serde_json::from_str(&serde_json::to_string(&held).unwrap()).unwrap();
+        engine
+            .document_write(id, "Written after both moves.", held.revision)
+            .expect("the revision held from before the moves must still be accepted");
+    }
+
     // ---- sources ---------------------------------------------------------------
     //
     // The same discipline as the revision tests above, for the same reason. A source is the

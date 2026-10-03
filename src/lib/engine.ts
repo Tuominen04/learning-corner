@@ -134,6 +134,8 @@ export const engine = {
       call<string>("topic_create", { parent, name }),
     rename: (topic: string, name: string) =>
       call<void>("topic_rename", { topic, name }),
+    /** Move a topic and everything in it into another topic, or to the top level with `null`. */
+    move: (topic: string, parent: string | null) => call<void>("topic_move", { topic, parent }),
     /**
      * What deleting this topic would reach: every document anywhere below it, by name.
      *
@@ -157,6 +159,9 @@ export const engine = {
       call<Document>("document_write", { document, body, revision }),
     rename: (document: string, title: string) =>
       call<Document>("document_rename", { document, title }),
+    /** Move a document, its pictures with it, into a topic; answers with it as it now is. */
+    move: (document: string, topic: string) =>
+      call<Document>("document_move", { document, topic }),
     delete: (document: string) => call<void>("document_delete", { document }),
     /**
      * Keep a picture with this document, and get back the name to write into the body.

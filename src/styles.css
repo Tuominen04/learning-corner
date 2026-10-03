@@ -251,8 +251,8 @@ button.hit:hover { background: #23262f; }
 .pencil:hover { color: #e6e4de; background: #2b2e38; }
 
 /* A document's name already fills the row, so there is no "just past" it — its pencil
-   overlays the far end instead, just short of the bin. */
-.doc-row .pencil { left: auto; right: 1.7rem; }
+   overlays the far end instead, short of the move arrows and the bin. */
+.doc-row .pencil { left: auto; right: 2.9rem; }
 
 /* Sized by the row it replaces, so the name does not jump when it becomes editable. */
 .rename-input {
@@ -705,6 +705,19 @@ button.delete {
 }
 button.delete:hover { color: var(--error); background: #2b2e38; }
 
+/* Moving sits between renaming and deleting, and looks like them: quiet until hovered. */
+button.move {
+  display: flex;
+  align-items: center;
+  border: none;
+  background: none;
+  color: var(--ink-soft);
+  padding: 0.15rem 0.25rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+button.move:hover { color: var(--accent); background: #2b2e38; }
+
 /* On a document row the bin overlays the far end, where the pencil used to be; the row is
    positioned so that "the far end" means this row and not the sidebar. */
 .doc-row { position: relative; }
@@ -717,6 +730,46 @@ button.delete:hover { color: var(--error); background: #2b2e38; }
 }
 .doc-row:hover > button.delete,
 .doc-row > button.delete:focus-visible { opacity: 1; }
+.doc-row > button.move {
+  position: absolute;
+  right: 1.5rem;
+  top: 0;
+  bottom: 0;
+  opacity: 0;
+}
+.doc-row:hover > button.move,
+.doc-row > button.move:focus-visible { opacity: 1; }
+
+/* ---- moving ---- */
+
+/* What is on its way: dimmed while dragged, outlined while held for Ctrl+V. */
+.doc-row.dragging, .branch-head.dragging { opacity: 0.45; }
+.doc-row.held, .branch-head.held { outline: 1px dashed var(--accent); border-radius: 4px; }
+
+/* Where a drop would land. Only a place that would take it lights up, so the light is the
+   answer to "can it go here?" before letting go. */
+.branch-head.drop-target, .tree-head.drop-target {
+  background: rgba(198, 138, 74, 0.18);
+  outline: 1px solid var(--accent);
+  border-radius: 4px;
+}
+
+.holding { font-size: 0.82em; color: var(--ink-soft); margin: 0 0 0.6rem; }
+kbd {
+  font: inherit;
+  font-size: 0.9em;
+  padding: 0 0.3rem;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: var(--ground);
+}
+
+.folder-note.moved .undo { color: var(--accent); font-size: 0.95em; }
+.folder-note.moved .undo:hover { text-decoration: underline; }
+
+.move-picker { max-width: 42rem; }
+.move-picker .places { list-style: none; margin: 1rem 0 1.2rem; padding: 0; }
+.move-picker .choice { margin-top: 0.35rem; }
 
 /* The confirming button looks like what it does. Everywhere else a filled button means "the
    thing you came here for"; this is the one place that must not look inviting. */

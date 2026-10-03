@@ -196,6 +196,22 @@ pub fn topic_rename(state: State<'_, OpenLibrary>, topic: String, name: String) 
     with(&state, |e| e.topic_rename(id(&topic)?, name))
 }
 
+/// Move a topic, and everything in it, into another topic — or, with no parent, to the top.
+///
+/// The folder moves on disk, its documents and pictures inside it. Nothing refers to a topic or
+/// a document by where it is, so no link or citation notices.
+#[tauri::command]
+pub fn topic_move(
+    state: State<'_, OpenLibrary>,
+    topic: String,
+    parent: Option<String>,
+) -> Answer<()> {
+    with(&state, |e| {
+        let parent = parent.as_deref().map(id).transpose()?;
+        e.topic_move(id(&topic)?, parent)
+    })
+}
+
 /// What deleting this topic would reach — every document anywhere below it, by name.
 ///
 /// Asked before `topic_delete`, never after. The interface shows this and has to be told
@@ -258,6 +274,19 @@ pub fn document_rename(
 ) -> Answer<Document> {
     with(&state, |e| {
         e.document_rename(id(&document)?, title).map(Document::from)
+    })
+}
+
+/// Move a document into another topic, its pictures with it, and answer with it as it now is.
+#[tauri::command]
+pub fn document_move(
+    state: State<'_, OpenLibrary>,
+    document: String,
+    topic: String,
+) -> Answer<Document> {
+    with(&state, |e| {
+        e.document_move(id(&document)?, id(&topic)?)
+            .map(Document::from)
     })
 }
 
