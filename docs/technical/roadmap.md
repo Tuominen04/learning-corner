@@ -87,10 +87,8 @@ Built along the way, because using the application asked for them: headings and 
 documents; deleting topics and documents after seeing what goes with them; the library's folder
 following its name; the last library reopened at start, with the recent ones listed; the PDF
 document, an eighth kind of source; the writing tools staying in reach down a long document,
-with the page centred on a wide window.
-
-Not built yet, though the engine can do it: **moving** a topic or a document to another topic
-from inside the application.
+with the page centred on a wide window; moving topics and documents, by dragging, from the
+keyboard, or with the move button.
 
 **Done when:** the protein example from the README can be worked end to end — one topic
 becoming six documents, sources saved and cited, a correct reference list on every one, and a

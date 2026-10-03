@@ -1,8 +1,8 @@
 # Topics and documents
 
 > **Audience:** People using Personal Learning Corner
-> **Status:** In progress
-> **Last reviewed:** 2026-10-02
+> **Status:** Implemented
+> **Last reviewed:** 2026-10-03
 
 Learning does not arrive organised. You start with one question and finish with a structure
 you could not have designed at the start. This part of the app is built for that: start
@@ -14,7 +14,7 @@ You want to know what a protein is. So you make a topic called **Protein** and w
 document in it.
 
 Reading, you find there are many kinds of protein, and that gets long. You select the
-section about kinds and choose **Split into new document**. Now *Protein* holds two
+section about kinds and click **Split**. Now *Protein* holds two
 documents — the original, and **Types of protein** — and the original automatically links to
 the new one where the section used to be.
 
@@ -47,7 +47,7 @@ like.
 | ---------- | ------- |
 | Make one | **New topic**, in the sidebar or inside another topic |
 | Rename it | Double-click the name, or click the pencil that appears when you hover it. Links and citations keep working |
-| Move it | Drag it onto another topic, or out to the top level |
+| Move it | Drag it onto another topic, or onto **Topics** for the top level — or hover it and click the arrows. See *Moving*, below |
 | Split it | Make a topic inside it and drag documents in |
 | Delete it | Hover it and click the bin. The app shows you every document inside, however deep, and asks what should happen to them |
 
@@ -110,6 +110,21 @@ topics you thought were separate have been talking to each other for a while.
 **Renaming.** Double-click the title — in the sidebar or above the page you are writing —
 or click the pencil that appears when you hover it. Enter keeps the new name, Escape throws it
 away, and clicking away keeps it. Safe at any time. Links follow.
+
+**Moving.** A document or a topic moves three ways:
+
+- **Drag it** onto the topic it belongs in. Dropping it on any document inside a topic counts
+  too, and dropping a topic on **Topics** at the top of the sidebar makes it a top-level topic.
+  A topic lights up when it will take what you are dragging.
+- **Click the arrows** that appear beside the bin when you hover it, choose where it goes, and
+  click **Move**.
+- **Select it and press Ctrl+X**, then select the topic it should go into and press **Ctrl+V**.
+  Esc leaves it where it is. Ctrl+C works the same: there is no copying a document, so both
+  mean move.
+
+A document's pictures go with it, and so does everything inside a topic. Links and citations
+keep working, because they point at what they mean, not at where it is. Moved the wrong thing?
+**Undo** appears straight afterwards.
 
 **Deleting.** Hover a document or a topic in the sidebar and click the bin. Nothing is deleted
 until you have seen what goes with it.
