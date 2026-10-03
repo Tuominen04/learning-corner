@@ -241,6 +241,8 @@ pub enum SourceType {
     Video,
     Audio,
     Report,
+    /// A document on its own — a guideline, a brochure, slides — that is none of the above.
+    Pdf,
 }
 
 /// A field a type can require.
@@ -558,6 +560,7 @@ impl From<engine_src::SourceType> for SourceType {
             E::Video => SourceType::Video,
             E::Audio => SourceType::Audio,
             E::Report => SourceType::Report,
+            E::Pdf => SourceType::Pdf,
         }
     }
 }
@@ -573,6 +576,7 @@ impl From<SourceType> for engine_src::SourceType {
             SourceType::Video => E::Video,
             SourceType::Audio => E::Audio,
             SourceType::Report => E::Report,
+            SourceType::Pdf => E::Pdf,
         }
     }
 }

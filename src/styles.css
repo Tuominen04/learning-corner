@@ -44,6 +44,10 @@ button.ghost {
 }
 button.ghost:hover { color: var(--accent); }
 
+/* An example of what goes in a box, never something already in it: dimmed well below typed
+   text, so a form shows at a glance which boxes are still empty. */
+::placeholder { color: var(--ink-soft); opacity: 1; }
+
 /* ---- library picker ---- */
 
 .picker {
@@ -150,7 +154,6 @@ main { overflow-y: auto; padding: 1.5rem 2rem; }
   background: var(--panel);
   color: inherit;
 }
-.find-input::placeholder { color: var(--ink-soft); }
 
 .results ul { list-style: none; margin: 0.4rem 0 0; padding: 0; }
 .results li { margin-bottom: 0.15rem; }

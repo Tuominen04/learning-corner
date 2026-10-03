@@ -26,6 +26,11 @@ export const SOURCE_TYPES: { value: SourceType; label: string; hint: string }[] 
     hint: "A podcast episode. Its host goes in as Host, where APA puts an author",
   },
   { value: "report", label: "Report", hint: "Published by an organisation rather than a person" },
+  {
+    value: "pdf",
+    label: "PDF document",
+    hint: "A PDF that is none of the above: a guideline, a brochure, a set of slides",
+  },
 ];
 
 export const ROLES: { value: Role; label: string }[] = [
@@ -78,6 +83,7 @@ const FIELDS_FOR: Record<SourceType, Editable[]> = {
   video: ["site", "doi", "url"],
   audio: ["container", "publisher", "number", "doi", "url"],
   report: ["publisher", "edition", "number", "doi", "url"],
+  pdf: ["publisher", "doi", "url"],
 };
 
 /** The fields a form for this type offers, in the order they read best. */
