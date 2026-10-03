@@ -977,6 +977,55 @@ mod wire {
     }
 
     #[test]
+    fn a_pdf_document_crosses_the_wire_as_one() {
+        // The newest kind, and so the one a conversion written before it would turn into
+        // something else on the way — or refuse.
+        let (_dir, mut engine) = library();
+        let mut document = a_book();
+        document.source_type = SourceType::Pdf;
+        document.title = "Protein and exercise: A guide for students".into();
+        document.date = SourceDate::NoDate;
+        document.contributors.clear();
+        document.publisher = Some("University Sports Services".into());
+
+        let sent = serde_json::to_string(&document).unwrap();
+        assert!(sent.contains(r#""type":"pdf""#), "{sent}");
+        let received: Source = serde_json::from_str(&sent).unwrap();
+        let (id, missing) = engine
+            .source_create(received.into_engine().unwrap())
+            .unwrap();
+        assert!(
+            missing.is_empty(),
+            "nobody named is not missing: {missing:?}"
+        );
+
+        let listed: Source = engine.source_read(id).unwrap().into();
+        assert_eq!(listed.source_type, SourceType::Pdf);
+    }
+
+    #[test]
+    fn a_web_page_or_a_document_is_not_asked_for_an_author() {
+        // The form marks as needed exactly what this answers, so this is the line between
+        // "Who made it · needed" and plain "Who made it".
+        let (_dir, engine) = library();
+        for kind in [SourceType::WebPage, SourceType::Pdf] {
+            let fields: Vec<Field> = engine
+                .source_required_fields(kind.into())
+                .into_iter()
+                .map(Field::from)
+                .collect();
+            assert!(!fields.contains(&Field::Authors), "{kind:?}: {fields:?}");
+            assert!(fields.contains(&Field::Title), "{kind:?}: {fields:?}");
+        }
+        let book: Vec<Field> = engine
+            .source_required_fields(SourceType::Book.into())
+            .into_iter()
+            .map(Field::from)
+            .collect();
+        assert!(book.contains(&Field::Authors), "{book:?}");
+    }
+
+    #[test]
     fn an_attached_paper_crosses_the_wire_and_survives_an_edit() {
         // Two things at once, because they fail together. The filename has to reach the client
         // so a source can be shown with its paper, and it has to survive the client sending
