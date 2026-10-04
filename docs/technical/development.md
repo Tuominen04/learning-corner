@@ -2,7 +2,7 @@
 
 > **Audience:** People building Personal Learning Corner
 > **Status:** Implemented
-> **Last reviewed:** 2026-09-07
+> **Last reviewed:** 2026-10-04
 
 Getting from a fresh clone to a running window.
 
@@ -92,7 +92,8 @@ Everything CI runs, runnable locally:
 ```sh
 npm run lint            # eslint
 npm run typecheck       # tsc --noEmit
-npm test                # the body round-trip tests
+npm test                # unit tests, and the engine pin check
+npm run engine:check    # just the engine pin: a tagged release, and the lock agrees
 npm run build           # typecheck plus a production bundle
 bash docs/check-docs.sh # documentation conventions
 
@@ -115,8 +116,45 @@ Pinned by immutable git tag ([ADR 0006](adr/0006-engine-dependency-pinning.md)):
 plc-engine = { git = "…-engine", tag = "v0.1.0" }
 ```
 
-To work on both at once, point it at a local path — and **never commit that**, because it
-builds on your machine and nowhere else. CI asserts the manifest carries a `tag`.
+### Working on both at once
+
+To try an engine change in the window before it is tagged, build against your engine checkout:
+
+```sh
+npm run engine:local     # the checkout beside this one; or name it: npm run engine:local -- <path>
+npm run tauri dev        # builds the engine from that checkout
+npm run engine:status    # which engine is in use
+npm run engine:pinned    # back to the tagged release
+```
+
+An edit in the engine checkout reaches the next `tauri dev` or `cargo test` with no push and no
+tag. With no path given, `engine:local` looks in `$PLC_ENGINE_DIR`, then in
+`../personal-learning-corner-engine`.
+
+It is a Cargo `[patch]` in `.cargo/config.toml` at the top of this repository, a file git
+ignores, so `Cargo.toml` keeps its tag throughout. The one committed file that changes is
+`src-tauri/Cargo.lock`: while the patch is on, the engine's entry loses its `source` line,
+because the engine now comes from a folder. `engine:pinned` removes the patch and resolves
+again, which puts the lock back. If it still differs from the last commit afterwards — a new
+dependency in the local engine can move a version the two share — `engine:pinned` says so, and
+`git checkout -- src-tauri/Cargo.lock` restores the committed one.
+
+**That lock must never be committed**, because it builds on your machine and nowhere else
+([ADR 0006](adr/0006-engine-dependency-pinning.md)):
+
+- `engine:local` installs a pre-commit hook that refuses a commit unless its `Cargo.toml` and
+  `Cargo.lock` both pin the same tagged release. Other work commits as usual while the patch
+  is on, as long as the lock is not part of it. The hook stays after `engine:pinned`, where it
+  passes; deleting `.git/hooks/pre-commit` removes it. If you already have a pre-commit hook,
+  it is left alone: have it run `node scripts/engine.mjs check --staged`.
+- `npm test` runs the same check on the files as they are, so CI refuses a local engine that
+  got past the hook.
+
+When the engine change is merged and tagged, finish on the interface side with
+`npm run engine:pinned`, then raise the tag in `src-tauri/Cargo.toml` and run `cargo test` in
+`src-tauri`. That updates the lock to the new tag; commit the manifest and the lock together.
+
+### In CI
 
 The engine repository is private, so CI needs its own credential to fetch it. See
 [Repositories](repositories.md#building-in-ci).

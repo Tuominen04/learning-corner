@@ -2,7 +2,7 @@
 
 > **Audience:** People building Personal Learning Corner
 > **Status:** In progress — M1 implemented
-> **Last reviewed:** 2026-10-02
+> **Last reviewed:** 2026-10-04
 
 There is no server, no network, and one user. That removes whole categories of testing and
 concentrates the risk in one place: **the library on disk.** Test accordingly.
@@ -121,6 +121,7 @@ opens.
 
 On every pull request: engine unit tests, filesystem tests, contract tests, both property
 tests, interface component tests, clippy and rustfmt, the interface's linter and type check,
+a check that the engine is pinned to a tagged release in both `Cargo.toml` and `Cargo.lock`,
 and `bash docs/check-docs.sh`.
 
 On a release tag: everything above, plus the RPM and Flatpak builds and the manual checklist.

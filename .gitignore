@@ -1,2 +1,5 @@
 node_modules/
 dist/
+
+# `npm run engine:local` writes this to build against a local engine. Never committed.
+/.cargo/config.toml
