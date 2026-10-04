@@ -2,7 +2,7 @@
 
 > **Audience:** People building Personal Learning Corner
 > **Status:** Implemented
-> **Last reviewed:** 2026-09-07
+> **Last reviewed:** 2026-10-04
 
 Getting from a fresh clone to a running window.
 
@@ -107,6 +107,26 @@ cargo test              # also regenerates src/lib/bindings/
 afterwards, commit the result: CI fails on a stale copy, because a stale copy means the
 interface is typed against a contract that no longer exists.
 
+### In a browser
+
+The browser checks ([Testing](testing.md#interface-tests)) need a Chromium. Playwright's own,
+the one they are tested against, is one command, once:
+
+```sh
+npx playwright install chromium
+npm run e2e                     # every check, a few at a time: under a minute
+npm run e2e -- moving layout    # just the files whose names contain either word
+```
+
+They start a Vite server of their own on a free port, so a `tauri dev` already running does
+not get in the way. Playwright's Chromium usually runs on Fedora as it is; if it stops at a
+missing library, `dnf` has it — or skip it and use Fedora's own Chromium:
+`PLC_E2E_CHROMIUM=/usr/bin/chromium-browser npm run e2e`.
+
+A new check is a file in `e2e/checks/` that imports `launch`, `check`, `finish` and `URL` from
+`e2e/support.mjs`. Any of the others shows the pattern: a stub engine set up before the page
+loads, then the screen driven the way a person would drive it.
+
 ## The engine
 
 Pinned by immutable git tag ([ADR 0006](adr/0006-engine-dependency-pinning.md)):
@@ -132,6 +152,7 @@ src/                 the interface
 src-tauri/           the desktop shell
 ├── src/dto.rs       wire types; the bindings are generated from these
 └── src/commands.rs  the commands the interface may call
+e2e/                 the browser checks, and the runner for them
 docs/                specification and guides
 ```
 

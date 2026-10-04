@@ -2,7 +2,7 @@
 
 > **Audience:** People building Personal Learning Corner
 > **Status:** In progress — M1 implemented
-> **Last reviewed:** 2026-10-02
+> **Last reviewed:** 2026-10-04
 
 There is no server, no network, and one user. That removes whole categories of testing and
 concentrates the risk in one place: **the library on disk.** Test accordingly.
@@ -79,12 +79,26 @@ and its absence shows up as a gap.
 
 ### Interface tests
 
-Component tests for the editor, the pane selector, and the map. End-to-end tests for the
-journeys a break in which would be unmissable: create a library → write a document → save a
-source → cite it → see the reference list; and create a work → add editions → toggle panes.
+**Unit and component tests**, `npm test`: the interface's own logic under Vitest — the body's
+round trip between text on disk and the editor, citations, claims, splitting, moving — with
+jsdom where an editor has to exist.
 
-Kept deliberately few. End-to-end tests are slow and brittle, and the risks that matter are
-one layer down.
+**Browser checks**, `npm run e2e`: the interface in a real Chromium, with a stub engine where
+the shell would be. Each file in `e2e/checks/` replaces `window.__TAURI_INTERNALS__` before the
+page loads, so every `invoke` reaches a stub that answers the way the real command does and
+records what it was asked. They catch what jsdom cannot: a node view that draws nothing, tools
+that scroll out of reach, a drag that lands on the wrong topic, a selection ProseMirror never
+saw, words still in the editor when the window closes. Each check is named for the behaviour it
+holds, so a failure reads as the bug it is.
+
+What they cannot catch is anything on the far side of the stub. A change to the contract has
+to reach the stubs too, or they go on answering the old way; and the real window draws with
+WebKitGTK, not Chromium, which is what the walkthrough before a release is for.
+
+End-to-end journeys through the real window and engine are not built: create a library → write
+a document → save a source → cite it → see the reference list; and create a work → add editions
+→ toggle panes. Kept deliberately few when they are — they are slow and brittle, and the risks
+that matter are one layer down.
 
 ### Manual verification
 
