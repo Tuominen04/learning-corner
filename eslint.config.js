@@ -21,4 +21,9 @@ export default tseslint.config(
       "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
     },
   },
+  // Scripts run under Node, not in the window.
+  {
+    files: ["scripts/**/*.mjs"],
+    languageOptions: { ecmaVersion: 2022, globals: globals.node },
+  },
 );

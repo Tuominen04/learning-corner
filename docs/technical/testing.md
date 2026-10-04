@@ -135,6 +135,7 @@ opens.
 
 On every pull request: engine unit tests, filesystem tests, contract tests, both property
 tests, interface component tests, clippy and rustfmt, the interface's linter and type check,
+a check that the engine is pinned to a tagged release in both `Cargo.toml` and `Cargo.lock`,
 and `bash docs/check-docs.sh`.
 
 On a release tag: everything above, plus the RPM and Flatpak builds and the manual checklist.

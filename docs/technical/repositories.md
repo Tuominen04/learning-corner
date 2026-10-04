@@ -2,7 +2,7 @@
 
 > **Audience:** People building Personal Learning Corner
 > **Status:** Implemented
-> **Last reviewed:** 2026-09-06
+> **Last reviewed:** 2026-10-04
 
 Two repositories, one product.
 
@@ -87,15 +87,26 @@ format version is separate.
 
 ## Development against an unreleased engine
 
-Point the dependency at a local path while working on both at once:
+The pin in `Cargo.toml` is never edited for this. A Cargo `[patch]` overrides it instead, from
+`.cargo/config.toml` at the top of this repository, a file git ignores:
 
 ```toml
-plc-engine = { path = "../personal-learning-corner-engine/crates/plc-engine" }
+[patch."https://github.com/Tuominen04/personal-learning-corner-engine"]
+plc-engine = { path = "/home/you/personal-learning-corner-engine/crates/plc-engine" }
 ```
 
-**Never commit that.** CI asserts the manifest carries a `tag` key, so a path dependency
-cannot reach `main` — otherwise the pin means nothing and the build stops being reproducible
-on any machine but yours.
+`npm run engine:local` writes it and `npm run engine:pinned` removes it; see
+[Development](development.md#working-on-both-at-once). A change spanning the boundary can then
+be tried end to end, engine and window together, before anything is pushed or tagged. The
+three steps above keep their order: the engine is still tagged, and the tag pinned, before the
+interface's side merges.
+
+**A local engine never reaches `main`.** While the patch is on, `Cargo.lock` records the
+engine as a folder on your machine, and it is the one committed file that could carry that
+into a commit. The pre-commit hook `engine:local` installs refuses it, and so does `npm test`
+in CI, which checks the committed manifest and lock — a path written into `Cargo.toml` too.
+Otherwise the pin means nothing, and the build stops being reproducible on any machine but
+yours.
 
 ## Building in CI
 

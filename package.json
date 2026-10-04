@@ -13,7 +13,11 @@
     "lint": "eslint .",
     "bindings": "cd src-tauri && cargo test",
     "tauri": "tauri",
-    "test": "vitest run"
+    "test": "vitest run",
+    "engine:local": "node scripts/engine.mjs local",
+    "engine:pinned": "node scripts/engine.mjs pinned",
+    "engine:status": "node scripts/engine.mjs status",
+    "engine:check": "node scripts/engine.mjs check"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",
