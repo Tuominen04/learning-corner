@@ -120,9 +120,25 @@ npm run e2e -- moving layout    # just the files whose names contain either word
 ```
 
 They start a Vite server of their own on a free port, so a `tauri dev` already running does
-not get in the way. Playwright's Chromium usually runs on Fedora as it is; if it stops at a
-missing library, `dnf` has it — or skip it and use Fedora's own Chromium:
-`PLC_E2E_CHROMIUM=/usr/bin/chromium-browser npm run e2e`.
+not get in the way.
+
+On Fedora the install warns that your OS is not officially supported and fetches the Ubuntu
+build. That is harmless: it is Google's Chrome for Testing, one build for every Linux. What can
+go wrong is the download itself — Playwright fetches that build from its own server and nowhere
+else, so if the server does not answer it times out. Google publishes the identical build:
+`npx playwright install --dry-run chromium` names the version, and the rest stays in your home
+folder:
+
+```sh
+mkdir -p ~/.local/share/chrome-for-testing && cd ~/.local/share/chrome-for-testing
+curl -LO https://storage.googleapis.com/chrome-for-testing-public/<version>/linux64/chrome-linux64.zip
+unzip -q chrome-linux64.zip && rm chrome-linux64.zip
+export PLC_E2E_CHROMIUM="$HOME/.local/share/chrome-for-testing/chrome-linux64/chrome"
+```
+
+Put that `export` in `~/.bashrc` to keep it. Fedora's own Chromium works the same way, installed
+for the whole machine: `sudo dnf install chromium`, then
+`PLC_E2E_CHROMIUM=/usr/bin/chromium-browser`.
 
 A new check is a file in `e2e/checks/` that imports `launch`, `check`, `finish` and `URL` from
 `e2e/support.mjs`. Any of the others shows the pattern: a stub engine set up before the page
