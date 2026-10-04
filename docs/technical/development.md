@@ -110,35 +110,20 @@ interface is typed against a contract that no longer exists.
 
 ### In a browser
 
-The browser checks ([Testing](testing.md#interface-tests)) need a Chromium. Playwright's own,
-the one they are tested against, is one command, once:
+CI runs the browser checks ([Testing](testing.md#interface-tests)) on every pull request, in
+Playwright's Chromium, so running them yourself is optional. `npm install` brings only
+Playwright's library; the browser is a download of its own, and nothing fetches it unless you
+ask:
 
 ```sh
-npx playwright install chromium
+npx playwright install chromium # once: Chrome for Testing, into ~/.cache/ms-playwright
 npm run e2e                     # every check, a few at a time: under a minute
 npm run e2e -- moving layout    # just the files whose names contain either word
 ```
 
-They start a Vite server of their own on a free port, so a `tauri dev` already running does
-not get in the way.
-
-On Fedora the install warns that your OS is not officially supported and fetches the Ubuntu
-build. That is harmless: it is Google's Chrome for Testing, one build for every Linux. What can
-go wrong is the download itself — Playwright fetches that build from its own server and nowhere
-else, so if the server does not answer it times out. Google publishes the identical build:
-`npx playwright install --dry-run chromium` names the version, and the rest stays in your home
-folder:
-
-```sh
-mkdir -p ~/.local/share/chrome-for-testing && cd ~/.local/share/chrome-for-testing
-curl -LO https://storage.googleapis.com/chrome-for-testing-public/<version>/linux64/chrome-linux64.zip
-unzip -q chrome-linux64.zip && rm chrome-linux64.zip
-export PLC_E2E_CHROMIUM="$HOME/.local/share/chrome-for-testing/chrome-linux64/chrome"
-```
-
-Put that `export` in `~/.bashrc` to keep it. Fedora's own Chromium works the same way, installed
-for the whole machine: `sudo dnf install chromium`, then
-`PLC_E2E_CHROMIUM=/usr/bin/chromium-browser`.
+`npx playwright uninstall` removes that browser again. Any other Chromium works in its place:
+`PLC_E2E_CHROMIUM=/path/to/chromium npm run e2e`. The checks start a Vite server of their own
+on a free port, so a `tauri dev` already running does not get in the way.
 
 A new check is a file in `e2e/checks/` that imports `launch`, `check`, `finish` and `URL` from
 `e2e/support.mjs`. Any of the others shows the pattern: a stub engine set up before the page
