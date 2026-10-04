@@ -38,7 +38,9 @@ const server = await createServer({
 await server.listen();
 const url = server.resolvedUrls.local[0];
 
-/** One check file, to the end: its output, its exit code, and the count it printed. */
+const count = (n, noun) => `${n} ${noun}${n === 1 ? "" : "s"}`;
+
+/** One check file, to the end: its output, its exit code, and how many of its checks passed. */
 function run(file) {
   return new Promise((resolve) => {
     const started = Date.now();
@@ -79,19 +81,20 @@ function report(result) {
     console.log(`  ok    ${name} ${String(result.total).padStart(3)} checks   ${time}`);
     return;
   }
-  const count = `${result.passed} of ${result.total} passed${result.finished ? "" : ", then stopped"}`;
-  console.log(`  FAIL  ${name} ${count}   ${time}`);
+  const tally = `${result.passed} of ${result.total} passed${result.finished ? "" : ", then stopped"}`;
+  console.log(`  FAIL  ${name} ${tally}   ${time}`);
   // Everything but the checks that passed: the failures, and any error that stopped the file.
   for (const line of result.output.trimEnd().split("\n")) {
     if (!line.startsWith("ok  ") && !/^\d+ of \d+ checks passed$/.test(line)) console.log(`        ${line}`);
   }
 }
 
-console.log(`${files.length} check files against ${url}, ${JOBS} at a time\n`);
+const jobs = Math.min(JOBS, files.length);
+console.log(`${count(files.length, "check file")} against ${url}, ${jobs} at a time\n`);
 const queue = [...files];
 const results = [];
 await Promise.all(
-  Array.from({ length: Math.min(JOBS, files.length) }, async () => {
+  Array.from({ length: jobs }, async () => {
     while (queue.length > 0) {
       const result = await run(queue.shift());
       report(result);
@@ -106,7 +109,7 @@ const checks = results.reduce((sum, result) => sum + result.total, 0);
 const passed = results.reduce((sum, result) => sum + result.passed, 0);
 console.log(
   failed.length === 0
-    ? `\nAll ${checks} checks in ${results.length} files passed.`
-    : `\n${failed.length} of ${results.length} files failed (${passed} of ${checks} checks passed): ${failed.map((result) => result.file).join(", ")}`,
+    ? `\nAll ${count(checks, "check")} in ${count(results.length, "file")} passed.`
+    : `\n${failed.length} of ${count(results.length, "file")} failed (${passed} of ${count(checks, "check")} passed): ${failed.map((result) => result.file).join(", ")}`,
 );
 process.exit(failed.length === 0 ? 0 : 1);
