@@ -86,3 +86,14 @@ jobs:
             echo "::error::src-tauri/Cargo.toml carries a path dependency on the engine"
             exit 1
           fi
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run e2e
