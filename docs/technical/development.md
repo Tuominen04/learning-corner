@@ -110,19 +110,20 @@ interface is typed against a contract that no longer exists.
 
 ### In a browser
 
-The browser checks ([Testing](testing.md#interface-tests)) need a Chromium. Playwright's own,
-the one they are tested against, is one command, once:
+CI runs the browser checks ([Testing](testing.md#interface-tests)) on every pull request, in
+Playwright's Chromium, so running them yourself is optional. `npm install` brings only
+Playwright's library; the browser is a download of its own, and nothing fetches it unless you
+ask:
 
 ```sh
-npx playwright install chromium
+npx playwright install chromium # once: Chrome for Testing, into ~/.cache/ms-playwright
 npm run e2e                     # every check, a few at a time: under a minute
 npm run e2e -- moving layout    # just the files whose names contain either word
 ```
 
-They start a Vite server of their own on a free port, so a `tauri dev` already running does
-not get in the way. Playwright's Chromium usually runs on Fedora as it is; if it stops at a
-missing library, `dnf` has it — or skip it and use Fedora's own Chromium:
-`PLC_E2E_CHROMIUM=/usr/bin/chromium-browser npm run e2e`.
+`npx playwright uninstall` removes that browser again. Any other Chromium works in its place:
+`PLC_E2E_CHROMIUM=/path/to/chromium npm run e2e`. The checks start a Vite server of their own
+on a free port, so a `tauri dev` already running does not get in the way.
 
 A new check is a file in `e2e/checks/` that imports `launch`, `check`, `finish` and `URL` from
 `e2e/support.mjs`. Any of the others shows the pattern: a stub engine set up before the page
