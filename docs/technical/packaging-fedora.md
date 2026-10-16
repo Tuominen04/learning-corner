@@ -2,7 +2,7 @@
 
 > **Audience:** People building and releasing Learning Corner
 > **Status:** In progress — M0 implemented
-> **Last reviewed:** 2026-09-28
+> **Last reviewed:** 2026-10-16
 
 Fedora is the first target ([ADR 0001](adr/0001-tauri-rust-stack.md)). Windows and macOS come
 after the Linux build is solid, and are packaging work rather than a rewrite.
@@ -96,6 +96,22 @@ is an ADR, a permission the user can see, and a feature that is off by default.
 Tagged, versioned per [Repositories](repositories.md), built in CI. Each release publishes the
 RPM, the Flatpak bundle, digests for both, and a changelog written for users rather than from
 commit messages.
+
+**Implemented so far:** the RPM, a `.deb` and an AppImage, a `SHA256SUMS` file, and a build
+attestation tying each package to the commit and workflow that produced it. The Flatpak is not
+built yet. Cutting a release:
+
+1. A pull request raises `version` in `package.json`, `src-tauri/Cargo.toml` and
+   `src-tauri/tauri.conf.json` together.
+2. Once it is merged, tag the merge commit on `main`: `git tag v0.19.0 && git push origin v0.19.0`.
+   A ruleset on `v*` lets only the maintainer create, move or delete such a tag.
+3. `.github/workflows/release.yml` refuses a tag that is not on `main` or does not match all
+   three versions, then builds with the committed lock and opens a **draft** release.
+4. Run [Verifying a build](#verifying-a-build) against the draft's RPM, replace the generated
+   notes with the user-facing changelog, and publish.
+
+The build job holds no write permission; only the separate job that drafts the release does,
+and it runs no dependency code.
 
 There is **no in-application update check.** The application does not contact anything on
 startup; updates arrive through `dnf` or Flatpak like every other package on the system. An
