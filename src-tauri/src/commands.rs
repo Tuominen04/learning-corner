@@ -8,9 +8,9 @@ use std::path::Path;
 use std::sync::Mutex;
 
 use base64::Engine as _;
-use plc_engine::api::Engine;
-use plc_engine::store::Revision;
-use plc_engine::{Error, Id};
+use lc_engine::api::Engine;
+use lc_engine::store::Revision;
+use lc_engine::{Error, Id};
 use tauri::State;
 
 use crate::closing::Closing;
@@ -529,7 +529,7 @@ pub fn source_open(state: State<'_, OpenLibrary>, source: String) -> Answer<bool
             return Ok(false);
         };
         tauri_plugin_opener::open_path(&path, None::<&str>).map_err(|why| {
-            plc_engine::Error::library(format!("cannot open {}: {why}", path.display()))
+            lc_engine::Error::library(format!("cannot open {}: {why}", path.display()))
         })?;
         Ok(true)
     })
@@ -652,7 +652,7 @@ fn export_to(
     path: &Path,
 ) -> Result<(), Error> {
     let bytes = engine.export_document(document, format.into())?;
-    plc_engine::atomic::write_bytes(path, &bytes)
+    lc_engine::atomic::write_bytes(path, &bytes)
 }
 
 /// The picture half of the wire, where it can be reached without a window.

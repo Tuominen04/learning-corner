@@ -1,6 +1,6 @@
 # Decision records
 
-> **Audience:** People building Personal Learning Corner
+> **Audience:** People building Learning Corner
 > **Status:** Implemented
 > **Last reviewed:** 2026-09-06
 
@@ -30,7 +30,7 @@ reason it was made are the useful part of the history.
 ```markdown
 # ADR NNNN · Title
 
-> **Audience:** People building Personal Learning Corner
+> **Audience:** People building Learning Corner
 > **Status:** Proposed | Accepted | Superseded by ADR NNNN
 > **Last reviewed:** YYYY-MM-DD
 

@@ -1,6 +1,6 @@
 # Backup and restore
 
-> **Audience:** People using Personal Learning Corner
+> **Audience:** People using Learning Corner
 > **Status:** Planned
 > **Last reviewed:** 2026-09-06
 
@@ -14,7 +14,7 @@ internal disk — written as **ordinary folders and files**.
 
 Not an archive. Not a packed-up bundle. Not something only this app can open. If you plug
 that drive into any computer, you can open your folders and read your writing, with or
-without Personal Learning Corner installed.
+without Learning Corner installed.
 
 That is deliberate. A backup you can only restore with a working copy of the app is a backup
 that fails you on the day the app will not start.
@@ -35,7 +35,7 @@ simply part-finished; run it again and it picks up where it stopped.
 
 ### The app will not decide for you
 
-Personal Learning Corner does not back up on a schedule and does not do it quietly in the
+Learning Corner does not back up on a schedule and does not do it quietly in the
 background. You plug in the drive and you choose **Back up**. Backups that happen without
 you noticing are also backups that go wrong without you noticing.
 

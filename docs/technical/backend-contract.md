@@ -1,6 +1,6 @@
 # Engine contract
 
-> **Audience:** People building Personal Learning Corner
+> **Audience:** People building Learning Corner
 > **Status:** In progress — M1 implemented
 > **Last reviewed:** 2026-10-02
 

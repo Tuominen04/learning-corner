@@ -4,8 +4,8 @@
 //   npm run e2e                    every check in e2e/checks
 //   npm run e2e -- moving split    the ones whose file names contain "moving" or "split"
 //
-// Each file runs as its own process with its own browser, a few at a time. PLC_E2E_JOBS sets
-// how many; PLC_E2E_CHROMIUM names a Chromium to use instead of Playwright's own.
+// Each file runs as its own process with its own browser, a few at a time. LC_E2E_JOBS sets
+// how many; LC_E2E_CHROMIUM names a Chromium to use instead of Playwright's own.
 
 import { spawn } from "node:child_process";
 import { readdirSync } from "node:fs";
@@ -17,7 +17,7 @@ import { createServer } from "vite";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CHECKS = join(HERE, "checks");
 const TIMEOUT_MS = 180_000;
-const JOBS = Number(process.env.PLC_E2E_JOBS) || Math.max(1, Math.min(4, availableParallelism() - 1));
+const JOBS = Number(process.env.LC_E2E_JOBS) || Math.max(1, Math.min(4, availableParallelism() - 1));
 
 const wanted = process.argv.slice(2);
 const files = readdirSync(CHECKS)

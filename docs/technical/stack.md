@@ -1,6 +1,6 @@
 # Stack
 
-> **Audience:** People building Personal Learning Corner
+> **Audience:** People building Learning Corner
 > **Status:** Implemented
 > **Last reviewed:** 2026-09-06
 

@@ -11,10 +11,10 @@
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use plc_engine::api::{DocumentSummary, DocumentView, Status, TopicNode};
-use plc_engine::citation as engine_src;
-use plc_engine::citation::format as engine_fmt;
-use plc_engine::store::Revision;
+use lc_engine::api::{DocumentSummary, DocumentView, Status, TopicNode};
+use lc_engine::citation as engine_src;
+use lc_engine::citation::format as engine_fmt;
+use lc_engine::store::Revision;
 
 /// An entity identifier. Opaque: the interface stores it and passes it back, never parses it.
 pub type Id = String;
@@ -104,8 +104,8 @@ pub struct TopicContents {
     pub documents: Vec<DocumentRef>,
 }
 
-impl From<plc_engine::api::TopicContents> for TopicContents {
-    fn from(contents: plc_engine::api::TopicContents) -> Self {
+impl From<lc_engine::api::TopicContents> for TopicContents {
+    fn from(contents: lc_engine::api::TopicContents) -> Self {
         TopicContents {
             topics: u32::try_from(contents.topics).unwrap_or(u32::MAX),
             documents: contents
@@ -130,12 +130,12 @@ pub enum LibraryFolder {
     Drive,
 }
 
-impl From<plc_engine::api::LibraryFolder> for LibraryFolder {
-    fn from(folder: plc_engine::api::LibraryFolder) -> Self {
+impl From<lc_engine::api::LibraryFolder> for LibraryFolder {
+    fn from(folder: lc_engine::api::LibraryFolder) -> Self {
         match folder {
-            plc_engine::api::LibraryFolder::Follows => LibraryFolder::Follows,
-            plc_engine::api::LibraryFolder::Shared => LibraryFolder::Shared,
-            plc_engine::api::LibraryFolder::Drive => LibraryFolder::Drive,
+            lc_engine::api::LibraryFolder::Follows => LibraryFolder::Follows,
+            lc_engine::api::LibraryFolder::Shared => LibraryFolder::Shared,
+            lc_engine::api::LibraryFolder::Drive => LibraryFolder::Drive,
         }
     }
 }
@@ -159,11 +159,11 @@ pub enum Contents {
     MoveUp,
 }
 
-impl From<Contents> for plc_engine::api::Contents {
+impl From<Contents> for lc_engine::api::Contents {
     fn from(contents: Contents) -> Self {
         match contents {
-            Contents::Delete => plc_engine::api::Contents::Delete,
-            Contents::MoveUp => plc_engine::api::Contents::MoveUp,
+            Contents::Delete => lc_engine::api::Contents::Delete,
+            Contents::MoveUp => lc_engine::api::Contents::MoveUp,
         }
     }
 }
@@ -182,8 +182,8 @@ pub struct Split {
     pub taken: Document,
 }
 
-impl From<plc_engine::api::Split> for Split {
-    fn from(split: plc_engine::api::Split) -> Self {
+impl From<lc_engine::api::Split> for Split {
+    fn from(split: lc_engine::api::Split) -> Self {
         Split {
             original: split.original.into(),
             taken: split.taken.into(),
@@ -212,12 +212,12 @@ pub enum HitKind {
     Source,
 }
 
-impl From<plc_engine::index::Kind> for HitKind {
-    fn from(kind: plc_engine::index::Kind) -> Self {
+impl From<lc_engine::index::Kind> for HitKind {
+    fn from(kind: lc_engine::index::Kind) -> Self {
         match kind {
-            plc_engine::index::Kind::Topic => HitKind::Topic,
-            plc_engine::index::Kind::Document => HitKind::Document,
-            plc_engine::index::Kind::Source => HitKind::Source,
+            lc_engine::index::Kind::Topic => HitKind::Topic,
+            lc_engine::index::Kind::Document => HitKind::Document,
+            lc_engine::index::Kind::Source => HitKind::Source,
         }
     }
 }
@@ -394,11 +394,11 @@ pub enum Keep {
     Move,
 }
 
-impl From<Keep> for plc_engine::api::Keep {
+impl From<Keep> for lc_engine::api::Keep {
     fn from(keep: Keep) -> Self {
         match keep {
-            Keep::Copy => plc_engine::api::Keep::Copy,
-            Keep::Move => plc_engine::api::Keep::Move,
+            Keep::Copy => lc_engine::api::Keep::Copy,
+            Keep::Move => lc_engine::api::Keep::Move,
         }
     }
 }
@@ -420,14 +420,14 @@ pub enum ExportFormat {
     Pdf,
 }
 
-impl From<ExportFormat> for plc_engine::export::Format {
+impl From<ExportFormat> for lc_engine::export::Format {
     fn from(format: ExportFormat) -> Self {
         match format {
-            ExportFormat::Text => plc_engine::export::Format::Text,
-            ExportFormat::Html => plc_engine::export::Format::Html,
-            ExportFormat::Docx => plc_engine::export::Format::Docx,
-            ExportFormat::Odt => plc_engine::export::Format::Odt,
-            ExportFormat::Pdf => plc_engine::export::Format::Pdf,
+            ExportFormat::Text => lc_engine::export::Format::Text,
+            ExportFormat::Html => lc_engine::export::Format::Html,
+            ExportFormat::Docx => lc_engine::export::Format::Docx,
+            ExportFormat::Odt => lc_engine::export::Format::Odt,
+            ExportFormat::Pdf => lc_engine::export::Format::Pdf,
         }
     }
 }
@@ -467,9 +467,9 @@ pub struct EngineError {
     pub message: String,
 }
 
-impl From<plc_engine::Error> for EngineError {
-    fn from(e: plc_engine::Error) -> Self {
-        use plc_engine::Error::*;
+impl From<lc_engine::Error> for EngineError {
+    fn from(e: lc_engine::Error) -> Self {
+        use lc_engine::Error::*;
         let kind = match &e {
             NotFound(_) => "NotFound",
             LibraryNotOpen => "LibraryNotOpen",
@@ -491,7 +491,7 @@ impl From<plc_engine::Error> for EngineError {
 
 impl LibraryStatus {
     /// The open library's summary, and where it is.
-    pub fn of(engine: &plc_engine::api::Engine) -> Result<Self, plc_engine::Error> {
+    pub fn of(engine: &lc_engine::api::Engine) -> Result<Self, lc_engine::Error> {
         let s: Status = engine.status()?;
         Ok(LibraryStatus {
             path: engine.root().to_string_lossy().into_owned(),
@@ -716,10 +716,10 @@ impl Source {
     ///
     /// A new source arrives with `id: null`, because identifiers are the engine's to assign —
     /// letting the interface invent one is how two entities end up sharing an identity.
-    pub fn into_engine(self) -> Result<engine_src::Source, plc_engine::Error> {
+    pub fn into_engine(self) -> Result<engine_src::Source, lc_engine::Error> {
         let id = match self.id {
             Some(raw) => raw.parse()?,
-            None => plc_engine::Id::new(),
+            None => lc_engine::Id::new(),
         };
         Ok(engine_src::Source {
             id,
@@ -808,7 +808,7 @@ mod export_bindings {
 #[cfg(test)]
 mod wire {
     use super::*;
-    use plc_engine::api::Engine;
+    use lc_engine::api::Engine;
 
     fn library() -> (tempfile::TempDir, Engine) {
         let dir = tempfile::tempdir().unwrap();
@@ -825,10 +825,10 @@ mod wire {
         let topic = engine.topic_create(None, "Protein").unwrap();
         engine.document_create(topic, "What protein is").unwrap();
 
-        let mut source = plc_engine::citation::source::Source::new(
-            plc_engine::citation::source::SourceType::JournalArticle,
+        let mut source = lc_engine::citation::source::Source::new(
+            lc_engine::citation::source::SourceType::JournalArticle,
             "Protein in adults",
-            plc_engine::citation::source::Date::Year(2021),
+            lc_engine::citation::source::Date::Year(2021),
         );
         source.container = Some("Journal of Nutrition".into());
         engine.source_create(source).unwrap();
@@ -1064,7 +1064,7 @@ mod wire {
         let pdf = dir.path().join("downloaded.pdf");
         std::fs::write(&pdf, "%PDF-1.7\n").unwrap();
         engine
-            .source_attach(id, &pdf, plc_engine::api::Keep::Copy)
+            .source_attach(id, &pdf, lc_engine::api::Keep::Copy)
             .unwrap();
 
         let listed: Source = engine.source_read(id).unwrap().into();
@@ -1234,13 +1234,13 @@ mod wire {
         // timestamp would have been a page and the narrative form would not have existed.
         let (_dir, mut engine) = library();
 
-        let mut source = plc_engine::citation::Source::new(
-            plc_engine::citation::SourceType::Video,
+        let mut source = lc_engine::citation::Source::new(
+            lc_engine::citation::SourceType::Video,
             "How muscle repairs",
-            plc_engine::citation::Date::Year(2020),
+            lc_engine::citation::Date::Year(2020),
         );
-        source.contributors = vec![plc_engine::citation::Contributor::person(
-            plc_engine::citation::Role::Author,
+        source.contributors = vec![lc_engine::citation::Contributor::person(
+            lc_engine::citation::Role::Author,
             "Chen",
             "Wei",
         )];
@@ -1263,7 +1263,7 @@ mod wire {
 
         // And the two places render differently, which is the whole point of the syntax growing.
         let body = engine.document_read(doc).unwrap().body;
-        let refs = plc_engine::citation::reference::parse_all(&body);
+        let refs = lc_engine::citation::reference::parse_all(&body);
         let requests: Vec<_> = refs
             .iter()
             .map(|r| (r.source, r.form, r.locator.clone()))
@@ -1300,7 +1300,7 @@ mod wire {
 
         let refused = engine.document_write(id, "What the app thinks is there.", held.revision);
         assert!(
-            matches!(refused, Err(plc_engine::Error::Conflict { .. })),
+            matches!(refused, Err(lc_engine::Error::Conflict { .. })),
             "a stale revision must be refused, not written: {refused:?}"
         );
 

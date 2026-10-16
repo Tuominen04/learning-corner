@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Personal Learning Corner",
+  "productName": "Learning Corner",
   "version": "0.18.0",
-  "identifier": "com.personallearningcorner.app",
+  "identifier": "io.github.tuominen04.LearningCorner",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:5173",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Personal Learning Corner",
+        "title": "Learning Corner",
         "width": 1100,
         "height": 750,
         "minWidth": 640,

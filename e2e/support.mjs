@@ -16,10 +16,10 @@ export const URL = process.env.URL ?? "http://localhost:5173/";
 
 /**
  * A headless Chromium: Playwright's own, which `npx playwright install chromium` fetches once,
- * or the one PLC_E2E_CHROMIUM names — a Chromium from your package manager, for instance.
+ * or the one LC_E2E_CHROMIUM names — a Chromium from your package manager, for instance.
  */
 export function launch() {
-  return chromium.launch({ executablePath: process.env.PLC_E2E_CHROMIUM || undefined });
+  return chromium.launch({ executablePath: process.env.LC_E2E_CHROMIUM || undefined });
 }
 
 /**

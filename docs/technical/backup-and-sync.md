@@ -1,6 +1,6 @@
 # Backup and synchronisation
 
-> **Audience:** People building Personal Learning Corner
+> **Audience:** People building Learning Corner
 > **Status:** Planned
 > **Last reviewed:** 2026-09-06
 

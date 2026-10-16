@@ -2,13 +2,13 @@
 // in the lock alike. Pure, so it can be checked against any text — the files on disk, or the
 // versions staged for a commit.
 
-export const ENGINE_URL = "https://github.com/Tuominen04/personal-learning-corner-engine";
+export const ENGINE_URL = "https://github.com/Tuominen04/learning-corner-engine";
 export const MANIFEST = "src-tauri/Cargo.toml";
 export const LOCK = "src-tauri/Cargo.lock";
 
 /** The tag src-tauri/Cargo.toml pins, from its text. */
 export function pinnedTag(manifest) {
-  const block = /plc-engine\s*=\s*\{([^}]*)\}/s.exec(manifest)?.[1] ?? "";
+  const block = /lc-engine\s*=\s*\{([^}]*)\}/s.exec(manifest)?.[1] ?? "";
   if (/\bpath\s*=/.test(block)) return { error: "it names a local path" };
   if (!block.includes(ENGINE_URL)) return { error: "it does not name the engine's repository" };
   const tag = /\btag\s*=\s*"([^"]+)"/.exec(block)?.[1];
@@ -17,7 +17,7 @@ export function pinnedTag(manifest) {
 
 /** What Cargo.lock says the engine is, from its text. */
 export function lockedSource(lock) {
-  const entry = /\[\[package\]\]\r?\nname = "plc-engine"\r?\n([^[]*)/.exec(lock)?.[1] ?? "";
+  const entry = /\[\[package\]\]\r?\nname = "lc-engine"\r?\n([^[]*)/.exec(lock)?.[1] ?? "";
   return /^source = "([^"]+)"/m.exec(entry)?.[1] ?? null;
 }
 

@@ -1,6 +1,6 @@
 # ADR 0007 · TypeScript bindings are generated with ts-rs from the shell's wire types
 
-> **Audience:** People building Personal Learning Corner
+> **Audience:** People building Learning Corner
 > **Status:** Accepted
 > **Last reviewed:** 2026-09-06
 

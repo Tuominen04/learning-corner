@@ -114,7 +114,7 @@ export function LibraryPicker({
 
   return (
     <main className="picker">
-      <h1>Personal Learning Corner</h1>
+      <h1>Learning Corner</h1>
       <p className="lede">
         Your notes, the sources behind them, and the texts you are working through — stored as
         ordinary files in a folder you choose.

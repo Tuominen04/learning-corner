@@ -1,15 +1,15 @@
 # Repositories
 
-> **Audience:** People building Personal Learning Corner
+> **Audience:** People building Learning Corner
 > **Status:** Implemented
-> **Last reviewed:** 2026-10-04
+> **Last reviewed:** 2026-10-16
 
 Two repositories, one product.
 
 | Repository | Holds | Language |
 | ---------- | ----- | -------- |
-| `personal-learning-corner` (this one) | Desktop shell, interface, the engine contract as the shared specification, all documentation | TypeScript, Rust (shell glue) |
-| `personal-learning-corner-engine` | The engine: library access, storage format, index, citations, alignment, backup comparison | Rust |
+| `learning-corner` (this one) | Desktop shell, interface, the engine contract as the shared specification, all documentation | TypeScript, Rust (shell glue) |
+| `learning-corner-engine` | The engine: library access, storage format, index, citations, alignment, backup comparison | Rust |
 
 The engine repository **does not exist yet.** It is created at the start of M0. Until then,
 [the contract](backend-contract.md) in this repository is the whole specification of it.
@@ -62,13 +62,13 @@ Doing this in any other order produces two components that each believe the othe
 
 ## Versioning
 
-The engine is a Rust crate depended on by this repository, pinned to an immutable git tag —
-both repositories are private, so no registry is available. See
-[ADR 0006](adr/0006-engine-dependency-pinning.md).
+The engine is a Rust crate depended on by this repository, pinned to an immutable git tag. See
+[ADR 0006](adr/0006-engine-dependency-pinning.md). Both repositories are now public, which is
+the condition that ADR names for revisiting crates.io; until that is decided, the tag pin stands.
 
 ```toml
 [dependencies]
-plc-engine = { git = "https://github.com/Tuominen04/personal-learning-corner-engine", tag = "v0.1.0" }
+lc-engine = { git = "https://github.com/Tuominen04/learning-corner-engine", tag = "v0.1.0" }
 ```
 
 - **Engine** uses semantic versioning against the contract: a breaking contract change is a
@@ -91,8 +91,8 @@ The pin in `Cargo.toml` is never edited for this. A Cargo `[patch]` overrides it
 `.cargo/config.toml` at the top of this repository, a file git ignores:
 
 ```toml
-[patch."https://github.com/Tuominen04/personal-learning-corner-engine"]
-plc-engine = { path = "/home/you/personal-learning-corner-engine/crates/plc-engine" }
+[patch."https://github.com/Tuominen04/learning-corner-engine"]
+lc-engine = { path = "/home/you/learning-corner-engine/crates/lc-engine" }
 ```
 
 `npm run engine:local` writes it and `npm run engine:pinned` removes it; see
@@ -110,35 +110,14 @@ yours.
 
 ## Building in CI
 
-The engine is a **private** repository, so fetching it needs a credential. `actions/checkout`
-issues a token scoped to the repository it checked out and nothing else, so `cargo` fetching the
-engine has nothing to authenticate with and the build fails with
-`failed to acquire username/password from local configuration`.
+The engine is a public repository, so `cargo` fetches it in CI exactly as it does on a
+developer's machine — no token, no secret, no extra step.
 
-This is a direct consequence of the two-repository split
-([ADR 0002](adr/0002-separate-backend-repository.md)) meeting two private repositories, and it
-does not show up locally, where a developer's own credential covers both.
-
-The fix is a fine-grained personal access token with **read access to the engine repository
-only**, stored as a secret in this repository, and a step before any `cargo` invocation:
-
-```yaml
-      - name: Authenticate cargo for the private engine repository
-        env:
-          ENGINE_TOKEN: ${{ secrets.ENGINE_READ_TOKEN }}
-        run: |
-          git config --global \
-            url."https://x-access-token:${ENGINE_TOKEN}@github.com/".insteadOf \
-            "https://github.com/"
-          echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> "$GITHUB_ENV"
-```
-
-`CARGO_NET_GIT_FETCH_WITH_CLI` matters as much as the token: without it `cargo` uses its own git
-implementation, which does not read the `insteadOf` rewrite, and the token is ignored.
-
-Making the engine repository public removes this entirely, and would also reopen crates.io as an
-option — see [ADR 0006](adr/0006-engine-dependency-pinning.md), whose *Revisit if* covers exactly
-that case.
+While both repositories were private this needed a fine-grained access token stored as a
+secret and a `git config` rewrite before any `cargo` command, because `actions/checkout` issues a
+token scoped to the one repository it checked out. That step was removed when the engine went
+public, and the secret with it. If the engine were ever private again, a fetch failing with
+`failed to acquire username/password from local configuration` is that problem coming back.
 
 ## Type bindings across the boundary
 

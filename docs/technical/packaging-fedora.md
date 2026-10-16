@@ -1,6 +1,6 @@
 # Packaging for Fedora
 
-> **Audience:** People building and releasing Personal Learning Corner
+> **Audience:** People building and releasing Learning Corner
 > **Status:** In progress — M0 implemented
 > **Last reviewed:** 2026-09-28
 
@@ -11,7 +11,7 @@ after the Linux build is solid, and are packaging work rather than a rewrite.
 
 | Artefact | For |
 | -------- | --- |
-| **RPM** | `sudo dnf install ./personal-learning-corner-*.rpm`, and a future Fedora package |
+| **RPM** | `sudo dnf install ./learning-corner-*.rpm`, and a future Fedora package |
 | **Flatpak** | Flathub, and every other Linux distribution without a second packaging effort |
 
 Tauri produces both. The RPM is the primary artefact because it is what a Fedora user
@@ -44,9 +44,9 @@ everything else is the application's and follows the XDG base directory specific
 | What | Where | Notes |
 | ---- | ----- | ----- |
 | The library | Anywhere the user picked | Never assumed, never defaulted to a hidden path |
-| Application settings | `$XDG_CONFIG_HOME/personal-learning-corner/` | Window state, recent libraries, preferences |
-| Application cache | `$XDG_CACHE_HOME/personal-learning-corner/` | Disposable |
-| Logs | `$XDG_STATE_HOME/personal-learning-corner/` | Local only, never transmitted |
+| Application settings | `$XDG_CONFIG_HOME/learning-corner/` | Window state, recent libraries, preferences |
+| Application cache | `$XDG_CACHE_HOME/learning-corner/` | Disposable |
+| Logs | `$XDG_STATE_HOME/learning-corner/` | Local only, never transmitted |
 
 Nothing derived from a library goes in these directories — the index lives inside the library
 at `.plc/` ([Search index](search-index.md)) so that copying the folder copies everything and

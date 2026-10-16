@@ -1,6 +1,6 @@
 # Sources and citations
 
-> **Audience:** People using Personal Learning Corner
+> **Audience:** People using Learning Corner
 > **Status:** Implemented
 > **Last reviewed:** 2026-10-02
 

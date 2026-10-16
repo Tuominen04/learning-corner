@@ -58,9 +58,8 @@ updates:
       prefix: "deps"
     ignore:
       # The engine is pinned to an immutable tag and bumped deliberately when a release is
-      # cut (ADR 0006). Dependabot cannot see a private git dependency anyway, and an
-      # automatic bump here would defeat the point of pinning it.
-      - dependency-name: "plc-engine"
+      # cut (ADR 0006). An automatic bump here would defeat the point of pinning it.
+      - dependency-name: "lc-engine"
     groups:
       minor-and-patch:
         update-types:

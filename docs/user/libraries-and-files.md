@@ -1,6 +1,6 @@
 # Libraries and your files
 
-> **Audience:** People using Personal Learning Corner
+> **Audience:** People using Learning Corner
 > **Status:** Implemented
 > **Last reviewed:** 2026-10-02
 
@@ -44,7 +44,7 @@ and leaves the choice to you. A library that cannot be found stays on the list, 
 you take it off with **×**. Taking it off the list does nothing to the library itself.
 
 The list is kept in the app's own settings folder — usually
-`~/.config/personal-learning-corner/` — and not in any library, so it never travels with one.
+`~/.config/learning-corner/` — and not in any library, so it never travels with one.
 Deleting it costs you the list and nothing else: the next start opens on the start screen, and
 your libraries are all where they were.
 
