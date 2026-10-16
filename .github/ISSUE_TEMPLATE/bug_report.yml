@@ -1,0 +1,52 @@
+name: Bug report
+description: Something does not work the way the user guide says it should.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time. Please **do not** attach your library or paste private
+        notes — a description, or a small made-up example that shows the same thing, is enough.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open a library
+        2. Choose …
+        3. …
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      description: From the release you installed, or the commit you built.
+      placeholder: 0.18.0
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: Fedora 44, GNOME
+    validations:
+      required: true
+  - type: checkboxes
+    id: data
+    attributes:
+      label: Your data
+      options:
+        - label: Something I wrote was lost, overwritten or damaged
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else
+      description: Screenshots, error messages, or what you have already tried.

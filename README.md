@@ -1,56 +1,108 @@
-# Personal Learning Corner
+# Learning Corner
 
-A local-first application for learning things properly: your notes, the sources behind them,
-and the texts you are working through — all stored as ordinary files on your own machine,
-backed up to your own drive, and readable without ever asking anyone's permission.
-
-## Why
-
-The internet has more information than anyone can read, and no reliable way to tell what in
-it is true. Personal Learning Corner takes the opposite approach to a search box:
+A desktop app for learning things properly: your notes, the sources behind them, and the texts
+you are working through — stored as ordinary files in a folder you choose, on your own machine.
+No account, no cloud, no internet connection needed.
 
 > **Nothing is recorded as fact without a source you chose.**
 
-Every claim you write down can be anchored to a source you saved and decided to trust. The
+Every claim you write down can be anchored to a source you saved and decided to trust, and the
 app builds the [APA 7](https://owl.purdue.edu/owl/research_and_citation/apa_style/apa_formatting_and_style_guide/index.html)
-reference list for you, so citing properly costs you nothing and skipping it is the thing
-that feels wrong.
+reference list for you.
 
 ## What it does
 
-**Topics and documents.** You start with one question and end up with ten. Say you want to
-know what a protein is — soon you have separate documents for protein types, protein
-sources, human organs, and how protein behaves in the body, each citing its own sources and
-linked to the others.
+**Topics and documents.** You start with one question and end up with ten. Say you want to know
+what a protein is — soon you have separate documents for protein types, protein sources, human
+organs, and how protein behaves in the body, each citing its own sources and linked to the
+others.
 
-**Parallel texts.** Read a text in its original language with the pronunciation underneath
-and a translation beside it — Russian original, transliteration, Finnish and English, and
-you choose which of those are on screen. Song lyrics and historical documents work the same
-way.
+**Sources and citations.** Save books, articles, web pages, PDFs and more as sources. Cite them
+as you write; the reference list and in-text citations are worked out for you. Search across
+everything, and export to PDF, Word, OpenDocument, a web page or plain text.
 
-**Mind maps.** See how your topics actually connect, in a window of its own, built from the
-documents you already wrote rather than a second copy of them.
+**Parallel texts** *(coming)*. Read a text in its original language with the pronunciation
+underneath and a translation beside it — Russian original, transliteration, Finnish and English,
+and you choose which of those are on screen.
 
-**Your files, your drive.** You choose the folder your library grows in. Back it up to an
-external drive whenever it is plugged in. If the two copies ever disagree, the app asks you
-which one is right rather than guessing — and never throws the other one away.
+**Mind maps** *(coming)*. See how your topics actually connect, built from the documents you
+already wrote rather than a second copy of them.
+
+**Backup to your own drive** *(coming)*. Back your library up to an external drive whenever it
+is plugged in. If the two copies ever disagree, the app asks you which one is right — and never
+throws the other one away.
+
+## Start here
+
+**Installing.** The first release is for **Fedora**, as an RPM, with `.deb` and AppImage
+packages alongside. Packages will appear on the [Releases](https://github.com/Tuominen04/learning-corner/releases) page; until the first
+one is published, build it yourself as below. Windows and macOS come after the Linux build is
+solid.
+
+**Building from source** on Fedora:
+
+```sh
+sudo dnf install webkit2gtk4.1-devel libsoup3-devel \
+                 libappindicator-gtk3-devel librsvg2-devel openssl-devel
+sudo dnf group install "c-development"
+# plus Node 22+ and rustup, if you do not have them
+
+git clone https://github.com/Tuominen04/learning-corner
+cd learning-corner
+npm install
+npm run tauri dev
+```
+
+The first run compiles everything from scratch and takes several minutes. Use the window it
+opens, not the `localhost` address it prints. [Development](docs/technical/development.md) has the
+details.
+
+**Using it.** The [user guide](docs/user/) starts at
+[Getting started](docs/user/getting-started.md): from nothing to a library with a document and a
+cited source in it.
+
+## Privacy
+
+Learning Corner is built so that your notes are yours alone. That is a design rule, not a
+setting.
+
+- **No network.** The app makes no network requests — no telemetry, no analytics, no crash
+  reports, no update checks, no fonts or images fetched from anywhere. It works on a computer
+  that has never been online.
+- **No account.** There is nothing to sign up for and nothing to sign in to.
+- **Your files, in your folder.** Everything you write is a plain file in a folder you chose.
+  The app keeps exactly one thing outside it: the list of libraries you opened recently, in
+  `~/.config/learning-corner/`.
+- **Backups go where you say.** To a drive you plug in — never to a server.
+- **Nothing hidden.** The only program the app hands anything to is your own PDF viewer, when you
+  ask it to open a PDF you saved.
+
+You do not have to take this on trust. The window is forbidden from loading anything that is not
+part of the app itself ([`tauri.conf.json`](src-tauri/tauri.conf.json), `security.csp`), and may
+only reach your files through the open and save dialogs you click
+([`capabilities/default.json`](src-tauri/capabilities/default.json)). The engine that reads and
+writes your library — [learning-corner-engine](https://github.com/Tuominen04/learning-corner-engine)
+— contains no network code at all.
 
 ## Status
 
 **Milestone 1 is built.** Libraries, topics and documents; sources, with APA 7 citations and
 reference lists worked out for you; claims marked against what they cite; search; and export to
-PDF, Word, OpenDocument, a web page and plain text — all of it works. Milestone 1 is done when it
-has been walked through end to end on Fedora, and it then becomes the first release. Nothing is
-packaged to install yet.
+PDF, Word, OpenDocument, a web page and plain text. Milestone 1 is done when it has been walked
+through end to end on Fedora, and it then becomes the first release.
 
-Parallel texts, mind maps and backup come in later milestones, in the order the
-[roadmap](docs/technical/roadmap.md) gives. The documentation below describes the whole
-application, and every page is marked `Planned`, `In progress`, or `Implemented` so it is
-always clear which parts exist.
+Backup, parallel texts and mind maps come in later milestones, in the order the
+[roadmap](docs/technical/roadmap.md) gives. Every documentation page is marked `Planned`,
+`In progress`, or `Implemented`, so it is always clear which parts exist.
 
-The first release targets **Fedora**, packaged natively. Windows and macOS come after the
-Linux build is solid — the application is built so that adding them is packaging work, not
-a rewrite.
+## Get involved
+
+| You want to… | Go to |
+| --- | --- |
+| report a problem | [Issues](https://github.com/Tuominen04/learning-corner/issues/new/choose) |
+| suggest an idea, ask a question, give feedback | [Discussions](https://github.com/Tuominen04/learning-corner/discussions) |
+| send a fix or an improvement | [CONTRIBUTING.md](CONTRIBUTING.md) |
+| report a security problem | privately — see [SECURITY.md](SECURITY.md) |
 
 ## Documentation
 
@@ -65,10 +117,11 @@ The two documentation trees are kept strictly apart: the user guide never mentio
 app is built, and the technical docs never repeat the tutorial. See
 [CONVENTIONS.md](docs/CONVENTIONS.md) for the rule and the check that enforces it.
 
-## Licence
+## Why
 
-Dual licensed under [MIT](LICENSE-MIT) or [Apache 2.0](LICENSE-APACHE), at your option — the
-Rust ecosystem convention, chosen so the engine is ordinary to depend on.
+The internet has more information than anyone can read, and no reliable way to tell what in it
+is true. Learning Corner takes the opposite approach to a search box: you decide what you trust,
+write down what you learned from it, and the app keeps the two tied together.
 
 ## Design principles
 
@@ -84,3 +137,7 @@ Rust ecosystem convention, chosen so the engine is ordinary to depend on.
    typed at the bottom of a page.
 5. **Your library outlives the app.** If this project stopped tomorrow, your folder would
    still open in any text editor.
+
+## Licence
+
+Dual licensed under [MIT](LICENSE-MIT) or [Apache 2.0](LICENSE-APACHE), at your option.
