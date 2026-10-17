@@ -5,6 +5,9 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
 env:
   CARGO_TERM_COLOR: always
 
@@ -12,15 +15,15 @@ jobs:
   docs:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Documentation conventions
         run: bash docs/check-docs.sh
 
   interface:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
           cache: npm
@@ -33,30 +36,18 @@ jobs:
   shell:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-
-      # The engine is a private repository. actions/checkout's token covers only the
-      # repository it checked out, so cargo has nothing to authenticate a fetch of the
-      # engine with. CARGO_NET_GIT_FETCH_WITH_CLI matters as much as the token: without
-      # it cargo uses its own git implementation, which ignores the rewrite below.
-      - name: Authenticate cargo for the private engine repository
-        env:
-          ENGINE_TOKEN: ${{ secrets.ENGINE_READ_TOKEN }}
-        run: |
-          git config --global \
-            url."https://x-access-token:${ENGINE_TOKEN}@github.com/".insteadOf \
-            "https://github.com/"
-          echo "CARGO_NET_GIT_FETCH_WITH_CLI=true" >> "$GITHUB_ENV"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Tauri's Linux dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # v1
         with:
+          toolchain: stable
           components: clippy, rustfmt
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           workspaces: src-tauri
 
@@ -82,15 +73,15 @@ jobs:
       # machine and nowhere else.
       - name: Engine is pinned, not a path dependency
         run: |
-          if grep -qE '^\s*plc-engine\s*=.*\bpath\s*=' src-tauri/Cargo.toml; then
+          if grep -qE '^\s*lc-engine\s*=.*\bpath\s*=' src-tauri/Cargo.toml; then
             echo "::error::src-tauri/Cargo.toml carries a path dependency on the engine"
             exit 1
           fi
   e2e:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
           cache: npm
