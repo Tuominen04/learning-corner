@@ -61,7 +61,7 @@ except using it.
 The lesson is cheap to state and easy to forget: **the automated checks in this list can all
 pass while the product does not work.** Keep the last item on every milestone.
 
-## M1 · Documents and sources ← *the first release, 0.19.1*
+## M1 · Documents and sources ← *the first release, 0.19.2*
 
 The reason the product exists: [claims anchored to sources](architecture.md#principles), and
 APA 7 that is actually correct.
