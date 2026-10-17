@@ -2021,7 +2021,7 @@ dependencies = [
 
 [[package]]
 name = "learning-corner"
-version = "0.19.1"
+version = "0.19.2"
 dependencies = [
  "base64 0.23.1",
  "lc-engine",

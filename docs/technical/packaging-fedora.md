@@ -129,11 +129,22 @@ person has set it themselves. The fallback renderer works on every session; what
 GPU-accelerated compositing, which a text-and-forms window does not need. Revisit when the
 WebKitGTK release Fedora ships no longer has the fault.
 
+## The window's content security policy
+
+`tauri.conf.json` sets the policy the window runs under. **Only a built package applies it**:
+`tauri dev` loads the page straight from Vite, and the browser checks use Vite too, so neither
+sees what the policy blocks. Pictures reach the window as `data:` URLs, which `default-src 'self'`
+refuses; the 0.19.1 build showed every picture as its alt text for exactly that reason, and was
+never published. The policy therefore names `img-src 'self' data:`, and
+`scripts/csp.test.mjs` fails if it stops allowing them — or starts allowing anything from the
+network.
+
 ## Verifying a build
 
 Before a release is published, on a clean Fedora installation:
 
-1. Install from the RPM. Launch it. Create a library, write a document, cite a source.
+1. Install from the RPM. Launch it. Create a library, write a document, cite a source, and
+   insert a picture — `.jpg` and `.png` — and see it shown.
 2. Confirm cold start under two seconds and installed size under 50 MB
    ([Stack](stack.md#constraints-these-choices-must-keep-satisfying)).
 3. Disable networking entirely and repeat step 1. Everything must work identically.
