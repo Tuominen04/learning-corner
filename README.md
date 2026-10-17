@@ -34,10 +34,19 @@ throws the other one away.
 
 ## Start here
 
-**Installing.** The first release is for **Fedora**, as an RPM, with `.deb` and AppImage
-packages alongside. Packages will appear on the [Releases](https://github.com/Tuominen04/learning-corner/releases) page; until the first
-one is published, build it yourself as below. Windows and macOS come after the Linux build is
-solid.
+**Installing.** Download the latest release from the
+[Releases](https://github.com/Tuominen04/learning-corner/releases) page:
+
+| System | File |
+| --- | --- |
+| Fedora | `learning-corner-<version>.x86_64.rpm` — then `sudo dnf install ./learning-corner-*.rpm` |
+| Debian, Ubuntu | `learning-corner_<version>_amd64.deb` |
+| Any other Linux | `learning-corner-<version>-x86_64.AppImage` — make it executable and run it |
+
+Fedora is the system it is tested on; the other two are built the same way but tested less.
+Each release has a `SHA256SUMS` file and a build attestation — see
+[Verifying a download](SECURITY.md#verifying-a-download). Windows and macOS come after the Linux
+build is solid.
 
 **Building from source** on Fedora:
 
@@ -86,12 +95,14 @@ writes your library — [learning-corner-engine](https://github.com/Tuominen04/l
 
 ## Status
 
-**Milestone 1 is built.** Libraries, topics and documents; sources, with APA 7 citations and
-reference lists worked out for you; claims marked against what they cite; search; and export to
-PDF, Word, OpenDocument, a web page and plain text. Milestone 1 is done when it has been walked
-through end to end on Fedora, and it then becomes the first release.
+**0.19.0 is the first release: Milestone 1.** Libraries, topics and documents; sources, with
+APA 7 citations and reference lists worked out for you; claims marked against what they cite;
+search; and export to PDF, Word, OpenDocument, a web page and plain text.
 
-Backup, parallel texts and mind maps come in later milestones, in the order the
+**Backup is not built yet** — it is the next milestone. Until it arrives, copy your library
+folder to another drive now and then; it is ordinary files, so a plain copy is a complete backup.
+
+Parallel texts and mind maps follow backup, in the order the
 [roadmap](docs/technical/roadmap.md) gives. Every documentation page is marked `Planned`,
 `In progress`, or `Implemented`, so it is always clear which parts exist.
 
