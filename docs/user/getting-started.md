@@ -1,6 +1,6 @@
 # Getting started
 
-> **Audience:** People using Personal Learning Corner
+> **Audience:** People using Learning Corner
 > **Status:** Planned — not yet available to install
 > **Last reviewed:** 2026-09-06
 
@@ -9,7 +9,7 @@ minutes, and you never need to be online.
 
 ## 1. Install
 
-Personal Learning Corner runs on **Fedora** first. Support for Windows and macOS is planned
+Learning Corner runs on **Fedora** first. Support for Windows and macOS is planned
 but not available yet.
 
 Two ways to install, whichever suits you:
@@ -19,15 +19,14 @@ Two ways to install, whichever suits you:
 1. Download the installer for Fedora from the releases page.
 2. Open it with your software installer, or from a terminal:
    ```
-   sudo dnf install ./personal-learning-corner-*.rpm
+   sudo dnf install ./learning-corner-*.rpm
    ```
-3. Find **Personal Learning Corner** in your applications menu.
+3. Find **Learning Corner** in your applications menu.
 
 **From Flathub**
 
-```
-flatpak install flathub com.personallearningcorner.App
-```
+Search for **Learning Corner** in your software centre, or on [flathub.org](https://flathub.org),
+and choose **Install**.
 
 The app never asks you to create an account, and it does not need an internet connection to
 run.

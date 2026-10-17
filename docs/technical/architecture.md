@@ -1,6 +1,6 @@
 # Architecture
 
-> **Audience:** People building Personal Learning Corner
+> **Audience:** People building Learning Corner
 > **Status:** In progress — M1 implemented
 > **Last reviewed:** 2026-10-02
 
@@ -33,11 +33,11 @@ Three pieces, two repositories.
 
 ```mermaid
 flowchart TB
-    subgraph app["personal-learning-corner (this repository)"]
+    subgraph app["learning-corner (this repository)"]
         UI["Interface<br/>TypeScript + web UI"]
         SHELL["Desktop shell<br/>Tauri v2"]
     end
-    subgraph engine_repo["personal-learning-corner-engine (separate repository)"]
+    subgraph engine_repo["learning-corner-engine (separate repository)"]
         ENGINE["Engine<br/>Rust"]
     end
     subgraph disk["User's chosen folder"]

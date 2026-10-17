@@ -1,6 +1,6 @@
 # ADR 0004 · Documents and citations before parallel texts and maps
 
-> **Audience:** People building Personal Learning Corner
+> **Audience:** People building Learning Corner
 > **Status:** Accepted
 > **Last reviewed:** 2026-09-06
 

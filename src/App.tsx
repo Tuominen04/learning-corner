@@ -101,7 +101,7 @@ export function App() {
       // to find the last library would offer a choice that is about to be taken away.
       return (
         <main className="picker">
-          <h1>Personal Learning Corner</h1>
+          <h1>Learning Corner</h1>
           {screen.reopening !== null && <p className="lede">Opening “{screen.reopening}”…</p>}
         </main>
       );

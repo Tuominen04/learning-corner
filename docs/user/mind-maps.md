@@ -1,6 +1,6 @@
 # Mind maps
 
-> **Audience:** People using Personal Learning Corner
+> **Audience:** People using Learning Corner
 > **Status:** Planned
 > **Last reviewed:** 2026-09-06
 

@@ -1,6 +1,6 @@
 # ADR 0006 · The engine is pinned by git tag
 
-> **Audience:** People building Personal Learning Corner
+> **Audience:** People building Learning Corner
 > **Status:** Accepted
 > **Last reviewed:** 2026-09-06
 
@@ -25,7 +25,7 @@ The interface depends on the engine by **git tag**:
 
 ```toml
 [dependencies]
-plc-engine = { git = "https://github.com/Tuominen04/personal-learning-corner-engine", tag = "v0.1.0" }
+lc-engine = { git = "https://github.com/Tuominen04/learning-corner-engine", tag = "v0.1.0" }
 ```
 
 Tags are immutable once pushed — never moved, never deleted, never reused. A version bump is a

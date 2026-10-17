@@ -38,14 +38,14 @@ pub fn run() {
             }
         })
         .setup(|app| {
-            // `$XDG_CONFIG_HOME/personal-learning-corner/`, as `packaging-fedora.md` names it:
+            // `$XDG_CONFIG_HOME/learning-corner/`, as `packaging-fedora.md` names it:
             // a folder somebody can find by the application's name, rather than the
             // reverse-DNS identifier Tauri would choose by itself.
             let file = app
                 .path()
                 .config_dir()
                 .ok()
-                .map(|dir| dir.join("personal-learning-corner").join(recent::FILE));
+                .map(|dir| dir.join("learning-corner").join(recent::FILE));
             app.manage(recent::Recent::at(file));
             Ok(())
         })

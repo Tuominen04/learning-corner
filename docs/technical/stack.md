@@ -1,6 +1,6 @@
 # Stack
 
-> **Audience:** People building Personal Learning Corner
+> **Audience:** People building Learning Corner
 > **Status:** Implemented
 > **Last reviewed:** 2026-09-06
 
@@ -25,8 +25,8 @@ Pinned when M0 begins; this table is filled in then, not guessed now.
 
 | | Minimum | Pinned |
 | --- | --- | --- |
-| Rust | 1.82 | 1.94.1 |
-| Tauri | 2.x | 2.11 |
+| Rust | 1.90 (shell; Tauri 2.12 needs it) · 1.82 (engine) | 1.98.0 |
+| Tauri | 2.x | 2.12 |
 | Node.js (build only) | 22 | |
 | React | 19.x | |
 | TipTap | 3.x | |

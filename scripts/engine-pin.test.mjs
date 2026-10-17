@@ -16,9 +16,9 @@ describe("the pin as committed", () => {
 });
 
 // A manifest and lock in the shapes Cargo writes, small enough to read.
-const manifest = `[dependencies]\nserde = "1"\nplc-engine = { \n    git = "${ENGINE_URL}", \n    tag = "v1.2.0" \n}\n`;
+const manifest = `[dependencies]\nserde = "1"\nlc-engine = { \n    git = "${ENGINE_URL}", \n    tag = "v1.2.0" \n}\n`;
 const engineEntry = (source) =>
-  `[[package]]\nname = "plc-engine"\nversion = "1.2.0"\n${source ? `source = "${source}"\n` : ""}dependencies = [\n "serde",\n]\n`;
+  `[[package]]\nname = "lc-engine"\nversion = "1.2.0"\n${source ? `source = "${source}"\n` : ""}dependencies = [\n "serde",\n]\n`;
 const lockWith = (source) =>
   `version = 4\n\n${engineEntry(source)}\n[[package]]\nname = "serde"\nversion = "1.0.0"\nsource = "registry+https://github.com/rust-lang/crates.io-index"\n`;
 const tagged = `git+${ENGINE_URL}?tag=v1.2.0#d2a4f5440979e3dc20fbb2acf8960f271bf3c27c`;
@@ -29,7 +29,7 @@ describe("what it accepts", () => {
   });
 
   it("the pin on one line", () => {
-    const oneLine = `plc-engine = { git = "${ENGINE_URL}", tag = "v1.2.0" }\n`;
+    const oneLine = `lc-engine = { git = "${ENGINE_URL}", tag = "v1.2.0" }\n`;
     expect(verify(oneLine, lockWith(tagged))).toBeNull();
   });
 
@@ -47,7 +47,7 @@ describe("what it refuses", () => {
 
   it("a path in the manifest, on a line of its own", () => {
     // The shape a one-line grep of the manifest cannot see.
-    const withPath = manifest.replace(/tag = "[^"]+"/, 'path = "../personal-learning-corner-engine/crates/plc-engine"');
+    const withPath = manifest.replace(/tag = "[^"]+"/, 'path = "../learning-corner-engine/crates/lc-engine"');
     expect(verify(withPath, lockWith(tagged))).toMatch(/names a local path/);
   });
 

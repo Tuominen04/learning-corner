@@ -11,7 +11,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
-use plc_engine::{Error, Result, Timestamp};
+use lc_engine::{Error, Result, Timestamp};
 use serde::{Deserialize, Serialize};
 
 /// The file's name, inside the application's settings folder.
@@ -149,7 +149,7 @@ fn read(file: &Path) -> Vec<Entry> {
 fn write(file: &Path, libraries: Vec<Entry>) -> Result<()> {
     let text = toml::to_string(&List { libraries })
         .map_err(|e| Error::invalid("recent libraries", e.to_string()))?;
-    plc_engine::atomic::write(file, &format!("{HEADER}{text}"))
+    lc_engine::atomic::write(file, &format!("{HEADER}{text}"))
 }
 
 #[cfg(test)]

@@ -1,12 +1,12 @@
 # ADR 0001 · Tauri and Rust for a Fedora-first desktop application
 
-> **Audience:** People building Personal Learning Corner
+> **Audience:** People building Learning Corner
 > **Status:** Accepted
 > **Last reviewed:** 2026-09-06
 
 ## Context
 
-Personal Learning Corner is a local-only desktop application with no server component, first
+Learning Corner is a local-only desktop application with no server component, first
 targeting Fedora and later Windows and macOS. It needs a rich interface — a text editor,
 multiple synchronised panes, drag-and-drop, and a graph view in a second window — and a
 correctness-critical core that writes the user's files, formats citations, and decides backup

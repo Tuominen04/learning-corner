@@ -1,6 +1,6 @@
 # ADR 0008 · The editor's schema stays narrow until Markdown serialisation exists
 
-> **Audience:** People building Personal Learning Corner
+> **Audience:** People building Learning Corner
 > **Status:** Accepted
 > **Last reviewed:** 2026-09-06
 

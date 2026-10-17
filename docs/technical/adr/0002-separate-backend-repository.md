@@ -1,6 +1,6 @@
 # ADR 0002 · The engine is a separate repository
 
-> **Audience:** People building Personal Learning Corner
+> **Audience:** People building Learning Corner
 > **Status:** Accepted
 > **Last reviewed:** 2026-09-06
 
@@ -16,8 +16,8 @@ much friction a change across the boundary carries.
 
 ## Decision
 
-Two repositories. `personal-learning-corner` holds the desktop shell, the interface, and all
-documentation. `personal-learning-corner-engine` holds the engine. The interface depends on a
+Two repositories. `learning-corner` holds the desktop shell, the interface, and all
+documentation. `learning-corner-engine` holds the engine. The interface depends on a
 pinned published version of the engine, and [the contract](../backend-contract.md) — kept in
 this repository — is normative for both.
 

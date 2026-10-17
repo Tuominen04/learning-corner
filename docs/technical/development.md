@@ -1,6 +1,6 @@
 # Development
 
-> **Audience:** People building Personal Learning Corner
+> **Audience:** People building Learning Corner
 > **Status:** Implemented
 > **Last reviewed:** 2026-10-04
 
@@ -83,7 +83,7 @@ interface's build tooling is grouped separately because it breaks differently fr
 
 The **engine is excluded**. It is pinned to an immutable tag and bumped when a release is cut
 ([ADR 0006](adr/0006-engine-dependency-pinning.md)) — an automatic bump would defeat the point
-of pinning it, and Dependabot cannot see a private git dependency in any case.
+of pinning it.
 
 ## Checks
 
@@ -122,7 +122,7 @@ npm run e2e -- moving layout    # just the files whose names contain either word
 ```
 
 `npx playwright uninstall` removes that browser again. Any other Chromium works in its place:
-`PLC_E2E_CHROMIUM=/path/to/chromium npm run e2e`. The checks start a Vite server of their own
+`LC_E2E_CHROMIUM=/path/to/chromium npm run e2e`. The checks start a Vite server of their own
 on a free port, so a `tauri dev` already running does not get in the way.
 
 A new check is a file in `e2e/checks/` that imports `launch`, `check`, `finish` and `URL` from
@@ -134,7 +134,7 @@ loads, then the screen driven the way a person would drive it.
 Pinned by immutable git tag ([ADR 0006](adr/0006-engine-dependency-pinning.md)):
 
 ```toml
-plc-engine = { git = "…-engine", tag = "v0.1.0" }
+lc-engine = { git = "…-engine", tag = "v0.1.0" }
 ```
 
 ### Working on both at once
@@ -149,8 +149,8 @@ npm run engine:pinned    # back to the tagged release
 ```
 
 An edit in the engine checkout reaches the next `tauri dev` or `cargo test` with no push and no
-tag. With no path given, `engine:local` looks in `$PLC_ENGINE_DIR`, then in
-`../personal-learning-corner-engine`.
+tag. With no path given, `engine:local` looks in `$LC_ENGINE_DIR`, then in
+`../learning-corner-engine`.
 
 It is a Cargo `[patch]` in `.cargo/config.toml` at the top of this repository, a file git
 ignores, so `Cargo.toml` keeps its tag throughout. The one committed file that changes is
@@ -177,8 +177,8 @@ When the engine change is merged and tagged, finish on the interface side with
 
 ### In CI
 
-The engine repository is private, so CI needs its own credential to fetch it. See
-[Repositories](repositories.md#building-in-ci).
+The engine repository is public, so CI fetches it like any other git dependency, with no
+credential. See [Repositories](repositories.md#building-in-ci).
 
 ## Layout
 

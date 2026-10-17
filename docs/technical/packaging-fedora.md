@@ -1,8 +1,8 @@
 # Packaging for Fedora
 
-> **Audience:** People building and releasing Personal Learning Corner
+> **Audience:** People building and releasing Learning Corner
 > **Status:** In progress — M0 implemented
-> **Last reviewed:** 2026-09-28
+> **Last reviewed:** 2026-10-16
 
 Fedora is the first target ([ADR 0001](adr/0001-tauri-rust-stack.md)). Windows and macOS come
 after the Linux build is solid, and are packaging work rather than a rewrite.
@@ -11,7 +11,7 @@ after the Linux build is solid, and are packaging work rather than a rewrite.
 
 | Artefact | For |
 | -------- | --- |
-| **RPM** | `sudo dnf install ./personal-learning-corner-*.rpm`, and a future Fedora package |
+| **RPM** | `sudo dnf install ./learning-corner-*.rpm`, and a future Fedora package |
 | **Flatpak** | Flathub, and every other Linux distribution without a second packaging effort |
 
 Tauri produces both. The RPM is the primary artefact because it is what a Fedora user
@@ -44,9 +44,9 @@ everything else is the application's and follows the XDG base directory specific
 | What | Where | Notes |
 | ---- | ----- | ----- |
 | The library | Anywhere the user picked | Never assumed, never defaulted to a hidden path |
-| Application settings | `$XDG_CONFIG_HOME/personal-learning-corner/` | Window state, recent libraries, preferences |
-| Application cache | `$XDG_CACHE_HOME/personal-learning-corner/` | Disposable |
-| Logs | `$XDG_STATE_HOME/personal-learning-corner/` | Local only, never transmitted |
+| Application settings | `$XDG_CONFIG_HOME/learning-corner/` | Window state, recent libraries, preferences |
+| Application cache | `$XDG_CACHE_HOME/learning-corner/` | Disposable |
+| Logs | `$XDG_STATE_HOME/learning-corner/` | Local only, never transmitted |
 
 Nothing derived from a library goes in these directories — the index lives inside the library
 at `.plc/` ([Search index](search-index.md)) so that copying the folder copies everything and
@@ -96,6 +96,22 @@ is an ADR, a permission the user can see, and a feature that is off by default.
 Tagged, versioned per [Repositories](repositories.md), built in CI. Each release publishes the
 RPM, the Flatpak bundle, digests for both, and a changelog written for users rather than from
 commit messages.
+
+**Implemented so far:** the RPM, a `.deb` and an AppImage, a `SHA256SUMS` file, and a build
+attestation tying each package to the commit and workflow that produced it. The Flatpak is not
+built yet. Cutting a release:
+
+1. A pull request raises `version` in `package.json`, `src-tauri/Cargo.toml` and
+   `src-tauri/tauri.conf.json` together.
+2. Once it is merged, tag the merge commit on `main`: `git tag v0.19.0 && git push origin v0.19.0`.
+   A ruleset on `v*` lets only the maintainer create, move or delete such a tag.
+3. `.github/workflows/release.yml` refuses a tag that is not on `main` or does not match all
+   three versions, then builds with the committed lock and opens a **draft** release.
+4. Run [Verifying a build](#verifying-a-build) against the draft's RPM, replace the generated
+   notes with the user-facing changelog, and publish.
+
+The build job holds no write permission; only the separate job that drafts the release does,
+and it runs no dependency code.
 
 There is **no in-application update check.** The application does not contact anything on
 startup; updates arrive through `dnf` or Flatpak like every other package on the system. An

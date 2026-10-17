@@ -1,6 +1,6 @@
 # Testing
 
-> **Audience:** People building Personal Learning Corner
+> **Audience:** People building Learning Corner
 > **Status:** In progress — M1 implemented
 > **Last reviewed:** 2026-10-04
 
@@ -108,7 +108,7 @@ including the offline run and the uninstall check.
 ## Fixtures
 
 A set of small libraries checked into the engine repository, in
-`crates/plc-engine/tests/fixtures/`, each opened from a copy as a person's library is:
+`crates/lc-engine/tests/fixtures/`, each opened from a copy as a person's library is:
 
 | Fixture | Exercises | Exists |
 | ------- | --------- | ------ |

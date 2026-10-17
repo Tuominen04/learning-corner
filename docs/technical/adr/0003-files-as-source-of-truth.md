@@ -1,6 +1,6 @@
 # ADR 0003 · Files are the source of truth; the index is derived
 
-> **Audience:** People building Personal Learning Corner
+> **Audience:** People building Learning Corner
 > **Status:** Accepted
 > **Last reviewed:** 2026-09-06
 

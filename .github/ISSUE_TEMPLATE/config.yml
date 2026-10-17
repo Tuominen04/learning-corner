@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Idea or feature request
+    url: https://github.com/Tuominen04/learning-corner/discussions/new?category=ideas
+    about: New features start as a discussion. Ideas the project takes on become issues from there.
+  - name: Question
+    url: https://github.com/Tuominen04/learning-corner/discussions/new?category=q-a
+    about: How do I…? Is it supposed to…? Ask here.
+  - name: Security problem
+    url: https://github.com/Tuominen04/learning-corner/security/advisories/new
+    about: Report it privately, not as a public issue.

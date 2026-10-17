@@ -4,7 +4,7 @@
 > **Status:** In progress
 > **Last reviewed:** 2026-09-06
 
-The words used throughout Personal Learning Corner. The app, this user guide, and the
+The words used throughout Learning Corner. The app, this user guide, and the
 technical documentation all use them to mean the same thing — if you learn them here, you
 will not meet a second name for the same idea anywhere else.
 

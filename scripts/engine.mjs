@@ -104,11 +104,11 @@ function local(argument) {
     fail(".cargo/config.toml exists and was not written by this script, so it is left alone. Add the [patch] to it by hand, or move it aside.");
   }
   const current = localEngine();
-  const given = argument ?? process.env.PLC_ENGINE_DIR ?? join(ROOT, "..", "personal-learning-corner-engine");
+  const given = argument ?? process.env.LC_ENGINE_DIR ?? join(ROOT, "..", "learning-corner-engine");
   const checkout = resolve(ROOT, given);
-  const crate = join(checkout, "crates", "plc-engine");
+  const crate = join(checkout, "crates", "lc-engine");
   if (!existsSync(join(crate, "Cargo.toml"))) {
-    fail(`No engine checkout at ${checkout} (looked for crates/plc-engine/Cargo.toml). Pass its path: npm run engine:local -- /path/to/personal-learning-corner-engine`);
+    fail(`No engine checkout at ${checkout} (looked for crates/lc-engine/Cargo.toml). Pass its path: npm run engine:local -- /path/to/learning-corner-engine`);
   }
   const previous = current ? readFileSync(OVERRIDE, "utf8") : null;
   mkdirSync(dirname(OVERRIDE), { recursive: true });
@@ -117,7 +117,7 @@ function local(argument) {
     `${MARK} Never committed: .gitignore keeps it out.\n` +
       `# \`npm run engine:pinned\` removes it and puts ${LOCK} back.\n` +
       `[patch."${ENGINE_URL}"]\n` +
-      `plc-engine = { path = ${JSON.stringify(crate)} }\n`,
+      `lc-engine = { path = ${JSON.stringify(crate)} }\n`,
   );
   if (!resolveLock()) {
     if (previous === null) removeOverride();

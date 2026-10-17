@@ -4,7 +4,7 @@
 > **Status:** In progress
 > **Last reviewed:** 2026-09-06
 
-Documentation for Personal Learning Corner is split in two, and the split is deliberate:
+Documentation for Learning Corner is split in two, and the split is deliberate:
 a person using the app should never have to read about how it is built, and a person
 building it should never have to wade through a tutorial to find the data model.
 
