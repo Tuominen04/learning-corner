@@ -95,7 +95,7 @@ writes your library — [learning-corner-engine](https://github.com/Tuominen04/l
 
 ## Status
 
-**0.19.0 is the first release: Milestone 1.** Libraries, topics and documents; sources, with
+**0.19.1 is the first release: Milestone 1.** Libraries, topics and documents; sources, with
 APA 7 citations and reference lists worked out for you; claims marked against what they cite;
 search; and export to PDF, Word, OpenDocument, a web page and plain text.
 

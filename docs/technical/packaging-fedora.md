@@ -2,7 +2,7 @@
 
 > **Audience:** People building and releasing Learning Corner
 > **Status:** In progress — M0 implemented
-> **Last reviewed:** 2026-10-16
+> **Last reviewed:** 2026-10-17
 
 Fedora is the first target ([ADR 0001](adr/0001-tauri-rust-stack.md)). Windows and macOS come
 after the Linux build is solid, and are packaging work rather than a rewrite.
@@ -116,6 +116,18 @@ and it runs no dependency code.
 There is **no in-application update check.** The application does not contact anything on
 startup; updates arrive through `dnf` or Flatpak like every other package on the system. An
 update ping is network traffic in a product that promises none.
+
+## Wayland and the WebKit renderer
+
+On some Wayland sessions WebKitGTK's DMA-BUF renderer fails as the window is created: it opens
+and closes within a second, printing `Error 71 (Protocol error) dispatching to Wayland display`.
+0.19.0 was built, installed and found to do exactly that on a Fedora desktop, and never
+published.
+
+`main.rs` therefore sets `WEBKIT_DISABLE_DMABUF_RENDERER=1` before anything else runs, unless the
+person has set it themselves. The fallback renderer works on every session; what it costs is
+GPU-accelerated compositing, which a text-and-forms window does not need. Revisit when the
+WebKitGTK release Fedora ships no longer has the fault.
 
 ## Verifying a build
 
