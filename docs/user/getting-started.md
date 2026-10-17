@@ -1,8 +1,8 @@
 # Getting started
 
 > **Audience:** People using Learning Corner
-> **Status:** Planned — not yet available to install
-> **Last reviewed:** 2026-09-06
+> **Status:** In progress — installing and steps 2 to 5 work; backup comes in a later version
+> **Last reviewed:** 2026-10-17
 
 This page takes you from nothing to a first document with a source behind it. Fifteen
 minutes, and you never need to be online.
@@ -12,21 +12,21 @@ minutes, and you never need to be online.
 Learning Corner runs on **Fedora** first. Support for Windows and macOS is planned
 but not available yet.
 
-Two ways to install, whichever suits you:
-
 **From the downloaded package**
 
-1. Download the installer for Fedora from the releases page.
+1. Download the installer for Fedora — the file ending in `.rpm` — from the releases page.
 2. Open it with your software installer, or from a terminal:
    ```
    sudo dnf install ./learning-corner-*.rpm
    ```
 3. Find **Learning Corner** in your applications menu.
 
-**From Flathub**
+On another Linux system, the same page has a `.deb` package for Debian and Ubuntu, and an
+`.AppImage` that runs without installing. They are made the same way as the Fedora package, but
+tested less.
 
-Search for **Learning Corner** in your software centre, or on [flathub.org](https://flathub.org),
-and choose **Install**.
+**From Flathub** — coming in a later version. You will be able to find **Learning Corner** in
+your software centre.
 
 The app never asks you to create an account, and it does not need an internet connection to
 run.
@@ -98,6 +98,10 @@ Two things happen automatically:
 Full detail in [Sources and citations](sources-and-citations.md).
 
 ## 6. Back it up
+
+> **Not in this version yet.** Until **Back up** arrives, copy your library folder to an
+> external drive yourself now and then. It is ordinary folders and files, so a plain copy is a
+> complete backup.
 
 Plug in an external drive and choose **Back up**. The app copies your library onto the drive
 as ordinary folders and files — nothing packed, nothing encrypted, nothing you need this app

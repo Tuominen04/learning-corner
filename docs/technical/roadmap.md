@@ -61,7 +61,7 @@ except using it.
 The lesson is cheap to state and easy to forget: **the automated checks in this list can all
 pass while the product does not work.** Keep the last item on every milestone.
 
-## M1 · Documents and sources ← *the first release*
+## M1 · Documents and sources ← *the first release, 0.19.0*
 
 The reason the product exists: [claims anchored to sources](architecture.md#principles), and
 APA 7 that is actually correct.
@@ -78,7 +78,7 @@ APA 7 that is actually correct.
 - [x] The APA fixture suite passing in full.
 - [x] The [fixture libraries](testing.md#fixtures): an empty one, a damaged one, and the format
       as M1 ships it, frozen as `v1`.
-- [ ] **Seen running by a person**, on Fedora: the M1 walkthrough, end to end — a library made,
+- [x] **Seen running by a person**, on Fedora: the M1 walkthrough, end to end — a library made,
       sources of every kind saved and cited, one long document split into six, a source
       corrected once and right everywhere, searches, all five exports opened, a window closed
       mid-sentence, and the library renamed and switched.
