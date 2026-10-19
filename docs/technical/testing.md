@@ -2,7 +2,7 @@
 
 > **Audience:** People building Learning Corner
 > **Status:** In progress — M1 implemented
-> **Last reviewed:** 2026-10-04
+> **Last reviewed:** 2026-10-19
 
 There is no server, no network, and one user. That removes whole categories of testing and
 concentrates the risk in one place: **the library on disk.** Test accordingly.
@@ -32,7 +32,7 @@ The bulk of the suite, in the engine repository. Pure logic, no filesystem where
   dates, all three disambiguation cases, locator kinds, reference ordering.
 - **Segmentation and alignment** — each unit, the `~` and `+ ` markers, misalignment
   detection and the line it reports, repeated segments.
-- **Comparison logic** — every row of the [three-outcome table](backup-and-sync.md#the-three-outcomes)
+- **Comparison logic** — every row of the [outcome table](backup-and-sync.md#comparison)
   as its own case.
 
 ### Filesystem tests
@@ -66,6 +66,20 @@ assert the two libraries are byte-identical outside `.plc/`. Then the harder var
 modify both sides, run the comparison, resolve each conflict every possible way, and assert
 that in every case nothing that existed on either side is unrecoverable
 ([Backup and synchronisation](backup-and-sync.md)).
+
+Around it, on real folders, the cases the specification turns on:
+
+- every row of the [comparison table](backup-and-sync.md#comparison) produced deliberately,
+  in both directions, with the action the specification gives it;
+- a backup over changes on the drive refused without `overwrite`, and with it, the drive's
+  versions found in `.conflicts/`; a stale drive with no changes of its own replaced with
+  nothing kept aside;
+- each answer to a file changed in both, on a bring-back;
+- an apply that fails partway, then a fresh plan showing only what was left;
+- a file changed between plan and apply, refused with `Conflict` before anything is touched;
+- two copies of one library, each with its own record;
+- the frozen `v1` fixture restored and read exactly as it reads in place, and a newer format
+  refused at plan time.
 
 ### Contract tests
 

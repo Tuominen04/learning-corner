@@ -37,7 +37,7 @@ Rejected because it costs four things this product is specifically for:
    [user documentation promises it](../../user/libraries-and-files.md#editing-your-files-outside-the-app),
    and it is a real part of the "your library outlives the application" principle.
 4. **The conflict model loses its subject.** The
-   [three-outcome comparison](../backup-and-sync.md#the-three-outcomes) works file by file and
+   [three-outcome comparison](../backup-and-sync.md#comparison) works file by file and
    shows the user a readable difference. Against two binary databases, the only honest report
    is "these differ", and the only resolution is all-or-nothing — precisely the automatic
    guess the user asked not to have.

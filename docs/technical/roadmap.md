@@ -101,9 +101,11 @@ source corrected once being correct everywhere.
 Before more features. A person using M1 has work worth losing, and the honest thing is to make
 it safe before making it bigger.
 
-- Mirror backup and restore, both two-phase.
-- The [three-outcome comparison](backup-and-sync.md#the-three-outcomes), digests, `sync-state`.
-- Conflict resolution with retention under `.conflicts/`, local as the default.
+- Back up, bring back and restore, all two-phase — the library leads, the drive follows
+  ([Backup and synchronisation](backup-and-sync.md#the-model-the-library-leads-the-drive-follows)).
+- The [comparison](backup-and-sync.md#comparison), digests, and a record per drive.
+- One warning when a backup would overwrite changes made on the drive; a question per file only
+  when bringing back a file changed in both places; retention under `.conflicts/`.
 - Resumable after interruption.
 - Format migration on restore, with the frozen-library fixtures.
 - The backup round-trip property test.
