@@ -2,7 +2,7 @@
 
 > **Audience:** People building Learning Corner
 > **Status:** In progress — M1 implemented
-> **Last reviewed:** 2026-10-02
+> **Last reviewed:** 2026-10-19
 
 Every operation the interface may ask of the engine. This document is normative for both
 repositories and is the specification the engine is built against — see
@@ -199,10 +199,50 @@ Derived edges are computed on read, never stored. See
 
 | Operation | Takes | Returns |
 | --------- | ----- | ------- |
-| `backup.plan` | destination path | per-file outcomes: new, changed here, changed there, conflicted, unchanged |
-| `backup.apply` | plan, decision per conflict | what was written, and where retained copies went |
-| `restore.plan` | source path, destination path | the same shape, in the other direction |
-| `restore.apply` | plan, decisions | result |
+| `backup.plan` | destination folder | a plan |
+| `backup.apply` | plan, a decision for every question | what was done |
+| `restore.plan` | backup folder, destination folder | a plan, in the other direction |
+| `restore.apply` | plan, decisions | what was done |
+
+`backup.*` works on the open library. `restore.*` needs none open — restoring onto a new
+computer is the case that matters most — and opens nothing itself; the interface opens the
+restored library afterwards like any other. Restoring over the library that is open means
+closing it first, so nothing is written to it from two places at once.
+
+**A plan** is everything the user is shown before anything is written:
+
+- `direction` — `backup` or `restore`
+- `library` — the library's id and name, read from both sides
+- `copy` — the copy's identifier, or none for a copy never backed up to before
+- `unchanged` — how many files are the same on both sides; they are not listed
+- `entries` — one per path that differs, each with:
+  - `path` — relative to the library, `/`-separated
+  - `outcome` — a row of the [outcome table](backup-and-sync.md#the-outcomes): `newHere`,
+    `newThere`, `changedHere`, `changedThere`, `conflict`, `deletedHere`,
+    `deletedHereChangedThere`, `deletedThere`, `deletedThereChangedHere`
+  - `local`, `other` — each side's file as `{ digest, size, modified }`, or none where absent
+  - `asks` — whether a decision is required; `false` for the rows copied without asking
+
+**A decision** is given for each entry whose `asks` is true, keyed by `path`: `keepLocal`,
+`takeCopy`, or `keepBoth` (only where both sides have the file). The interface may pre-select
+one — `keepLocal` on a backup, `takeCopy` on a restore — but the engine applies only what it is
+given.
+
+**What was done**:
+
+- `copied` — paths written, to either side
+- `removed` — paths removed, from either side
+- `kept` — every version replaced or removed, as the path it now has under `.conflicts/`
+- `agreed` — how many files are now recorded as agreed with the copy
+
+Errors, beyond those any operation can return:
+
+| Cause | When |
+| ----- | ---- |
+| `Invalid` | The destination is neither empty nor a copy of this library; or a question has no decision, or `keepBoth` where a side has no file. Nothing is written |
+| `Conflict` | A file no longer has the digest the plan recorded, on either side. The apply stops; what it had done stays done and agreed, and planning again shows what is left |
+| `FormatTooNew` / `MigrationRequired` | From `restore.plan`, when the copy's `library.toml` is a format this build cannot write |
+| `Io` | The drive is gone or full. As with `Conflict`, an apply interrupted midway resumes from a fresh plan |
 
 Always two-phase. The plan is what the user is shown before anything is written, and the
 apply step carries their decisions. Rules in [Backup and synchronisation](backup-and-sync.md).

@@ -2,7 +2,7 @@
 
 > **Audience:** People building Learning Corner
 > **Status:** In progress — M1 implemented
-> **Last reviewed:** 2026-10-02
+> **Last reviewed:** 2026-10-19
 
 The library on disk is the source of truth ([ADR 0003](adr/0003-files-as-source-of-truth.md)).
 This document specifies it. It is normative: the engine implements this, and the format is
@@ -47,7 +47,10 @@ MyLibrary/
 │   └── protein-overview.toml
 ├── .plc/                         # derived — safe to delete, see search-index.md
 │   ├── index.sqlite
-│   └── format-version
+│   ├── format-version
+│   ├── sync-state/               # what was last agreed with each backup copy
+│   │   └── <copy>.toml
+│   └── backup.toml               # only in a backup copy: which copy it is
 └── .conflicts/                   # copies kept from conflict resolution
 ```
 

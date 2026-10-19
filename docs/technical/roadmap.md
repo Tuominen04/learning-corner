@@ -102,7 +102,7 @@ Before more features. A person using M1 has work worth losing, and the honest th
 it safe before making it bigger.
 
 - Mirror backup and restore, both two-phase.
-- The [three-outcome comparison](backup-and-sync.md#the-three-outcomes), digests, `sync-state`.
+- The [outcome comparison](backup-and-sync.md#the-outcomes), digests, `sync-state`.
 - Conflict resolution with retention under `.conflicts/`, local as the default.
 - Resumable after interruption.
 - Format migration on restore, with the frozen-library fixtures.
