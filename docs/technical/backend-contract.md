@@ -200,52 +200,57 @@ Derived edges are computed on read, never stored. See
 | Operation | Takes | Returns |
 | --------- | ----- | ------- |
 | `backup.plan` | destination folder | a plan |
-| `backup.apply` | plan, a decision for every question | what was done |
-| `restore.plan` | backup folder, destination folder | a plan, in the other direction |
-| `restore.apply` | plan, decisions | what was done |
+| `backup.apply` | plan, and `overwrite` if the drive has changes of its own | what was done |
+| `restore.plan` | drive folder, destination folder | a plan |
+| `restore.apply` | plan, an answer for every file changed in both | what was done |
 
-`backup.*` works on the open library. `restore.*` needs none open — restoring onto a new
-computer is the case that matters most — and opens nothing itself; the interface opens the
-restored library afterwards like any other. Restoring over the library that is open means
-closing it first, so nothing is written to it from two places at once.
+*Back up* copies the open library to the drive. *Bring back* and *restore* are both
+`restore.*`: into the library's own folder it brings back the drive's changes, into an empty
+folder it restores the whole copy. `restore.*` needs no library open and opens nothing itself;
+the interface opens the result afterwards like any other library, and closes the open library
+first when bringing back into it, so nothing is written from two places at once.
 
 **A plan** is everything the user is shown before anything is written:
 
 - `direction` — `backup` or `restore`
-- `library` — the library's id and name, read from both sides
-- `copy` — the copy's identifier, or none for a copy never backed up to before
+- `library` — the library's id and name
+- `copy` — the drive's copy identifier, or none for a destination never backed up to before
 - `unchanged` — how many files are the same on both sides; they are not listed
 - `entries` — one per path that differs, each with:
   - `path` — relative to the library, `/`-separated
-  - `outcome` — a row of the [outcome table](backup-and-sync.md#the-outcomes): `newHere`,
-    `newThere`, `changedHere`, `changedThere`, `conflict`, `deletedHere`,
-    `deletedHereChangedThere`, `deletedThere`, `deletedThereChangedHere`
-  - `local`, `other` — each side's file as `{ digest, size, modified }`, or none where absent
-  - `asks` — whether a decision is required; `false` for the rows copied without asking
+  - `outcome` — a row of the [comparison table](backup-and-sync.md#comparison): `newInLibrary`,
+    `newOnDrive`, `changedInLibrary`, `changedOnDrive`, `changedInBoth`, `removedOnDrive`,
+    `removedOnDriveChangedInLibrary`, `removedInLibrary`, `removedInLibraryChangedOnDrive`
+  - `library`, `drive` — each side's file as `{ digest, size, modified }`, or none where absent
+  - `action` — what applying the plan does with it: `copyToDrive`, `removeFromDrive`,
+    `copyToLibrary`, `removeFromLibrary`, `leave`, or `ask`
+  - `driveChange` — whether this is a change on the drive
+- on a backup, `driveChanges` — how many entries are changes on the drive. When it is not
+  zero, the apply needs `overwrite`; the other answer, *bring them back first*, is simply not
+  applying
+- on a restore, `asks` — how many entries need an answer
 
-**A decision** is given for each entry whose `asks` is true, keyed by `path`: `keepLocal`,
-`takeCopy`, or `keepBoth` (only where both sides have the file). The interface may pre-select
-one — `keepLocal` on a backup, `takeCopy` on a restore — but the engine applies only what it is
-given.
+**An answer**, for each entry whose `action` is `ask`, keyed by `path`: `keepLibrary`,
+`takeDrive`, or `keepBoth` (only where both sides have the file).
 
 **What was done**:
 
 - `copied` — paths written, to either side
 - `removed` — paths removed, from either side
-- `kept` — every version replaced or removed, as the path it now has under `.conflicts/`
-- `agreed` — how many files are now recorded as agreed with the copy
+- `kept` — every version kept aside, as the path it now has under `.conflicts/`
+- `recorded` — how many files are now recorded as in step with the copy
 
 Errors, beyond those any operation can return:
 
 | Cause | When |
 | ----- | ---- |
-| `Invalid` | The destination is neither empty nor a copy of this library; or a question has no decision, or `keepBoth` where a side has no file. Nothing is written |
-| `Conflict` | A file no longer has the digest the plan recorded, on either side. The apply stops; what it had done stays done and agreed, and planning again shows what is left |
+| `Invalid` | The destination is neither empty nor a copy of this library; or the drive has changes and `overwrite` is missing; or an answer is missing, or `keepBoth` where a side has no file. Nothing is written |
+| `Conflict` | A file no longer has the digest the plan recorded, on either side. The apply stops; what it had done stays done and recorded, and planning again shows what is left |
 | `FormatTooNew` / `MigrationRequired` | From `restore.plan`, when the copy's `library.toml` is a format this build cannot write |
 | `Io` | The drive is gone or full. As with `Conflict`, an apply interrupted midway resumes from a fresh plan |
 
 Always two-phase. The plan is what the user is shown before anything is written, and the
-apply step carries their decisions. Rules in [Backup and synchronisation](backup-and-sync.md).
+apply step carries their answers. Rules in [Backup and synchronisation](backup-and-sync.md).
 
 ## Export
 

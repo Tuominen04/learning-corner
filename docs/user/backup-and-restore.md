@@ -2,7 +2,7 @@
 
 > **Audience:** People using Learning Corner
 > **Status:** Planned
-> **Last reviewed:** 2026-09-06
+> **Last reviewed:** 2026-10-19
 
 Your library is on one computer. Computers fail. This page is how you stop that from
 mattering.
@@ -24,20 +24,47 @@ that fails you on the day the app will not start.
 1. Plug in the drive.
 2. Choose **Back up**.
 3. The first time, pick where on the drive the copy should go. The app remembers it.
-4. It shows you what it is about to do — *142 files new, 8 changed, nothing removed* — and
-   you confirm.
+4. It shows you what it is about to do — *142 files new, 8 changed, 3 removed* — and you
+   confirm.
 
-Only what changed is copied, so after the first backup it is quick. Do it whenever you
-finish a session's work.
+The drive becomes exactly like your library. Only what changed is copied, so after the first
+backup it is quick. Do it whenever you finish a session's work.
 
-If the drive is unplugged halfway through, nothing is broken. The copy on the drive is
-simply part-finished; run it again and it picks up where it stopped.
+If the drive is unplugged halfway through, nothing is broken. The copy on the drive is simply
+part-finished; run it again and it picks up where it stopped.
 
 ### The app will not decide for you
 
-Learning Corner does not back up on a schedule and does not do it quietly in the
-background. You plug in the drive and you choose **Back up**. Backups that happen without
-you noticing are also backups that go wrong without you noticing.
+Learning Corner does not back up on a schedule and does not do it quietly in the background.
+You plug in the drive and you choose **Back up**. Backups that happen without you noticing are
+also backups that go wrong without you noticing.
+
+## Using the library on another computer
+
+You can take the drive to another computer and open the library from it — to show somebody,
+or to work away from your desk. If you change anything there, bring it home:
+
+1. Plug the drive into your own computer.
+2. Choose **Bring back from drive**.
+3. It shows you what changed on the drive, and you confirm. Those changes come into your
+   library.
+
+Then carry on working and back up as usual.
+
+If you forget, the app reminds you. When you back up and the drive has changes your library
+does not, it stops before writing anything — *the drive has 2 changes made since your last
+backup* — and asks whether to **bring them back first** or **overwrite them**. If you overwrite
+them, the drive's versions are kept, so nothing is lost either way.
+
+### When the same file changed in both places
+
+If you changed a document on the other computer **and** the same document on your own since the
+last backup, bringing back asks about that one file. It shows when each copy was last changed
+and what differs, and you choose **keep mine**, **take the drive's**, or **keep both** — which
+saves the drive's version alongside, renamed, so you can merge them yourself.
+
+Following the habit — bring back before you start, back up before you leave — means this almost
+never happens.
 
 ## Restoring
 
@@ -49,53 +76,28 @@ On a new computer, or after a disaster:
 
 Everything comes back: documents, sources, citations, texts, maps.
 
-You can also skip the app entirely and copy the folder off the drive by hand, then open it
-with **Open an existing one…** on the start screen. It works. There is nothing magic in the
-backup.
+You can also skip the app entirely and copy the folder off the drive by hand, then open it with
+**Open an existing one…** on the start screen. It works. There is nothing magic in the backup.
 
-## When both copies changed
+## Nothing is lost
 
-This is the situation the app takes seriously.
-
-You backed up on Friday. Over the weekend you wrote on your laptop, and you also opened the
-copy on the drive at work and fixed a source there. Now the two disagree, and one of them
-must not win by accident.
-
-When you back up or restore, the app compares the two copies file by file and sorts every
-difference into one of three piles:
-
-| What it found | What it does |
-| ------------- | ------------ |
-| Changed here only | Copies your change to the drive |
-| Changed on the drive only | Tells you, and asks before bringing it over |
-| **Changed in both places** | Stops and asks you |
-
-For the third pile it shows you, one item at a time: what it is, when each copy was last
-changed, and what actually differs. You choose **keep mine**, **take the drive's**, or **keep
-both** — which saves the other one alongside, renamed, so you can merge them yourself later.
-
-Three promises, which hold in every case:
-
-1. **Nothing is overwritten without you saying so.** If the app cannot tell which copy is
-   right, it stops and asks. It never guesses.
-2. **The copy you did not choose is kept**, in a folder inside your library, for as long as
-   you want it. Choosing wrong is recoverable.
-3. **Your computer is the default.** If you dismiss the question or close the window, the
-   copy on your computer stands and nothing on it is touched.
+Whenever a backup or bring-back replaces or removes a file in your library — or overwrites a
+change made on the drive — the version it replaced is kept first, in a folder inside your
+library. Choosing wrong is recoverable. Those kept copies are never deleted automatically; the
+app tells you how much space they take and lets you clear them.
 
 ## Two computers
 
 You can work on the same library from a desktop and a laptop by carrying it on a drive: back
-up from one, restore to the other, and answer the questions above whenever both changed.
+up from one, bring back on the other.
 
-It works, and people do it. But be honest about what it is — a manual copy with a careful
-review, not automatic synchronisation. The safe habit is to always back up before you leave
-one machine and restore before you start on the other. If you skip that, you get conflict
-questions, and answering them badly is how work gets lost.
+It works, but be honest about what it is — a careful manual copy, not automatic
+synchronisation. Your computer is the master and the drive is its copy. The safe habit is to
+always back up before you leave one machine and bring back before you start on the other.
 
 Do **not** put your library inside a folder run by an automatic cloud sync tool. Those tools
-resolve conflicts on their own, by rules that suit files that only one program writes. That
-is precisely the decision this app exists to leave with you.
+resolve conflicts on their own, by rules that suit files that only one program writes. That is
+precisely the decision this app exists to leave with you.
 
 ## How often?
 
