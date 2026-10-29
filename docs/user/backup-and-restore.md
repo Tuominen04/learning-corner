@@ -1,8 +1,8 @@
 # Backup and restore
 
 > **Audience:** People using Learning Corner
-> **Status:** Planned
-> **Last reviewed:** 2026-10-19
+> **Status:** Implemented
+> **Last reviewed:** 2026-10-29
 
 Your library is on one computer. Computers fail. This page is how you stop that from
 mattering.
@@ -22,10 +22,11 @@ that fails you on the day the app will not start.
 ## Backing up
 
 1. Plug in the drive.
-2. Choose **Back up**.
-3. The first time, pick where on the drive the copy should go. The app remembers it.
-4. It shows you what it is about to do — *142 files new, 8 changed, 3 removed* — and you
-   confirm.
+2. Choose **Back up…** under the library's name, then **Choose a folder…**.
+3. The first time, pick an empty folder on the drive. After that, pick the same folder each
+   time — the app recognises its own copy, and refuses a folder holding something else.
+4. It shows you what it is about to do — *142 files to copy to the drive, nothing to remove* —
+   and the files it means. Nothing is written until you choose **Back up**.
 
 The drive becomes exactly like your library. Only what changed is copied, so after the first
 backup it is quick. Do it whenever you finish a session's work.
@@ -45,7 +46,7 @@ You can take the drive to another computer and open the library from it — to s
 or to work away from your desk. If you change anything there, bring it home:
 
 1. Plug the drive into your own computer.
-2. Choose **Bring back from drive**.
+2. Choose **Bring back…** under the library's name, and pick the copy on the drive.
 3. It shows you what changed on the drive, and you confirm. Those changes come into your
    library.
 
@@ -53,15 +54,20 @@ Then carry on working and back up as usual.
 
 If you forget, the app reminds you. When you back up and the drive has changes your library
 does not, it stops before writing anything — *the drive has 2 changes made since your last
-backup* — and asks whether to **bring them back first** or **overwrite them**. If you overwrite
-them, the drive's versions are kept, so nothing is lost either way.
+backup* — and asks whether to **bring them back first** or **replace them**. If you replace them, the
+drive's versions are kept, so nothing is lost either way.
 
 ### When the same file changed in both places
 
 If you changed a document on the other computer **and** the same document on your own since the
 last backup, bringing back asks about that one file. It shows when each copy was last changed
-and what differs, and you choose **keep mine**, **take the drive's**, or **keep both** — which
-saves the drive's version alongside, renamed, so you can merge them yourself.
+and how big it is, and you choose **keep this library's**, **take the drive's**, or **keep
+both** — which saves the drive's version alongside, named *(from backup* and the date*)*, so you
+can merge them yourself. Nothing is brought back until every such file has an answer.
+
+Keeping both copies of a document leaves two documents that both claim to be the same one.
+The library lists that under **Needs your attention** until one of them is gone — merge what
+you want to keep into one, and delete the other.
 
 Following the habit — bring back before you start, back up before you leave — means this almost
 never happens.
@@ -71,8 +77,11 @@ never happens.
 On a new computer, or after a disaster:
 
 1. Install the app and plug in the drive.
-2. Choose **Restore from drive** and point it at the copy.
-3. Choose where the library should live on this computer.
+2. On the start screen, choose **Restore from a backup…**, then **Choose a folder…**, and point
+   it at the copy.
+3. Choose an empty folder for the library on this computer — the folder dialog can make one.
+4. It shows you what it will copy, and you choose **Restore from a backup**. The library opens
+   when it is done.
 
 Everything comes back: documents, sources, citations, texts, maps.
 
@@ -83,8 +92,9 @@ You can also skip the app entirely and copy the folder off the drive by hand, th
 
 Whenever a backup or bring-back replaces or removes a file in your library — or overwrites a
 change made on the drive — the version it replaced is kept first, in a folder inside your
-library. Choosing wrong is recoverable. Those kept copies are never deleted automatically; the
-app tells you how much space they take and lets you clear them.
+library, named `.conflicts`, under the date and time. When it is done, the app lists what it
+kept and where. Choosing wrong is recoverable. Those kept copies are never deleted
+automatically; when you no longer want them, delete them from `.conflicts` yourself.
 
 ## Two computers
 

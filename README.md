@@ -28,9 +28,9 @@ and you choose which of those are on screen.
 **Mind maps** *(coming)*. See how your topics actually connect, built from the documents you
 already wrote rather than a second copy of them.
 
-**Backup to your own drive** *(coming)*. Back your library up to an external drive whenever it
-is plugged in. If the two copies ever disagree, the app asks you which one is right — and never
-throws the other one away.
+**Backup to your own drive.** Back your library up to an external drive whenever it is plugged
+in, and bring back what you changed on it somewhere else. If a file changed in both places, the
+app asks you which one is right — and never throws the other one away.
 
 ## Start here
 
@@ -95,14 +95,15 @@ writes your library — [learning-corner-engine](https://github.com/Tuominen04/l
 
 ## Status
 
-**0.19.2 is the first release: Milestone 1.** Libraries, topics and documents; sources, with
+**0.20.0 adds Milestone 2: backup and restore.** Back up to a drive you choose, bring back what
+was changed on it, and restore a library from it onto another computer — every version replaced
+on the way kept, so nothing is lost.
+
+**0.19.2 was the first release: Milestone 1.** Libraries, topics and documents; sources, with
 APA 7 citations and reference lists worked out for you; claims marked against what they cite;
 search; and export to PDF, Word, OpenDocument, a web page and plain text.
 
-**Backup is not built yet** — it is the next milestone. Until it arrives, copy your library
-folder to another drive now and then; it is ordinary files, so a plain copy is a complete backup.
-
-Parallel texts and mind maps follow backup, in the order the
+Parallel texts and mind maps come next, in the order the
 [roadmap](docs/technical/roadmap.md) gives. Every documentation page is marked `Planned`,
 `In progress`, or `Implemented`, so it is always clear which parts exist.
 

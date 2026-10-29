@@ -1,8 +1,8 @@
 # Getting started
 
 > **Audience:** People using Learning Corner
-> **Status:** In progress — installing and steps 2 to 5 work; backup comes in a later version
-> **Last reviewed:** 2026-10-17
+> **Status:** Implemented
+> **Last reviewed:** 2026-10-29
 
 This page takes you from nothing to a first document with a source behind it. Fifteen
 minutes, and you never need to be online.
@@ -99,11 +99,7 @@ Full detail in [Sources and citations](sources-and-citations.md).
 
 ## 6. Back it up
 
-> **Not in this version yet.** Until **Back up** arrives, copy your library folder to an
-> external drive yourself now and then. It is ordinary folders and files, so a plain copy is a
-> complete backup.
-
-Plug in an external drive and choose **Back up**. The app copies your library onto the drive
+Plug in an external drive and choose **Back up…**, under the library's name. The app copies your library onto the drive
 as ordinary folders and files — nothing packed, nothing encrypted, nothing you need this app
 to read again.
 

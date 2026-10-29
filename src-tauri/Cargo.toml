@@ -1,6 +1,6 @@
 [package]
 name = "learning-corner"
-version = "0.19.2"
+version = "0.20.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "Local-first learning, with every claim anchored to a source you chose."
