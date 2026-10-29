@@ -26,12 +26,9 @@ ts-rs = "12"
 # Pinned to an immutable tag on the engine's main branch, per ADR 0006. Tags are never moved,
 # deleted, or reused, so this resolves to the same code forever; a version bump is a one-line
 # diff naming the old tag and the new one.
-#
-# For local testing only: the commit of the engine's backup pull request, until it is merged
-# and tagged v0.20.0. Swapped for `tag = "v0.20.0"` before this merges.
 lc-engine = { 
     git = "https://github.com/Tuominen04/learning-corner-engine", 
-    rev = "f34cadccfabdda696e245edb1c3c50c197938370" 
+    tag = "v0.20.0" 
 }
 
 [dev-dependencies]
