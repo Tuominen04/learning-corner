@@ -2,7 +2,7 @@
 
 > **Audience:** People using Learning Corner
 > **Status:** Planned
-> **Last reviewed:** 2026-09-06
+> **Last reviewed:** 2026-10-29
 
 For reading something in a language you are still learning: the original, how it is
 pronounced, and what it means — lined up, on screen together, in whatever combination helps
@@ -28,14 +28,19 @@ the Finnish, three panes, all lined up.
 
 ## Setting one up
 
-1. Choose **New work** and name it.
-2. Add the original: paste or type the text, and say what language it is in.
-3. Add an edition — **Add pronunciation** or **Add translation** — and write it alongside the
-   original, row by row.
+1. Open **Works** in the sidebar, beside Documents and Sources, and choose **New work**.
+2. Name it, paste or type the original, say what language it is in, and choose how it is
+   divided — by line, sentence or paragraph (see below).
+3. Add an edition — **Add pronunciation** or **Add translation** — and paste it in or write it
+   alongside the original, row by row.
 
-The app keeps the rows lined up as you type. Add a line to one edition and every other
-edition gets an empty row in the same place, so nothing slides out of alignment while you
-work.
+The app keeps the rows lined up as you type. Add a row to one edition and every other edition
+gets an empty row in the same place, so nothing slides out of alignment while you work.
+
+Two translations into the same language are welcome — two translators often disagree, and
+that is worth seeing. Give each a label, such as the translator's name and year, so you can
+tell them apart. An edition can also name the [source](sources-and-citations.md) it came
+from: which printed edition you copied the original from, whose translation this is.
 
 ## Choosing what you see
 
@@ -50,11 +55,12 @@ Two layouts:
 
 - **Side by side** — editions as columns. Best on a wide screen, and best for comparing two
   translations against each other.
-- **Stacked rows** — each line of the original followed underneath by the other editions of
-  that same line. Best for long lines, songs, and narrow windows.
+- **Stacked rows** — each row of the original followed underneath by the other editions of
+  that same row. Best for long lines, songs, and narrow windows.
 
-Whichever you pick, scrolling and selecting stay in step: click a line in one pane and the
-matching line is highlighted in all of them.
+Whichever you pick, scrolling and selecting stay in step: click a row in one pane and the
+matching row is highlighted in all of them. What you have chosen to see lasts while the window
+is open; it is how you are reading today, not part of the text.
 
 ## How the text is divided
 
@@ -66,24 +72,35 @@ You choose the unit the editions line up by, because it depends on what you are 
 | **Sentence** | Prose, articles, letters |
 | **Paragraph** | Long-form text you want to read in blocks |
 
-Pick it when you create the work. You can change it later; the app re-divides the text and
-shows you what moved before anything is saved.
+Pick it when you create the work. The app divides what you paste; dividing by sentence is a
+good guess rather than a certainty — an abbreviation it does not know can split a sentence in
+two, and joining the two rows puts it right.
+
+You can change the unit later. The app divides the text again and shows you the rows before
+and after — and any lining-up you did by hand that would be lost — before anything is saved.
 
 ### When translations do not line up
 
 They often do not. One Russian sentence becomes two in Finnish. A line of a song has no
 translation at all, because it is a refrain of nonsense syllables.
 
-The app shows this rather than hiding it. A row can hold two sentences of a translation
-against one of the original, and a row can be empty in one edition and full in another —
-both are marked as such, so you can see it was a deliberate choice and not a mistake in your
-alignment. If you want a row split or joined, drag its edge.
+The app shows this rather than hiding it. A row can hold two lines of a translation against one
+of the original — **join** them — and a row can be empty in one edition and full in another —
+**mark it empty**. Both are shown as deliberate, so you can see it was your choice and not a
+mistake in the alignment. **Split** undoes a join.
+
+If an edition stops lining up with the original — after a join, or after you edited its file in
+another program — the app says from which row, shows the editions unaligned from there, and
+lets you put it right with join, split or mark empty at the row you choose. It never moves
+lines around by itself to make them fit: a translation quietly lined up against the wrong line
+teaches you something false, and you would not find out.
 
 ## Songs
 
 Songs are works like any other; the difference is only that **line** is almost always the
-right unit, and that a refrain repeats. Repeated lines can be marked once and reused, so
-translating a chorus four times is not something you have to do.
+right unit, and that a refrain repeats. Mark a row as a repeat of an earlier one, and the two
+are the same text: translate the chorus once, and every repetition shows it. Change one and
+the app changes all, and tells you how many places that was.
 
 ## Notes and sources
 
@@ -100,6 +117,13 @@ it, is often the whole question.
 Hide any pane to test yourself, then reveal it to check. Hide the pronunciation and try to
 read aloud; hide the translation and try to understand; hide the original and try to
 reconstruct it.
+
+## In the folder
+
+Each work is a folder in your library's `works` folder, and each edition is a plain text file
+in it, one row per line — open it in any text editor. A line starting `+ ` belongs to the row
+above it; a line that is only `~` is a deliberately empty row. Editing these files yourself
+is fine: the app shows you if the editions no longer line up.
 
 ---
 

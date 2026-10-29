@@ -367,31 +367,55 @@ and is not archived — not on every web page.
 
 ## Works and editions
 
-`work.toml` describes the text and lists its editions; each edition is a plain `.txt` file.
+A work is a folder in `works/`, named after its title like a document is. `work.toml`
+describes the text and lists its editions; each edition is a plain `.txt` file beside it.
 
 ```toml
-id    = "01J8ZQA1B2C3D4E5F6G7H8J9K0"
-title = "Я вас любил"
-unit  = "line"            # line | sentence | paragraph
+id      = "01J8ZQA1B2C3D4E5F6G7H8J9K0"
+title   = "Я вас любил"
+unit    = "line"                    # line | sentence | paragraph
+created = 2026-11-02T18:04:00Z
+sources = ["01J8ZQB7…"]             # cited by the work as a whole
 
 [[editions]]
-file = "original.txt"
-kind = "original"
+id       = "01J8ZQC1…"
+file     = "original.txt"
+kind     = "original"
 language = "ru"
+source   = "01J8ZQB7…"              # optional: where this version came from
 
 [[editions]]
-file = "pronunciation.txt"
-kind = "pronunciation"
+id       = "01J8ZQC2…"
+file     = "pronunciation.txt"
+kind     = "pronunciation"
 language = "ru"
-scheme = "bgn-pcgn"
+scheme   = "bgn-pcgn"
 
 [[editions]]
-file = "translation.fi.txt"
-kind = "translation"
+id       = "01J8ZQC3…"
+file     = "translation.fi.txt"
+kind     = "translation"
 language = "fi"
+label    = "Leino 1921"             # optional: tells two of a kind apart
+
+[[notes]]
+row  = 3                            # rows count from 1, in the original
+text = """
+*угасла* — perfective past of угаснуть, to die out.
+"""
+
+[[repeats]]
+row = 9                             # this row …
+of  = 1                             # … is the same text as row 1
 ```
 
-Edition files are the text itself, one segment per line — deliberately plain, so that a
+The order of `[[editions]]` is the order of the panes. Exactly one is `original`. An edition's
+`id` is what the interface names it by; its `file` is the engine's business, made from its
+kind and language — `original.txt`, `pronunciation.txt`, `translation.fi.txt`, with `-2`, `-3`
+added when the name is taken — and never renamed afterwards, so a file somebody found once is
+where it stays.
+
+Edition files are the text itself, one row per line — deliberately plain, so that a
 translation can be pasted in and read by anything:
 
 ```
@@ -399,19 +423,27 @@ translation can be pasted in and read by anything:
 В душе моей угасла не совсем;
 ```
 
-Alignment is by line number, with two markers for the cases where texts do not correspond
-one-to-one:
+Alignment is by row, with two markers for the cases where texts do not correspond one-to-one:
 
 | Marker | Means |
 | ------ | ----- |
-| A line containing only `~` | This edition has nothing for this segment |
-| A line beginning `+ ` | Continues the previous segment rather than starting a new one |
+| A line containing only `~` | This edition has nothing for this row |
+| A line beginning `+ ` | Continues the row above, as another line within it |
 
-Blank lines are ignored. If two editions have different segment counts after applying these
-rules, the engine reports a misalignment naming the first line where they diverge, and shows
-the text unaligned from that point. It does **not** silently re-pair lines: a wrong alignment
-that looks right is worse than a visible error. The reasoning is in
-[Parallel text model](parallel-text-model.md).
+A line that genuinely begins with `+ ` or is a lone `~` is written with a backslash in front,
+which is not part of the text. Blank lines are ignored. Files are UTF-8, with `\n` line endings
+written and `\r\n` read.
+
+If an edition's row count differs from the original's after applying these rules, the engine
+reports a misalignment naming the first row and file line where they diverge, and shows the
+text unaligned from that point. It does **not** silently re-pair lines: a wrong alignment that
+looks right is worse than a visible error. The reasoning, and how notes and repeats follow
+their rows, is in [Parallel text model](parallel-text-model.md).
+
+Works are part of format version 1. The layout above has listed `works/` since the format was
+first written, and no engine before M3 reads or writes it — an older engine opening a library
+with works in it leaves them alone, and a backup copies them like any other files. So M3 adds
+no format version, and `v1` stays the fixture it is.
 
 ## Maps
 

@@ -2,7 +2,7 @@
 
 > **Audience:** Everyone
 > **Status:** In progress
-> **Last reviewed:** 2026-09-06
+> **Last reviewed:** 2026-10-29
 
 The words used throughout Learning Corner. The app, this user guide, and the
 technical documentation all use them to mean the same thing — if you learn them here, you
@@ -19,13 +19,13 @@ will not meet a second name for the same idea anywhere else.
 | **Claim** | A sentence you have anchored to a source. The app can show you what in a document is a claim and what is not. |
 | **Work** | A text you are studying in more than one language or form — a poem, a song, a chapter, a historical document. See [Parallel texts](parallel-texts.md). |
 | **Edition** | One version of a work: the original, a pronunciation guide, or a translation into one language. A work has as many editions as you make. |
-| **Segment** | The unit two editions line up by — a line, a verse, or a sentence, depending on the text. What you see on one row across all panes. |
+| **Row** | The unit editions line up by — a line, a sentence, or a paragraph, depending on the text. One row across all panes. |
 | **Pane** | One column or row on screen showing one edition. You choose which editions get a pane. |
 | **Map** | A picture of how your topics and documents connect, drawn from what you already wrote. Opens in its own window. See [Mind maps](mind-maps.md). |
 | **Node** | One thing on a map — usually a document or a topic. A node points at your work; it is not a second copy of it. |
 | **Backup** | A copy of your library on a drive you chose, in ordinary folders and files. See [Backup and restore](backup-and-restore.md). |
-| **Import** | Bringing a library on a drive back onto your computer, after the app has asked you which copy is right. |
-| **Conflict** | What the app calls it when your computer and your drive both changed since they last agreed. You decide the outcome; the app keeps both. |
+| **Bring back** | Copying what was changed on a backup — on another computer, say — into your library. You are asked only about a file changed in both places. |
+| **Conflict** | A file changed both in your library and on the drive since they last agreed. You decide which to keep; whatever is replaced is kept in the library's `.conflicts` folder. |
 
 ---
 

@@ -126,11 +126,11 @@ nothing unrecoverable.
 ## M3 · Parallel texts
 
 - Works, editions, all three kinds; the pronunciation/translation distinction.
-- Segmentation by line, sentence, paragraph; two-phase re-segmentation.
+- Dividing by line, sentence, paragraph; two-phase re-division. The **Works** view.
 - Pane selection, both layouts, synchronised scrolling and selection.
-- Misalignment reporting, `~` and `+ ` markers, split and join.
-- Repeated segments.
-- Segment notes; sources on a work.
+- Misalignment reporting, `~` and `+ ` markers, split, join and mark empty.
+- Repeated rows.
+- Row notes; sources on a work and on each edition; edition labels.
 - Pane hiding, for practice.
 
 **Done when:** the Russian/Finnish example works — original, pronunciation, Finnish and

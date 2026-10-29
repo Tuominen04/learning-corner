@@ -133,8 +133,8 @@ precisely the case this exists to catch.
 | `source.update` | id, fields | source |
 | `source.read` | id | source |
 | `source.list` | filter, sort | sources |
-| `source.delete` | id | `plan` (lists every citing document) / `apply` |
-| `source.citingDocuments` | id | the documents citing it, each once |
+| `source.delete` | id | `plan` (lists every citing document and work) / `apply` |
+| `source.citingDocuments` | id | the documents and works citing it, each once |
 | `source.requiredFields` | type | the fields APA 7 requires for that type |
 | `source.attach` | id, path, `copy`/`move` | source, now carrying the copy's filename |
 | `source.detach` | id | source, with the copy deleted |
@@ -162,18 +162,48 @@ reasoning is in [Architecture](architecture.md#where-logic-is-allowed-to-live).
 
 ## Works and parallel texts
 
+The rules are in [Parallel text model](parallel-text-model.md). Rows count from 1, in the
+original. An edition is named by its `id`, never its file.
+
 | Operation | Takes | Returns |
 | --------- | ----- | ------- |
-| `work.create` | title, unit, original text, language | work |
-| `work.addEdition` | work id, kind, language, text | work |
-| `work.read` | id, editions to include | aligned segments, plus any misalignment report |
-| `work.writeSegment` | work id, edition id, segment index, text | segment |
-| `work.splitSegment` / `work.joinSegments` | work id, index | the re-aligned work |
-| `work.resegment` | id, new unit | `plan` (what moves) / `apply` |
-| `work.delete` | id | `plan` / `apply` |
+| `work.list` | — | every work: id, title, the languages of its editions, and whether it is misaligned |
+| `work.create` | title, unit, original text, language, source (optional) | work. The text is divided by the unit |
+| `work.read` | id, editions to include (all when none) | work: title, unit, sources, editions, rows, notes, repeats, and the misalignment report |
+| `work.update` | id, title, sources, revision | work |
+| `work.addEdition` | work id, kind, language, label, scheme, source, text, revision | work. The text is divided by the work's unit; a different row count is reported, not refused |
+| `work.updateEdition` | work id, edition id, label, scheme, source, revision | work |
+| `work.removeEdition` | work id, edition id | `plan` (its text, and how many rows have any) / `apply` |
+| `work.writeRow` | work id, edition id, row, text, revision | work. `text` may hold line breaks: the lines after the first become `+ ` lines. Writing a repeated row writes every repetition |
+| `work.insertRow` | work id, row, revision | work. An empty row (`~`) at that place in every edition |
+| `work.removeRow` | work id, edition id, row, revision | work. Removes the row from every edition; refused with `Invalid` while an edition other than the one named still has text in it |
+| `work.markEmpty` | work id, edition id, row, revision | work. A `~` at that row, moving the edition's later rows down |
+| `work.join` / `work.split` | work id, edition id, row, (split) line within the row, revision | work. One edition only |
+| `work.setRepeat` | work id, row, repeat of (or none), revision | work, and how many rows now share the text |
+| `work.setNote` | work id, row, text (empty removes), revision | work |
+| `work.resegment` | id, new unit | `plan` (rows before and after, markers lost, notes and repeats affected) / `apply` |
+| `work.delete` | id | `plan` (its editions, their row counts, and its notes) / `apply` |
 
-`work.read` returns rows across the requested editions, and always returns the misalignment
-report alongside rather than hiding a bad alignment behind a plausible-looking one.
+A **work** as returned carries its `revision`, like a document: an opaque token from the last
+read, handed back with every change and refused with `Conflict` if any of the work's files
+changed underneath. One revision covers the work's whole folder, because one change — a row
+inserted — writes every edition at once.
+
+**Rows** come back across the requested editions. Each cell holds the row's lines and whether
+it is marked empty or joined (made of `+ ` lines), so the interface can show both as
+intentional. A work whose editions do not line up returns the **misalignment report** beside
+the rows: the edition, the first row and file line where it stops corresponding, and each
+edition's rows from that point in its own order, unaligned. It is never hidden behind a
+plausible-looking pairing.
+
+The original edition cannot be removed; a work without one is not a work. Removing any other
+edition is two-phase because it deletes writing.
+
+`work.delete` keeps nothing: the plan lists everything that goes, and the person confirms.
+
+A source cited by a work — by the work as a whole, or as an edition's `source` — is part of
+what `source.citingDocuments` returns and of `source.delete`'s plan, whose apply removes the
+reference from the work.
 
 ## Maps
 
