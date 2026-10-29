@@ -950,3 +950,15 @@ button.cite-option.chosen { background: #2a2d38; color: #fff; }
     max-height: calc(100vh - 3rem);
   }
 }
+
+/* Back up, bring back, restore. */
+.backup-buttons { margin-top: 0.5rem; gap: 0.3rem; flex-wrap: wrap; }
+.backup-panel { max-width: 46rem; }
+.backup-panel .where { font-size: 0.9em; color: var(--ink-soft); overflow-wrap: anywhere; }
+.backup-panel .drive-changes { border-left: 3px solid var(--warning); padding: 0.2rem 0 0.4rem 0.8rem; margin: 1rem 0; }
+.backup-panel .drive-changes .choice span { color: var(--ink-soft); }
+.backup-entries { max-height: 22rem; overflow-y: auto; }
+.backup-entries li { padding: 0.25rem 0; overflow-wrap: anywhere; }
+.backup-entries li.ask { padding: 0.6rem 0; border-top: 1px solid var(--line, rgba(255, 255, 255, 0.08)); }
+.backup-entries .outcome { font-size: 0.85em; color: var(--ink-soft); }
+.backup-entries .answers { margin: 0.3rem 0 0 1rem; }

@@ -9,6 +9,7 @@ import {
   type RecentLibrary,
 } from "../lib/engine";
 import { couldNotOpen, whenOpened } from "../lib/recent";
+import { BackupPanel } from "./BackupPanel";
 
 /** A library that has just opened, and the folder it was opened from. */
 export type Opened = { path: string; status: LibraryStatus };
@@ -31,6 +32,9 @@ export function LibraryPicker({
   const [recent, setRecent] = useState<RecentLibrary[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Restoring from a backup, while its panel is up; and the library it made, once it has.
+  const [restoring, setRestoring] = useState(false);
+  const [restored, setRestored] = useState<LibraryStatus | null>(null);
 
   useEffect(() => {
     let live = true;
@@ -112,6 +116,22 @@ export function LibraryPicker({
 
   const today = new Date();
 
+  if (restoring) {
+    return (
+      <main className="picker">
+        <BackupPanel
+          mode="restore"
+          onApplied={(applied) => setRestored(applied.status)}
+          onClose={() => {
+            // The restored library is already open in the shell; the window follows it.
+            if (restored) onOpened({ path: restored.path, status: restored });
+            else setRestoring(false);
+          }}
+        />
+      </main>
+    );
+  }
+
   return (
     <main className="picker">
       <h1>Learning Corner</h1>
@@ -177,6 +197,9 @@ export function LibraryPicker({
         </button>
         <button onClick={() => void choose("open")} disabled={busy} className="secondary">
           Open an existing one…
+        </button>
+        <button onClick={() => setRestoring(true)} disabled={busy} className="secondary">
+          Restore from a backup…
         </button>
       </div>
 

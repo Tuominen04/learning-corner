@@ -18,6 +18,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(commands::OpenLibrary::default())
+        .manage(commands::PendingPlan::default())
         .manage(closing::Closing::default())
         // Held while the interface writes what it is holding, and closed when it answers or
         // after two seconds — see `closing.rs`. `destroy` closes without asking again.
@@ -91,6 +92,11 @@ pub fn run() {
             commands::citation_format_many,
             commands::citation_reference_list,
             commands::document_export,
+            commands::backup_plan,
+            commands::backup_apply,
+            commands::restore_plan,
+            commands::restore_apply,
+            commands::backup_cancel,
         ])
         .run(tauri::generate_context!())
         .expect("the application failed to start");

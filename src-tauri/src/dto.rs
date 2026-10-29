@@ -432,6 +432,201 @@ impl From<ExportFormat> for lc_engine::export::Format {
     }
 }
 
+// ---- backup ----------------------------------------------------------------------
+
+/// Which way a plan copies: the library out to the drive, or the drive's changes back in.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "kebab-case")]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub enum BackupDirection {
+    Backup,
+    Restore,
+}
+
+/// How one file differs between the library and the drive: a row of the comparison table in
+/// `backup-and-sync.md`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "kebab-case")]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub enum BackupOutcome {
+    NewInLibrary,
+    NewOnDrive,
+    ChangedInLibrary,
+    ChangedOnDrive,
+    ChangedInBoth,
+    RemovedOnDrive,
+    RemovedOnDriveChangedInLibrary,
+    RemovedInLibrary,
+    RemovedInLibraryChangedOnDrive,
+}
+
+/// What applying the plan does with one file.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "kebab-case")]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub enum BackupAction {
+    CopyToDrive,
+    RemoveFromDrive,
+    CopyToLibrary,
+    RemoveFromLibrary,
+    /// Nothing now: a change made only in the library goes out with the next backup.
+    Leave,
+    /// Changed in both places. The person answers.
+    Ask,
+}
+
+/// One side's copy of a file. The digest stays in the shell: it decides, and is never shown.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub struct BackupSide {
+    /// Bytes. A number rather than a bigint: no file anybody keeps is near 2^53 bytes.
+    #[ts(type = "number")]
+    pub size: u64,
+    /// When the file was last changed, as RFC 3339, to show. Never used to decide anything.
+    pub modified: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub struct BackupEntry {
+    /// Relative to the library, `/`-separated.
+    pub path: String,
+    pub outcome: BackupOutcome,
+    pub action: BackupAction,
+    pub library: Option<BackupSide>,
+    pub drive: Option<BackupSide>,
+    /// A change made on the drive itself — what a backup warns about before overwriting.
+    pub drive_change: bool,
+}
+
+/// What a backup, a bring-back or a restore would do, for the person to read before anything
+/// is written.
+///
+/// A view of the plan, not the plan: the shell keeps the plan itself until it is applied or
+/// another is made, so the folders it names are the ones that were chosen, and nothing the
+/// interface sends back can point an apply somewhere else.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub struct BackupPlan {
+    pub direction: BackupDirection,
+    pub library_name: String,
+    /// The library's folder: the open one, or where a restore puts it.
+    pub library_path: String,
+    pub drive_path: String,
+    /// Whether the drive has been backed up to from somewhere before.
+    pub known_drive: bool,
+    /// Only the files that differ.
+    pub entries: Vec<BackupEntry>,
+    pub drive_changes: u32,
+    pub asks: u32,
+    /// Files already the same on both sides.
+    pub unchanged: u32,
+}
+
+impl From<&lc_engine::backup::Plan> for BackupPlan {
+    fn from(plan: &lc_engine::backup::Plan) -> Self {
+        use lc_engine::backup::Direction;
+        let count = |n: usize| u32::try_from(n).unwrap_or(u32::MAX);
+        BackupPlan {
+            direction: match plan.direction {
+                Direction::Backup => BackupDirection::Backup,
+                Direction::Restore => BackupDirection::Restore,
+            },
+            library_name: plan.library_name.clone(),
+            library_path: plan.library_root.to_string_lossy().into_owned(),
+            drive_path: plan.drive_root.to_string_lossy().into_owned(),
+            known_drive: plan.copy.is_some(),
+            entries: plan.entries.iter().map(BackupEntry::from).collect(),
+            drive_changes: count(plan.drive_changes()),
+            asks: count(plan.asks()),
+            unchanged: count(plan.unchanged.len()),
+        }
+    }
+}
+
+impl From<&lc_engine::backup::Entry> for BackupEntry {
+    fn from(entry: &lc_engine::backup::Entry) -> Self {
+        let side = |s: &lc_engine::backup::Side| BackupSide {
+            size: s.size,
+            modified: s.modified.as_ref().map(ToString::to_string),
+        };
+        BackupEntry {
+            path: entry.path.clone(),
+            outcome: entry.outcome.into(),
+            action: entry.action.into(),
+            library: entry.library.as_ref().map(side),
+            drive: entry.drive.as_ref().map(side),
+            drive_change: entry.drive_change,
+        }
+    }
+}
+
+impl From<lc_engine::backup::Outcome> for BackupOutcome {
+    fn from(outcome: lc_engine::backup::Outcome) -> Self {
+        use lc_engine::backup::Outcome::*;
+        match outcome {
+            NewInLibrary => BackupOutcome::NewInLibrary,
+            NewOnDrive => BackupOutcome::NewOnDrive,
+            ChangedInLibrary => BackupOutcome::ChangedInLibrary,
+            ChangedOnDrive => BackupOutcome::ChangedOnDrive,
+            ChangedInBoth => BackupOutcome::ChangedInBoth,
+            RemovedOnDrive => BackupOutcome::RemovedOnDrive,
+            RemovedOnDriveChangedInLibrary => BackupOutcome::RemovedOnDriveChangedInLibrary,
+            RemovedInLibrary => BackupOutcome::RemovedInLibrary,
+            RemovedInLibraryChangedOnDrive => BackupOutcome::RemovedInLibraryChangedOnDrive,
+        }
+    }
+}
+
+impl From<lc_engine::backup::Action> for BackupAction {
+    fn from(action: lc_engine::backup::Action) -> Self {
+        use lc_engine::backup::Action::*;
+        match action {
+            CopyToDrive => BackupAction::CopyToDrive,
+            RemoveFromDrive => BackupAction::RemoveFromDrive,
+            CopyToLibrary => BackupAction::CopyToLibrary,
+            RemoveFromLibrary => BackupAction::RemoveFromLibrary,
+            Leave => BackupAction::Leave,
+            Ask => BackupAction::Ask,
+        }
+    }
+}
+
+/// The answer to a file changed in both places.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "kebab-case")]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub enum BackupAnswer {
+    /// The library's version stays; the next backup takes it to the drive.
+    KeepLibrary,
+    /// The drive's version comes in; the library's is kept under `.conflicts/`.
+    TakeDrive,
+    /// Both: the drive's beside the library's, as `<name> (from backup <date>).<ext>`.
+    KeepBoth,
+}
+
+impl From<BackupAnswer> for lc_engine::backup::Answer {
+    fn from(answer: BackupAnswer) -> Self {
+        match answer {
+            BackupAnswer::KeepLibrary => lc_engine::backup::Answer::KeepLibrary,
+            BackupAnswer::TakeDrive => lc_engine::backup::Answer::TakeDrive,
+            BackupAnswer::KeepBoth => lc_engine::backup::Answer::KeepBoth,
+        }
+    }
+}
+
+/// What an apply did.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub struct BackupApplied {
+    pub copied: Vec<String>,
+    pub removed: Vec<String>,
+    /// Where the versions it replaced or removed were kept, under the library's `.conflicts/`.
+    pub kept: Vec<String>,
+    /// The library as it is now. After a restore, the library the window should open.
+    pub status: LibraryStatus,
+}
+
 /// One citation the interface wants rendered.
 ///
 /// Batched rather than asked for one at a time. Every single `citation_format` reads the whole
