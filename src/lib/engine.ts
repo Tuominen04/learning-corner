@@ -8,6 +8,13 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 
 import type { Appraisal } from "./bindings/Appraisal";
+import type { BackupAction } from "./bindings/BackupAction";
+import type { BackupAnswer } from "./bindings/BackupAnswer";
+import type { BackupApplied } from "./bindings/BackupApplied";
+import type { BackupEntry } from "./bindings/BackupEntry";
+import type { BackupOutcome } from "./bindings/BackupOutcome";
+import type { BackupPlan } from "./bindings/BackupPlan";
+import type { BackupSide } from "./bindings/BackupSide";
 import type { CitationRequest } from "./bindings/CitationRequest";
 import type { Contributor } from "./bindings/Contributor";
 import type { Document } from "./bindings/Document";
@@ -35,6 +42,13 @@ import type { Contents } from "./bindings/Contents";
 
 export type {
   Appraisal,
+  BackupAction,
+  BackupAnswer,
+  BackupApplied,
+  BackupEntry,
+  BackupOutcome,
+  BackupPlan,
+  BackupSide,
   CitationRequest,
   Contributor,
   Document,
@@ -259,6 +273,30 @@ export const engine = {
       call<string[]>("citation_reference_list", { document }),
   },
   search: (query: string) => call<SearchHit[]>("search", { query }),
+  /**
+   * Back up, bring back and restore — always two steps. A plan says what would happen and
+   * writes nothing; the shell keeps it, and applying it is the only thing that writes.
+   * Making another plan, or `cancel`, forgets the one before.
+   */
+  backup: {
+    /** What backing the open library up to `destination` would do. */
+    plan: (destination: string) => call<BackupPlan>("backup_plan", { destination }),
+    /** `overwrite` is the yes to replacing the drive's own changes, which are kept first. */
+    apply: (overwrite: boolean) => call<BackupApplied>("backup_apply", { overwrite }),
+    /**
+     * What bringing `drive` back would do: into the open library, or with `destination`
+     * into an empty folder — a restore.
+     */
+    restorePlan: (drive: string, destination: string | null = null) =>
+      call<BackupPlan>("restore_plan", { drive, destination }),
+    /**
+     * Bring the drive's changes in, with an answer for every file changed in both places.
+     * The library it went into is the open one afterwards.
+     */
+    restoreApply: (answers: Record<string, BackupAnswer>) =>
+      call<BackupApplied>("restore_apply", { answers }),
+    cancel: () => call<void>("backup_cancel"),
+  },
 };
 
 /**

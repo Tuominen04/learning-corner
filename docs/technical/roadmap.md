@@ -1,8 +1,8 @@
 # Roadmap
 
 > **Audience:** People building Learning Corner
-> **Status:** In progress — M1 implemented
-> **Last reviewed:** 2026-10-02
+> **Status:** In progress — M1 and M2 implemented
+> **Last reviewed:** 2026-10-29
 
 Milestones in order. Each is shippable on its own — a person could install it, use it, and get
 something out of it — and each has a definition of done that is checkable rather than a
@@ -96,19 +96,26 @@ source corrected once being correct everywhere.
 
 ---
 
-## M2 · Backup and restore
+## M2 · Backup and restore ← *0.20.0*
 
 Before more features. A person using M1 has work worth losing, and the honest thing is to make
 it safe before making it bigger.
 
-- Back up, bring back and restore, all two-phase — the library leads, the drive follows
-  ([Backup and synchronisation](backup-and-sync.md#the-model-the-library-leads-the-drive-follows)).
-- The [comparison](backup-and-sync.md#comparison), digests, and a record per drive.
-- One warning when a backup would overwrite changes made on the drive; a question per file only
-  when bringing back a file changed in both places; retention under `.conflicts/`.
-- Resumable after interruption.
-- Format migration on restore, with the frozen-library fixtures.
-- The backup round-trip property test.
+- [x] Back up, bring back and restore, all two-phase — the library leads, the drive follows
+      ([Backup and synchronisation](backup-and-sync.md#the-model-the-library-leads-the-drive-follows)).
+- [x] The [comparison](backup-and-sync.md#comparison), digests, and a record per drive.
+- [x] One warning when a backup would overwrite changes made on the drive; a question per file
+      only when bringing back a file changed in both places; retention under `.conflicts/`.
+- [x] Resumable after interruption.
+- [x] The format checked on restore exactly as on open, against the frozen `v1` fixture. Real
+      migration waits for a format 2 to migrate to.
+- [x] The backup round-trip property test.
+- [x] **Seen running by a person**, on Fedora: backed up to a USB drive, a file changed on the
+      drive brought back, then changed in the app and backed up over the drive.
+- [ ] **Seen running by a person**: a restore from the drive into an empty folder, and a file
+      changed in both places answered each of the three ways.
+- [ ] Later: the last backup folder remembered per library; a line diff for a text file changed
+      in both places.
 
 **Done when:** a library backs up to a drive, restores onto a different machine, and every row
 of the outcome table has been produced deliberately and resolved every possible way with

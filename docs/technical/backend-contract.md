@@ -1,8 +1,8 @@
 # Engine contract
 
 > **Audience:** People building Learning Corner
-> **Status:** In progress — M1 implemented
-> **Last reviewed:** 2026-10-19
+> **Status:** In progress — M1 and M2 implemented
+> **Last reviewed:** 2026-10-29
 
 Every operation the interface may ask of the engine. This document is normative for both
 repositories and is the specification the engine is built against — see

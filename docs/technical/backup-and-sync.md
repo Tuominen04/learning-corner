@@ -1,8 +1,8 @@
 # Backup and synchronisation
 
 > **Audience:** People building Learning Corner
-> **Status:** Planned
-> **Last reviewed:** 2026-10-19
+> **Status:** Implemented
+> **Last reviewed:** 2026-10-29
 
 The library lives on the user's computer, and that copy is the one they work in. A backup is a
 copy of it on a drive they chose. This document is the rules for keeping the two in step: what

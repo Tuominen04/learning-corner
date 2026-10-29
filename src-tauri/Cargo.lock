@@ -655,7 +655,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d045de693cb712d0b22c6a64be5b953f67b3ce00ab5ad3dd5d8b441886ab8e1a"
 dependencies = [
  "quote",
- "syn 3.0.5",
+ "syn 2.0.119",
 ]
 
 [[package]]
@@ -2000,8 +2000,8 @@ dependencies = [
 
 [[package]]
 name = "lc-engine"
-version = "0.19.0"
-source = "git+https://github.com/Tuominen04/learning-corner-engine?tag=v0.19.0#9a3c2960ab419332861eda2edde25d3cba689d83"
+version = "0.20.0"
+source = "git+https://github.com/Tuominen04/learning-corner-engine?tag=v0.20.0#6f43b55fba638b6423aa1d700f2b1c4af225afb2"
 dependencies = [
  "blake3",
  "flate2",
@@ -2021,7 +2021,7 @@ dependencies = [
 
 [[package]]
 name = "learning-corner"
-version = "0.19.2"
+version = "0.20.0"
 dependencies = [
  "base64 0.23.1",
  "lc-engine",
@@ -3922,7 +3922,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "32497e9a4c7b38532efcdebeef879707aa9f794296a4f0244f6f69e9bc8574bd"
 dependencies = [
  "fastrand",
- "getrandom 0.4.3",
+ "getrandom 0.3.4",
  "once_cell",
  "rustix",
  "windows-sys 0.61.2",

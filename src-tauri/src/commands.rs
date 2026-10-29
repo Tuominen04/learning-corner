@@ -4,20 +4,22 @@
 //! that appears here is logic in the wrong repository — the rule is in `architecture.md`, and
 //! the reason is that nothing here can be tested without a window.
 
+use std::collections::BTreeMap;
 use std::path::Path;
 use std::sync::Mutex;
 
 use base64::Engine as _;
 use lc_engine::api::Engine;
+use lc_engine::backup;
 use lc_engine::store::Revision;
 use lc_engine::{Error, Id};
 use tauri::State;
 
 use crate::closing::Closing;
 use crate::dto::{
-    CitationRequest, Document, DocumentRef, EngineError, ExportFormat, Field, Form, Keep,
-    LibraryStatus, Locator, RecentLibrary, RenamedLibrary, SavedSource, SearchHit, Source,
-    SourceType, Split, Topic, TopicContents,
+    BackupAnswer, BackupApplied, BackupPlan, CitationRequest, Document, DocumentRef, EngineError,
+    ExportFormat, Field, Form, Keep, LibraryStatus, Locator, RecentLibrary, RenamedLibrary,
+    SavedSource, SearchHit, Source, SourceType, Split, Topic, TopicContents,
 };
 use crate::recent::Recent;
 
@@ -655,6 +657,169 @@ fn export_to(
     lc_engine::atomic::write_bytes(path, &bytes)
 }
 
+// ---- backup --------------------------------------------------------------------
+//
+// Two-phase, like the engine: a plan is shown, and nothing is written until it is applied. The
+// plan itself stays here, in `PendingPlan`, and the interface is shown a view of it. Losing it
+// loses nothing — the next plan is made afresh from the disks.
+
+/// The plan last made, waiting to be applied, or none.
+#[derive(Default)]
+pub struct PendingPlan(pub Mutex<Option<backup::Plan>>);
+
+fn lock<T>(mutex: &Mutex<T>) -> Result<std::sync::MutexGuard<'_, T>, EngineError> {
+    mutex.lock().map_err(|_| EngineError {
+        kind: "LibraryError".into(),
+        message: "a lock was poisoned by an earlier failure".into(),
+    })
+}
+
+/// What backing the open library up to `destination` would do.
+#[tauri::command]
+pub fn backup_plan(
+    state: State<'_, OpenLibrary>,
+    pending: State<'_, PendingPlan>,
+    destination: String,
+) -> Answer<BackupPlan> {
+    let plan = with(&state, |e| e.backup_plan(Path::new(&destination)))?;
+    let view = BackupPlan::from(&plan);
+    *lock(&pending.0)? = Some(plan);
+    Ok(view)
+}
+
+/// Apply the backup plan last made. `overwrite` is the person's yes to replacing the drive's
+/// own changes, which are kept in the library first.
+#[tauri::command]
+pub fn backup_apply(
+    state: State<'_, OpenLibrary>,
+    pending: State<'_, PendingPlan>,
+    overwrite: bool,
+) -> Answer<BackupApplied> {
+    let mut pending = lock(&pending.0)?;
+    let applied = apply_backup(&state.0, pending.as_ref(), overwrite)?;
+    *pending = None;
+    Ok(applied)
+}
+
+fn apply_backup(
+    open: &Mutex<Option<Engine>>,
+    plan: Option<&backup::Plan>,
+    overwrite: bool,
+) -> Answer<BackupApplied> {
+    let plan = plan.ok_or_else(no_plan)?;
+    if plan.direction != backup::Direction::Backup {
+        return Err(no_plan());
+    }
+    let mut guard = lock(open)?;
+    let engine = guard.as_mut().ok_or(Error::LibraryNotOpen)?;
+    let done = engine.backup_apply(plan, overwrite)?;
+    Ok(BackupApplied {
+        copied: done.copied,
+        removed: done.removed,
+        kept: done.kept,
+        status: LibraryStatus::of(engine)?,
+    })
+}
+
+/// What bringing `drive` back would do: into the open library when `destination` is none, or
+/// into the empty folder `destination` names — a restore.
+#[tauri::command]
+pub fn restore_plan(
+    state: State<'_, OpenLibrary>,
+    pending: State<'_, PendingPlan>,
+    drive: String,
+    destination: Option<String>,
+) -> Answer<BackupPlan> {
+    let destination = match destination {
+        Some(d) => d.into(),
+        None => with(&state, |e| Ok(e.root().to_path_buf()))?,
+    };
+    let plan = Engine::restore_plan(Path::new(&drive), &destination)?;
+    let view = BackupPlan::from(&plan);
+    *lock(&pending.0)? = Some(plan);
+    Ok(view)
+}
+
+/// Apply the restore plan last made, with an answer for every file changed in both places.
+/// Afterwards the library it went into is the open one.
+#[tauri::command]
+pub fn restore_apply(
+    state: State<'_, OpenLibrary>,
+    pending: State<'_, PendingPlan>,
+    recent: State<'_, Recent>,
+    answers: BTreeMap<String, BackupAnswer>,
+) -> Answer<BackupApplied> {
+    let mut pending = lock(&pending.0)?;
+    let applied = apply_restore(&state.0, pending.as_ref(), answers)?;
+    *pending = None;
+    remember(&recent, &applied.status.path, &applied.status.name);
+    Ok(applied)
+}
+
+/// The restore, apart from the command so it can be tested without a window.
+///
+/// Bringing back into the open library closes it first, as the engine asks, so nothing writes
+/// to it from two places at once — and opens it again whatever happened, so a bring-back that
+/// stops part way leaves the library open as it now is, with the error to say why.
+fn apply_restore(
+    open: &Mutex<Option<Engine>>,
+    plan: Option<&backup::Plan>,
+    answers: BTreeMap<String, BackupAnswer>,
+) -> Answer<BackupApplied> {
+    let plan = plan.ok_or_else(no_plan)?;
+    if plan.direction != backup::Direction::Restore {
+        return Err(no_plan());
+    }
+    let answers = answers.into_iter().map(|(p, a)| (p, a.into())).collect();
+    let mut guard = lock(open)?;
+    let into_open = guard
+        .as_ref()
+        .is_some_and(|e| same_folder(e.root(), &plan.library_root));
+    if into_open {
+        *guard = None;
+    }
+
+    let done = match Engine::restore_apply(plan, &answers) {
+        // A restore into a new folder that stopped part way is not a library to open.
+        Err(e) if !into_open => return Err(e.into()),
+        done => done,
+    };
+    let mut engine = Engine::open(&plan.library_root)?;
+    // Files arrived from outside the engine, so what it knows of them is made afresh.
+    engine.rebuild_index()?;
+    let status = LibraryStatus::of(&engine)?;
+    *guard = Some(engine);
+    let done = done?;
+    Ok(BackupApplied {
+        copied: done.copied,
+        removed: done.removed,
+        kept: done.kept,
+        status,
+    })
+}
+
+/// Forget the plan without applying it.
+#[tauri::command]
+pub fn backup_cancel(pending: State<'_, PendingPlan>) -> Answer<()> {
+    *lock(&pending.0)? = None;
+    Ok(())
+}
+
+fn no_plan() -> EngineError {
+    Error::invalid(
+        "plan",
+        "there is no plan of that kind to apply; make one first",
+    )
+    .into()
+}
+
+fn same_folder(a: &Path, b: &Path) -> bool {
+    match (std::fs::canonicalize(a), std::fs::canonicalize(b)) {
+        (Ok(a), Ok(b)) => a == b,
+        _ => a == b,
+    }
+}
+
 /// The picture half of the wire, where it can be reached without a window.
 #[cfg(test)]
 mod tests {
@@ -845,5 +1010,109 @@ mod tests {
         assert_eq!(mime_for(&notes), None);
         assert_eq!(data_url(&notes).unwrap(), None);
         assert_eq!(mime_for(std::path::Path::new("no-extension")), None);
+    }
+
+    /// A library with one document in it, open, and a drive folder beside it.
+    fn library_and_drive() -> (
+        tempfile::TempDir,
+        Mutex<Option<Engine>>,
+        Id,
+        std::path::PathBuf,
+    ) {
+        let dir = tempfile::tempdir().unwrap();
+        let mut engine = Engine::create(dir.path().join("learning"), "Learning").unwrap();
+        let topic = engine.topic_create(None, "Protein").unwrap();
+        let doc = engine.document_create(topic, "What protein is").unwrap();
+        let revision = engine.document_read(doc).unwrap().revision;
+        engine
+            .document_write(doc, "Protein is built from amino acids.", revision)
+            .unwrap();
+        let drive = dir.path().join("drive");
+        (dir, Mutex::new(Some(engine)), doc, drive)
+    }
+
+    fn plan_backup(open: &Mutex<Option<Engine>>, drive: &Path) -> backup::Plan {
+        open.lock()
+            .unwrap()
+            .as_ref()
+            .unwrap()
+            .backup_plan(drive)
+            .unwrap()
+    }
+
+    #[test]
+    fn a_bring_back_reopens_the_library_with_the_drive_s_change_in_it() {
+        let (_dir, open, doc, drive) = library_and_drive();
+        let plan = plan_backup(&open, &drive);
+        let done = apply_backup(&open, Some(&plan), false).unwrap();
+        assert!(!done.copied.is_empty());
+
+        // Changed on the drive, as on another computer.
+        let on_drive = std::fs::read_dir(drive.join("topics"))
+            .unwrap()
+            .flatten()
+            .flat_map(|t| std::fs::read_dir(t.path()).unwrap().flatten())
+            .find(|f| f.path().extension().is_some_and(|e| e == "md"))
+            .unwrap()
+            .path();
+        let text = std::fs::read_to_string(&on_drive).unwrap();
+        std::fs::write(
+            &on_drive,
+            text.replace("amino acids", "amino acids, twenty of them"),
+        )
+        .unwrap();
+
+        let root = open.lock().unwrap().as_ref().unwrap().root().to_path_buf();
+        let plan = Engine::restore_plan(&drive, &root).unwrap();
+        assert_eq!(BackupPlan::from(&plan).asks, 0);
+        let done = apply_restore(&open, Some(&plan), BTreeMap::new()).unwrap();
+        assert_eq!(done.copied.len(), 1);
+        assert_eq!(done.kept.len(), 1, "the library's version is kept");
+
+        let guard = open.lock().unwrap();
+        let engine = guard.as_ref().expect("the library is open again");
+        assert!(engine
+            .document_read(doc)
+            .unwrap()
+            .body
+            .contains("twenty of them"));
+    }
+
+    #[test]
+    fn a_restore_opens_the_library_in_its_new_folder() {
+        let (dir, open, doc, drive) = library_and_drive();
+        let plan = plan_backup(&open, &drive);
+        apply_backup(&open, Some(&plan), false).unwrap();
+        *open.lock().unwrap() = None;
+
+        let into = dir.path().join("restored");
+        let plan = Engine::restore_plan(&drive, &into).unwrap();
+        let view = BackupPlan::from(&plan);
+        assert_eq!(view.library_name, "Learning");
+        assert_eq!(view.asks, 0);
+        let done = apply_restore(&open, Some(&plan), BTreeMap::new()).unwrap();
+        assert_eq!(done.status.documents, 1);
+
+        let guard = open.lock().unwrap();
+        let engine = guard.as_ref().unwrap();
+        assert!(same_folder(engine.root(), &into));
+        assert!(engine
+            .document_read(doc)
+            .unwrap()
+            .body
+            .contains("amino acids"));
+    }
+
+    #[test]
+    fn a_plan_is_applied_only_in_its_own_direction() {
+        let (_dir, open, _doc, drive) = library_and_drive();
+        assert_eq!(
+            apply_backup(&open, None, false).unwrap_err().kind,
+            "Invalid"
+        );
+        let plan = plan_backup(&open, &drive);
+        let wrong = apply_restore(&open, Some(&plan), BTreeMap::new()).unwrap_err();
+        assert_eq!(wrong.kind, "Invalid");
+        assert!(open.lock().unwrap().is_some(), "the library stays open");
     }
 }

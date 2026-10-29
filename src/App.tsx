@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
+import { BackupPanel, type BackupMode } from "./components/BackupPanel";
 import { DeleteConfirm, type Deleting } from "./components/DeleteConfirm";
 import { Editor } from "./components/Editor";
 import { LibraryPicker, type Opened } from "./components/LibraryPicker";
@@ -13,6 +14,7 @@ import {
   EngineFailure,
   isDesktopRuntime,
   shell,
+  type BackupApplied,
   type Document,
   type LibraryFolder,
   type LibraryStatus,
@@ -209,6 +211,13 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
   // the wrong topic is a moment's slip, and putting it back should cost a click, not a search.
   const [moved, setMoved] = useState<{ what: Moving; from: Place; to: Place } | null>(null);
 
+  // A backup or a bring-back, while its panel is up. In the main area: a plan lists files.
+  const [backingUp, setBackingUp] = useState<BackupMode | null>(null);
+
+  // Counted up when files under the open document changed from outside the editor — a
+  // bring-back — so the editor starts afresh from what is on disk rather than what it held.
+  const [reloaded, setReloaded] = useState(0);
+
   /**
    * Open a document, from wherever somebody asked.
    *
@@ -355,6 +364,27 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
     });
   }
 
+  /**
+   * After a backup, the library's counts; after a bring-back, everything — the tree, and the
+   * open document, which may have been replaced or removed by the drive's version.
+   */
+  function afterBackup(applied: BackupApplied, mode: BackupMode) {
+    setLibrary(applied.status);
+    if (mode === "backup") return;
+    const was = open?.id;
+    void guard(async () => {
+      if (was) {
+        try {
+          setOpen(await engine.document.read(was));
+        } catch {
+          setOpen(null);
+        }
+      }
+      setReloaded((n) => n + 1);
+      await refresh();
+    });
+  }
+
   async function guard(work: () => Promise<void>) {
     setError(null);
     setNote(null);
@@ -399,6 +429,24 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
           <span className="counts">
             {count(library.topics, "topic")} · {count(library.documents, "document")}
           </span>
+          {library.writable && (
+            <div className="row backup-buttons">
+              <button
+                className="ghost"
+                onClick={() => setBackingUp("backup")}
+                title="Copy this library to a drive, so the drive is exactly like it"
+              >
+                Back up…
+              </button>
+              <button
+                className="ghost"
+                onClick={() => setBackingUp("bring-back")}
+                title="Copy what was changed on a backup into this library"
+              >
+                Bring back…
+              </button>
+            </div>
+          )}
           {!library.writable && (
             <p className="warning">
               This library was written by a newer version. It is open for reading only.
@@ -497,7 +545,14 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
             </button>
           </p>
         )}
-        {deleting ? (
+        {backingUp ? (
+          <BackupPanel
+            key={backingUp}
+            mode={backingUp}
+            onApplied={afterBackup}
+            onClose={() => setBackingUp(null)}
+          />
+        ) : deleting ? (
           <DeleteConfirm
             // Keyed, so opening the confirmation for something else starts it afresh rather
             // than showing the last thing's contents for a moment.
@@ -518,7 +573,7 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
           <Sources onOpenDocument={openDocument} />
         ) : open ? (
           <Editor
-            key={open.id}
+            key={`${open.id}:${reloaded}`}
             document={open}
             topics={topics}
             onSaved={(saved) => {
