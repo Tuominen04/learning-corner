@@ -173,6 +173,7 @@ original. An edition is named by its `id`, never its file.
 | `work.update` | id, title, sources, revision | work |
 | `work.addEdition` | work id, kind, language, label, scheme, source, text, revision | work. The text is divided by the work's unit; a different row count is reported, not refused |
 | `work.updateEdition` | work id, edition id, label, scheme, source, revision | work |
+| `work.moveEdition` | work id, edition id, position (from 1), revision | work. Only the pane order changes |
 | `work.removeEdition` | work id, edition id | `plan` (its text, and how many rows have any) / `apply` |
 | `work.writeRow` | work id, edition id, row, text, revision | work. `text` may hold line breaks: the lines after the first become `+ ` lines. Writing a repeated row writes every repetition |
 | `work.insertRow` | work id, row, revision | work. An empty row (`~`) at that place in every edition |

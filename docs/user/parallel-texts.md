@@ -74,6 +74,10 @@ Two layouts:
 - **Stacked rows** — each row of the original followed underneath by the other editions of
   that same row. Best for long lines, songs, and narrow windows.
 
+The arrows **‹** and **›** on a pane's heading move it a place left or right — the original
+need not be first, if you would rather read the translation and glance across. The order is
+kept with the work.
+
 Whichever you pick, scrolling and selecting stay in step: click a row in one pane and the
 matching row is highlighted in all of them. What you have chosen to see lasts while the window
 is open; it is how you are reading today, not part of the text.

@@ -776,6 +776,26 @@ pub fn work_update_edition(
     })
 }
 
+/// Move an edition to `position` among the panes, counting from 1.
+#[tauri::command]
+pub fn work_move_edition(
+    state: State<'_, OpenLibrary>,
+    work: String,
+    edition: String,
+    position: usize,
+    revision: String,
+) -> Answer<Work> {
+    with(&state, |e| {
+        Ok(e.work_move_edition(
+            id(&work)?,
+            id(&edition)?,
+            position,
+            &self::revision(&revision),
+        )?
+        .into())
+    })
+}
+
 #[tauri::command]
 pub fn work_remove_edition_plan(
     state: State<'_, OpenLibrary>,

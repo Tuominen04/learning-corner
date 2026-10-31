@@ -12,6 +12,7 @@ export const LANGUAGES: { code: string; name: string }[] = [
   { code: "ru", name: "Russian" },
   { code: "sv", name: "Swedish" },
   { code: "et", name: "Estonian" },
+  { code: "sr", name: "Serbian" },
   { code: "de", name: "German" },
   { code: "fr", name: "French" },
   { code: "es", name: "Spanish" },

@@ -99,6 +99,7 @@ pub fn run() {
             commands::work_update,
             commands::work_add_edition,
             commands::work_update_edition,
+            commands::work_move_edition,
             commands::work_remove_edition_plan,
             commands::work_remove_edition,
             commands::work_write_row,

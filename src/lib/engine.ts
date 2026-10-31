@@ -308,6 +308,9 @@ export const engine = {
       source: string | null,
       revision: WorkRevision,
     ) => call<Work>("work_update_edition", { work, edition, label, scheme, source, revision }),
+    /** Put an edition at `position` among the panes, counting from 1. */
+    moveEdition: (work: string, edition: string, position: number, revision: WorkRevision) =>
+      call<Work>("work_move_edition", { work, edition, position, revision }),
     removeEditionPlan: (work: string, edition: string) =>
       call<EditionContents>("work_remove_edition_plan", { work, edition }),
     removeEdition: (work: string, edition: string, revision: WorkRevision) =>

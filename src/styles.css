@@ -971,7 +971,13 @@ button.cite-option.chosen { background: #2a2d38; color: #fff; }
 .work-list li { margin-bottom: 0.4rem; }
 .work-item { display: flex; gap: 0.8rem; align-items: baseline; width: 100%; text-align: left; flex-wrap: wrap; }
 .work-item .languages { color: var(--ink-soft); font-size: 0.88em; }
-.new-work textarea, .edition-form textarea, .note-panel textarea { width: 100%; font: inherit; }
+/* As wide as the form and no wider; taller as somebody needs, three rows at the least. */
+.new-work textarea, .edition-form textarea, .note-panel textarea { display: block; width: 100%; max-width: 100%; min-height: calc(3 * 1.6em + 0.7rem); resize: vertical; font: inherit; }
+/* A choice inside a field is a radio and its words, side by side — not a full-width input. */
+.field .choice { display: flex; }
+.field .choice input { width: auto; flex: none; margin-top: 0.3rem; padding: 0; }
+.field .choice span { margin: 0; }
+.field .choice span strong { display: block; }
 .new-work, .edition-form { max-width: 40rem; }
 .language-picker, .field .language-picker { display: flex; gap: 0.5rem; }
 .language-picker input { flex: 1; }

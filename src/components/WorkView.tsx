@@ -64,12 +64,33 @@ export function WorkView({
   const [revealed, setRevealed] = useState<Set<string>>(new Set());
   const [layout, setLayout] = useState<Layout>("side");
   const [selected, setSelected] = useState<number | null>(null);
+  // The rows, so a click anywhere else can put the row bar away.
+  const rowsRef = useRef<HTMLDivElement>(null);
   const [editing, setEditing] = useState<Editing | null>(null);
   const [panel, setPanel] = useState<Panel | null>(null);
   const [sources, setSources] = useState<Source[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  // Clicking outside the rows, or Esc, closes the selected row and its tools: done with the
+  // row, rather than only done writing it.
+  useEffect(() => {
+    function away(e: MouseEvent) {
+      if (rowsRef.current && e.target instanceof Node && !rowsRef.current.contains(e.target)) {
+        setSelected(null);
+      }
+    }
+    function escape(e: KeyboardEvent) {
+      if (e.key === "Escape") setSelected(null);
+    }
+    document.addEventListener("mousedown", away);
+    document.addEventListener("keydown", escape);
+    return () => {
+      document.removeEventListener("mousedown", away);
+      document.removeEventListener("keydown", escape);
+    };
+  }, []);
 
   useEffect(() => {
     engine.source
@@ -150,7 +171,10 @@ export function WorkView({
             value={editing.text}
             onChange={(text) => setEditing({ ...editing, text })}
             onSave={save}
-            onCancel={() => setEditing(null)}
+            onCancel={() => {
+              setEditing(null);
+              setSelected(null);
+            }}
             label={`${editionName(edition)}, row ${row}`}
           />
         </div>
@@ -212,6 +236,32 @@ export function WorkView({
           </span>
         )}
       </span>
+    );
+  }
+
+  function paneHead(e: WorkEdition) {
+    const at = work.editions.findIndex((x) => x.id === e.id) + 1;
+    return (
+      <PaneHead
+        key={e.id}
+        edition={e}
+        unaligned={unaligned.has(e.id)}
+        practising={practising.has(e.id)}
+        onPractise={() => {
+          setPractising((was) => {
+            const next = new Set(was);
+            if (next.has(e.id)) next.delete(e.id);
+            else next.add(e.id);
+            return next;
+          });
+          setRevealed(new Set());
+        }}
+        onEdit={() => setPanel({ kind: "edition", edition: e })}
+        onMove={(by) => void act((rev) => engine.work.moveEdition(work.id, e.id, at + by, rev))}
+        first={at === 1}
+        last={at === work.editions.length}
+        busy={busy}
+      />
     );
   }
 
@@ -419,28 +469,12 @@ export function WorkView({
 
       {layout === "side" ? (
         <div
+          ref={rowsRef}
           className="work-grid"
           style={{ gridTemplateColumns: `3.4rem repeat(${Math.max(visible.length, 1)}, minmax(10rem, 1fr))` }}
         >
           <div className="work-corner" />
-          {visible.map((e) => (
-            <PaneHead
-              key={e.id}
-              edition={e}
-              unaligned={unaligned.has(e.id)}
-              practising={practising.has(e.id)}
-              onPractise={() => {
-                setPractising((was) => {
-                  const next = new Set(was);
-                  if (next.has(e.id)) next.delete(e.id);
-                  else next.add(e.id);
-                  return next;
-                });
-                setRevealed(new Set());
-              }}
-              onEdit={() => setPanel({ kind: "edition", edition: e })}
-            />
-          ))}
+          {visible.map(paneHead)}
           {Array.from({ length: rows }, (_, i) => i + 1).map((row) => (
             <div className={`work-row${selected === row ? " selected" : ""}`} key={row} style={{ display: "contents" }}>
               {rowMarks(row)}
@@ -450,27 +484,8 @@ export function WorkView({
           ))}
         </div>
       ) : (
-        <div className="work-stacked">
-          <div className="stacked-heads">
-            {visible.map((e) => (
-              <PaneHead
-                key={e.id}
-                edition={e}
-                unaligned={unaligned.has(e.id)}
-                practising={practising.has(e.id)}
-                onPractise={() => {
-                  setPractising((was) => {
-                    const next = new Set(was);
-                    if (next.has(e.id)) next.delete(e.id);
-                    else next.add(e.id);
-                    return next;
-                  });
-                  setRevealed(new Set());
-                }}
-                onEdit={() => setPanel({ kind: "edition", edition: e })}
-              />
-            ))}
-          </div>
+        <div className="work-stacked" ref={rowsRef}>
+          <div className="stacked-heads">{visible.map(paneHead)}</div>
           {Array.from({ length: rows }, (_, i) => i + 1).map((row) => (
             <div className={`stacked-row${selected === row ? " selected" : ""}`} key={row}>
               {rowMarks(row)}
@@ -543,12 +558,21 @@ function PaneHead({
   practising,
   onPractise,
   onEdit,
+  onMove,
+  first,
+  last,
+  busy,
 }: {
   edition: WorkEdition;
   unaligned: boolean;
   practising: boolean;
   onPractise: () => void;
   onEdit: () => void;
+  /** -1 a place to the left, +1 a place to the right. */
+  onMove: (by: -1 | 1) => void;
+  first: boolean;
+  last: boolean;
+  busy: boolean;
 }) {
   return (
     <div className={unaligned ? "pane-head unaligned" : "pane-head"}>
@@ -557,6 +581,24 @@ function PaneHead({
         {editionName(edition)}
       </strong>
       <span className="pane-buttons">
+        <button
+          className="ghost"
+          onClick={() => onMove(-1)}
+          disabled={busy || first}
+          aria-label={`Move ${editionName(edition)} left`}
+          title="Move this pane a place to the left"
+        >
+          ‹
+        </button>
+        <button
+          className="ghost"
+          onClick={() => onMove(1)}
+          disabled={busy || last}
+          aria-label={`Move ${editionName(edition)} right`}
+          title="Move this pane a place to the right"
+        >
+          ›
+        </button>
         <button
           className="ghost"
           onClick={onPractise}

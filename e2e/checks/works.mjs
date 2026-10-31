@@ -66,6 +66,12 @@ await page.addInitScript(() => {
           rows[args.row - 2].push(...joined);
           return answer();
         }
+        case "work_move_edition": {
+          const from = work.editions.findIndex((e) => e.id === args.edition);
+          const [moved] = work.editions.splice(from, 1);
+          work.editions.splice(args.position - 1, 0, moved);
+          return answer();
+        }
         case "work_insert_row":
           for (const e of work.editions) e.rows.splice(args.row - 1, 0, []);
           return answer();
@@ -88,6 +94,11 @@ check("an empty library says there are no works yet", (await page.locator(".work
 
 // A new work, divided by line.
 await page.getByRole("button", { name: "New work" }).click();
+const radio = await page.getByRole("radio", { name: /By line/ }).boundingBox();
+const label = await page.getByText("By line", { exact: true }).boundingBox();
+check("each way to divide sits beside its radio, not across the form", radio !== null && label !== null && radio.width < 30 && label.x - radio.x < 60, JSON.stringify({ radio, label }));
+const box = await page.getByLabel("The original text").evaluate((t) => ({ resize: getComputedStyle(t).resize, width: t.getBoundingClientRect().width, form: t.closest(".new-work").getBoundingClientRect().width }));
+check("the text box grows downwards only, inside the form", box.resize === "vertical" && box.width < box.form, JSON.stringify(box));
 await page.getByLabel("Title").fill("Я вас любил");
 await page.getByLabel("The original text").fill("Я вас любил: любовь ещё, быть может,\nВ душе моей угасла не совсем;\nНо пусть она вас больше не тревожит;");
 await page.getByRole("button", { name: "Create" }).click();
@@ -120,6 +131,23 @@ await page.locator(".misaligned").waitFor();
 check("a join that leaves the translation a row short says so", (await page.locator(".misaligned").innerText()).includes("1 row fewer than the original"));
 check("the unaligned pane is marked", (await page.locator(".pane-head.unaligned").count()) === 1);
 
+// The row bar goes away with Esc, and with a click outside the rows.
+await page.getByRole("button", { name: "Original (Russian), row 1" }).click();
+await page.getByRole("textbox", { name: "Original (Russian), row 1" }).press("Escape");
+check("Esc closes the row's tools", (await page.locator(".row-tools").count()) === 0);
+await page.getByRole("button", { name: "Original (Russian), row 2" }).click();
+await page.getByRole("textbox", { name: "Original (Russian), row 2" }).press("Enter");
+check("Enter saves and keeps the row's tools", (await page.locator(".row-tools").count()) === 1);
+await page.locator(".work-head h2").click({ position: { x: 2, y: 2 } });
+check("a click outside the rows closes them", (await page.locator(".row-tools").count()) === 0);
+
+// The panes in another order.
+await page.getByRole("button", { name: "Move Finnish translation left" }).click();
+await page.waitForFunction(() => document.querySelector(".pane-head strong")?.textContent?.includes("Finnish"));
+const moved = (await calls("work_move_edition")).at(-1)?.args;
+check("a pane moves a place to the left", moved?.position === 1, JSON.stringify(moved));
+check("the first pane cannot move further left", await page.getByRole("button", { name: "Move Finnish translation left" }).isDisabled());
+
 // Stacked rows, and a pane hidden for practice.
 await page.getByRole("button", { name: "Stacked" }).click();
 check("stacked shows a block per row", (await page.locator(".stacked-row").count()) === 3);
@@ -133,7 +161,7 @@ check("clicking a hidden row reveals just that row", (await page.locator(".work-
 await page.getByRole("button", { name: "← Works" }).click();
 await page.locator(".work-list").waitFor();
 const item = await page.locator(".work-item").innerText();
-check("the list names the languages and the misalignment", item.includes("Russian · Finnish") && item.includes("not lined up"), item);
+check("the list names the languages, in pane order, and the misalignment", item.includes("Finnish · Russian") && item.includes("not lined up"), item);
 
 await browser.close();
 finish();
