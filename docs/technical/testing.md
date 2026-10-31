@@ -30,8 +30,10 @@ The bulk of the suite, in the engine repository. Pure logic, no filesystem where
 - **Citation formatting** — table-driven fixtures from the APA manual's own examples, covering
   every rule in [Citation model](citation-model.md): author counts, group authors, missing
   dates, all three disambiguation cases, locator kinds, reference ordering.
-- **Segmentation and alignment** — each unit, the `~` and `+ ` markers, misalignment
-  detection and the line it reports, repeated segments.
+- **Segmentation and alignment** — each unit, including the sentence rule's abbreviations in
+  Finnish, English and Russian; the `~` and `+ ` markers and their backslash escapes;
+  misalignment detection and the row and file line it reports; repeated rows; notes and
+  repeats renumbered by every operation that moves rows.
 - **Comparison logic** — every row of the [outcome table](backup-and-sync.md#comparison)
   as its own case.
 
@@ -81,6 +83,13 @@ Around it, on real folders, the cases the specification turns on:
 - the frozen `v1` fixture restored and read exactly as it reads in place, and a newer format
   refused at plan time.
 
+**Parallel text round-trip.** For random works — Finnish and Cyrillic text, empty rows, joined
+rows, lines that need escaping — write the rows, read them back, and assert they are the same
+rows. Then apply random edits (insert, remove, join, split, mark empty, write a repeated row)
+and assert after each that an aligned work stays aligned, that a join or split leaves only that
+edition out of line, and that no note is lost
+([Parallel text model](parallel-text-model.md)).
+
 ### Contract tests
 
 One suite asserting every operation in [Engine contract](backend-contract.md): its inputs, its
@@ -129,7 +138,7 @@ A set of small libraries checked into the engine repository, in
 | `minimal` | An empty library | Since M1 |
 | `damaged` | Broken front matter, duplicate identifiers, an orphaned citation, a broken source and topic, a person's own notes left beside the documents | Since M1 |
 | `v1`, `v2`, … | One library per historical format version, frozen forever | `v1` since M1 |
-| `parallel` | The Russian/Finnish work, including misalignment and a repeated chorus | With M3 |
+| `parallel` | The Russian/Finnish work — original, pronunciation, Finnish and English — with a repeated chorus, notes, an edition citing a source, and a second work misaligned by a hand edit | With M3 |
 
 Two fixtures this page once planned are covered another way. Every source type and every
 disambiguation case is a case in the engine's APA suite (`tests/apa/`) and its citation tests,

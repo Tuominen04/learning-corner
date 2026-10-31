@@ -2,19 +2,30 @@
 
 > **Audience:** People building Learning Corner
 > **Status:** Planned
-> **Last reviewed:** 2026-09-06
+> **Last reviewed:** 2026-10-29
+
+A text read in a language the reader is still learning, with its other versions lined up
+beside it: the original, how it is said, and what it means. This page is the rules — what the
+pieces are, how a text is divided into rows, how the rows stay lined up, and what happens when
+they do not. The files are in [Storage format](storage-format.md#works-and-editions) and the
+operations in the [Engine contract](backend-contract.md#works-and-parallel-texts).
 
 ## Entities
 
 ```
 Work ──┬── Edition (kind: original,      language: ru)
        ├── Edition (kind: pronunciation, language: ru, scheme: bgn-pcgn)
-       ├── Edition (kind: translation,   language: fi)
+       ├── Edition (kind: translation,   language: fi, label: "Leino 1921")
        └── Edition (kind: translation,   language: en)
 ```
 
-A **work** is the text as an abstract thing. An **edition** is one rendering of it. A
-**segment** is the unit editions line up by — one row across every pane.
+A **work** is the text as an abstract thing. An **edition** is one rendering of it. A **row**
+is the unit editions line up by — one row across every pane. (Earlier versions of this page
+called a row a *segment*; the operations still say segment where it reads better.)
+
+A work belongs to the library, not to a topic, like a source: a poem studied for a Russian
+course and cited in a history document is one text. Works are listed in their own view in the
+sidebar, **Works**, beside Documents and Sources.
 
 ### Three edition kinds, not two
 
@@ -31,27 +42,81 @@ might want to attribute or compare.
 They also behave differently. Two translations into the same language are two competing
 interpretations and both are worth keeping side by side. Two transliterations in the same
 scheme are a mistake. Pronunciation is the one kind that could eventually be generated
-mechanically; translation never can be.
+mechanically; translation never can be. In M3 the user writes every edition, pronunciation
+included; `scheme` is a label naming how it was written.
 
 `language` uses BCP 47. `scheme` applies to pronunciation editions only.
 
-## Segmentation
+A work has exactly **one original**. It may have any number of pronunciation and translation
+editions; two of the same kind and language are told apart by their `label` (whose
+translation, which year).
+
+### Whose version it is
+
+An edition can name the [source](citation-model.md) it came from: which printed edition the
+original was copied from, whose translation this is. A work as a whole can cite sources too —
+a commentary, the dictionary used throughout.
+
+For historical texts this is the point rather than a nicety: which manuscript, whose
+transcription, whose translation. The provenance principle in [Architecture](architecture.md)
+applies to texts as much as to claims, and *which* version of a text you are reading is often
+the whole scholarly question.
+
+A source cited by a work counts as cited: deleting it lists the work in its plan, and the
+source's list of what cites it includes the work.
+
+## Rows and lines
+
+Every edition is stored as plain text, one **line** per row. A row that needs more than one
+line — a paragraph, or one Russian sentence that is two in Finnish — writes its later lines
+with a `+ ` prefix, which joins them to the row above. A row that has nothing in this edition
+is a line holding only `~`.
+
+| In the file | Means |
+| ----------- | ----- |
+| A line | Starts the next row |
+| A line beginning `+ ` | Continues the row above, as a new line within it |
+| A line containing only `~` | This edition has nothing for this row |
+| A blank line | Ignored |
+
+So the row count of an edition is its lines, minus the `+ ` lines, minus the blank ones. When
+every edition has the same count, row *n* of each is the same piece of text. A row's lines are
+shown as lines within the row, so a two-sentence translation reads as two lines beside one.
+
+`~` and `+ ` are shown in the pane as intentional — an empty row marked empty, a row of two
+lines marked joined. This matters: an empty row that looks like a mistake gets "fixed" by a
+user, and a merged row that looks like a mistake gets split.
+
+A line of text that really does begin with `+ `, or is a lone `~`, is written with a
+backslash before it (`\+ `, `\~`), and the backslash is not shown.
+
+## Dividing a text
 
 The **unit** is a property of the work, chosen by the user at creation, because the right unit
-is a property of the material:
+is a property of the material. It decides how pasted text is divided into rows — after that,
+rows are rows, whatever the unit:
 
-| Unit | Right for | Segment boundary |
-| ---- | --------- | ---------------- |
-| `line` | Songs, poetry, anything where the line break is authored | Newline |
-| `sentence` | Prose, articles, letters | Sentence-final punctuation, with an abbreviation exception list |
-| `paragraph` | Long-form read in blocks | Blank line |
+| Unit | Right for | A new row starts at |
+| ---- | --------- | ------------------- |
+| `line` | Songs, poetry, anything where the line break is authored | Every line break |
+| `sentence` | Prose, articles, letters | The end of every sentence |
+| `paragraph` | Long-form read in blocks | Every blank line; the lines within a paragraph become `+ ` lines |
 
-`line` is the default and the safest. Sentence segmentation is language-specific and gets
-harder in every language you add; the engine must never silently re-segment a work that the
-user has already aligned by hand.
+`line` is the default and the safest.
 
-`work.resegment` is therefore two-phase: it produces a plan showing exactly what moves and
-what alignment would be lost, and applies nothing until the user accepts.
+**Sentences** end at `.`, `!`, `?` or `…` (or a run of them, `?!`), optionally followed by a
+closing quote or bracket, then whitespace and an uppercase letter, a digit, or an opening quote
+or dash. Not after an abbreviation on the language's list — Finnish, English and Russian to
+begin with (`esim.`, `mm.`, `e.g.`, `Dr.`, `т.е.`, `г.` …) — and not after a single capital
+letter, which is an initial. A language without a list uses the punctuation rule alone. A line
+break inside a sentence is kept as a `+ ` line. The rule is meant to be right most of the time
+and easy to correct when it is not, not to be a parser: a wrong split is fixed with join.
+
+The engine must never silently re-divide a work that the user has already aligned by hand.
+Changing the unit — `work.resegment` — is therefore two-phase: it divides every edition again
+by the new unit and produces a plan showing the rows before and after and every `~` and `+ `
+that would be lost, and applies nothing until the user accepts. Notes and repeats on rows that
+no longer exist are listed in the plan, and kept in `.conflicts/` when it is applied.
 
 ## Alignment
 
@@ -63,51 +128,74 @@ wrong pairings that a learner — who by definition cannot yet read the original
 detect. A user who aligned the text themselves knows it is right. Position is also trivially
 inspectable in a text editor, which hand-editing requires.
 
-Two markers, stored in the edition files
-([Storage format](storage-format.md#works-and-editions)), handle non-correspondence:
+The original leads, as the library leads a backup: rows are counted from it, and the other
+editions are lined up against it. Editing keeps them lined up:
 
-| Marker | Means |
-| ------ | ----- |
-| `~` alone on a line | No content in this edition for this segment |
-| `+ ` prefix | Continues the previous segment |
-
-`~` covers the refrain of nonsense syllables that has no translation, and the untranslatable
-line. `+ ` covers one sentence of Russian becoming two of Finnish: the second is written with
-`+ ` and joins the row above.
-
-Both are visible in the pane, marked as intentional. This matters: an empty row that looks
-like a mistake gets "fixed" by a user, and a merged row that looks like a mistake gets split.
+- **Adding a row** to any edition adds an empty row (`~`) at the same place in every other
+  edition. **Removing a row** while editing one edition removes it from every edition, and is
+  refused while another edition still has text in that row — that text is somebody's work, so
+  it is cleared first, on purpose, or the row stays.
+- **Joining** a row of one edition to the row above (it becomes `+ ` lines) moves that
+  edition's later rows up by one; **splitting** a row at one of its lines does the reverse.
+  Both act on one edition only — that is what they are for — and so leave that edition one row
+  shorter or longer than the others until it is evened out; the pane shows where, and the
+  next join, split or empty row usually closes the gap.
+- **Marking a row empty** in one edition inserts a `~` there, moving that edition's later rows
+  down.
 
 ## Misalignment
 
-If two editions differ in segment count after markers are applied, the engine:
+If an edition's row count differs from the original's — after a join or split, or because the
+file was edited in a text editor — the engine:
 
-1. reports the first line number where they diverge,
-2. shows every edition **unaligned from that point**, and
-3. offers to insert `~` or `+ ` markers at a position the user picks.
+1. reports the first row where they stop corresponding, by row and by line in the file,
+2. shows every edition **unaligned from that point**, each in its own order, and
+3. offers the fixes above at a row the user picks: mark it empty, join, split.
 
 It does not shift lines to make the counts agree. A silently repaired alignment is worse than
 a visible break, because the break is obvious and the repair is not — and a learner reading a
 translation against the wrong line learns something false and does not find out.
 
-## Repeated segments
+A misaligned work is listed under the library's problems until it is aligned again. It is
+still readable and editable; nothing is refused because of it.
 
-A chorus repeats. Marking a segment as a repeat of an earlier one means its editions are
-shared: translate the chorus once, and every repetition shows the translation. Editing one
-edits all, with the user told how many places are affected.
+## Repeated rows
 
-Stored as a reference from the repeating segment to the first occurrence, so the file stays
-readable and the relationship is one-directional.
+A chorus repeats. Marking a row as a repeat of an earlier one means they are the same text:
+translate the chorus once, and every repetition shows the translation. Editing one edits all,
+with the user told how many places are affected.
 
-## Notes and sources
+The edition files still hold the full text at every repetition, so a file read in any editor,
+pasted elsewhere, or exported is the whole text. The repeat is recorded once, in the work's
+own file, as a reference from the repeating row to the first occurrence — one-directional, so
+there is never a cycle — and the engine keeps every repetition's text in step when one is
+written. If a hand edit leaves a repetition different from its first occurrence, that is
+reported as a problem, and the first occurrence is what the pane shows for both until the
+person chooses one.
 
-A segment can carry notes — grammar points, a case ending, a word to look up.
+## Notes
 
-A work can cite [sources](citation-model.md) like a document can, and for historical texts
-this is the point rather than a nicety: which manuscript, which edition, whose transcription,
-whose translation. The provenance principle in [Architecture](architecture.md) applies to
-texts as much as to claims, and *which* version of a text you are reading is often the whole
-scholarly question.
+A row can carry a note — a grammar point, a case ending, a word to look up. Notes are plain
+text, belong to the row (not to one edition), and are stored in the work's own file by row
+number.
+
+## Row numbers
+
+Notes and repeats name rows by number, so anything that moves rows renumbers them. The engine
+does it in the same operation: it writes the edition files first and the work's file last,
+like every multi-file write ([Storage format](storage-format.md#writing-files)). An
+interruption between the two can leave a note one row from where it was — visible, and moved
+back by hand — never a note lost.
+
+A person editing an edition file in a text editor moves rows the engine does not know about,
+and a note follows its number rather than its words. That is the cost of plain files, and it
+is the right one: the words are never at risk, and the note is still there to move.
+
+## What the interface keeps for itself
+
+Which editions are showing, the layout (side by side, or stacked rows), and hidden panes for
+practising are the interface's, for as long as the window is open. They are not written into
+the library: they are how somebody is reading today, not part of the text.
 
 ## Related
 
