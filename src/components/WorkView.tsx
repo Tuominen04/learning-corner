@@ -160,6 +160,8 @@ export function WorkView({
     const isEditing = editing?.edition === edition.id && editing.row === row;
     const hidden = practising.has(edition.id) && !revealed.has(key);
     const classes = ["work-cell"];
+    // How a text is said is set apart from what it says, so the eye finds each.
+    if (edition.kind === "pronunciation") classes.push("pronunciation");
     if (unaligned.has(edition.id)) classes.push("unaligned");
     if (lines === undefined) classes.push("beyond");
     if (hidden) classes.push("practising");

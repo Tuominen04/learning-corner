@@ -51,7 +51,7 @@ await page.addInitScript(() => {
           return structuredClone(work);
         case "work_add_edition": {
           const n = work.editions[0].rows.length;
-          work.editions.push({ id: "01J9ED00000000000000000002", kind: args.edition.kind, language: args.edition.language, scheme: args.edition.scheme,
+          work.editions.push({ id: `01J9ED${String(work.editions.length + 1).padStart(20, "0")}`, kind: args.edition.kind, language: args.edition.language, scheme: args.edition.scheme,
             label: args.edition.label, source: null, missing: false,
             rows: args.text.trim() ? args.text.split("\n").filter((l) => l.trim()).map((l) => [l]) : Array.from({ length: n }, () => []) });
           return answer();
@@ -147,6 +147,14 @@ await page.waitForFunction(() => document.querySelector(".pane-head strong")?.te
 const moved = (await calls("work_move_edition")).at(-1)?.args;
 check("a pane moves a place to the left", moved?.position === 1, JSON.stringify(moved));
 check("the first pane cannot move further left", await page.getByRole("button", { name: "Move Finnish translation left" }).isDisabled());
+
+// A pronunciation reads in italics, set apart from the meaning.
+await page.getByRole("button", { name: "Add pronunciation" }).click();
+await page.locator(".edition-form").waitFor();
+await page.getByRole("button", { name: "Add", exact: true }).click();
+await page.locator(".pane-head", { hasText: "Pronunciation" }).waitFor();
+const style = await page.locator(".work-cell.pronunciation").first().evaluate((c) => getComputedStyle(c).fontStyle);
+check("a pronunciation is in italics", style === "italic", style);
 
 // Stacked rows, and a pane hidden for practice.
 await page.getByRole("button", { name: "Stacked" }).click();

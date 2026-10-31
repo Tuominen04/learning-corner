@@ -1007,6 +1007,7 @@ button.danger-text, .ghost.danger-text { color: var(--error); }
 .work-cell:hover { border-color: var(--line); background: var(--panel); }
 .work-row.selected .work-cell:not(.unaligned), .stacked-row.selected .work-cell:not(.unaligned) { background: #22252f; border-color: #3a3e4c; }
 .work-cell .line { display: block; }
+.work-cell.pronunciation, .work-cell.pronunciation .cell-editor { font-style: italic; }
 .work-cell .line.joined { border-left: 2px dotted var(--ink-soft); padding-left: 0.4rem; margin-left: 0.1rem; }
 .work-cell .empty-row { color: var(--ink-soft); font-style: italic; font-size: 0.85em; }
 .work-cell .empty-row::before { content: "~ "; }
