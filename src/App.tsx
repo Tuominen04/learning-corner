@@ -9,6 +9,7 @@ import { RenameableName } from "./components/RenameableName";
 import { Search } from "./components/Search";
 import { Sources } from "./components/Sources";
 import { TopicTree } from "./components/TopicTree";
+import { Works } from "./components/Works";
 import {
   engine,
   EngineFailure,
@@ -181,7 +182,11 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
 
   // Sources are library-wide rather than living under a topic, so they are a place you go
   // rather than something you select in the tree.
-  const [view, setView] = useState<"documents" | "sources">("documents");
+  const [view, setView] = useState<"documents" | "sources" | "works">("documents");
+
+  // The work showing in the Works view, if one is. Here rather than in that view, so a search
+  // result can open one.
+  const [openWork, setOpenWork] = useState<string | null>(null);
 
   // Searching is navigating, so it lives in the sidebar with the tree rather than being a
   // place you go. While there is a query the results stand in for the tree; clear it and the
@@ -428,6 +433,7 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
           </div>
           <span className="counts">
             {count(library.topics, "topic")} · {count(library.documents, "document")}
+            {library.works > 0 && ` · ${count(library.works, "work")}`}
           </span>
           {library.writable && (
             <div className="row backup-buttons">
@@ -467,6 +473,12 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
           >
             Sources
           </button>
+          <button
+            className={view === "works" ? "view selected" : "view"}
+            onClick={() => setView("works")}
+          >
+            Works
+          </button>
         </nav>
 
         <div className="find">
@@ -485,7 +497,14 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
         </div>
 
         {query.trim() !== "" ? (
-          <Search query={query} onOpenDocument={openDocument} />
+          <Search
+            query={query}
+            onOpenDocument={openDocument}
+            onOpenWork={(id) => {
+              setOpenWork(id);
+              setView("works");
+            }}
+          />
         ) : (
         <TopicTree
           topics={topics}
@@ -571,6 +590,11 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
           />
         ) : view === "sources" ? (
           <Sources onOpenDocument={openDocument} />
+        ) : view === "works" ? (
+          <Works
+            open={openWork}
+            onOpen={setOpenWork}
+          />
         ) : open ? (
           <Editor
             key={`${open.id}:${reloaded}`}

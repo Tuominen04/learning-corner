@@ -7,6 +7,7 @@ import {
   type Field,
   type Source,
   type SourceType,
+  type WorkSummary,
 } from "../lib/engine";
 import { contributorName, missingLabel, SOURCE_TYPES } from "../lib/sources";
 import { SourceForm } from "./SourceForm";
@@ -18,7 +19,7 @@ import { SourceForm } from "./SourceForm";
 // one call per source and the disambiguation pass repeated for every one of them. APA appears
 // where it is read: in the text as you write, and in each document's reference list.
 
-type Pending = { source: Source; citing: DocumentRef[] };
+type Pending = { source: Source; citing: DocumentRef[]; works: WorkSummary[] };
 
 /** As the sidebar's search: long enough not to query per letter, short enough to feel live. */
 const SEARCH_AFTER_IDLE_MS = 180;
@@ -293,7 +294,11 @@ export function Sources({ onOpenDocument }: { onOpenDocument: (id: string) => vo
                         if (!id) return;
                         // Two-phase without exception: what would be orphaned is shown
                         // before anything is removed, never after.
-                        setPending({ source, citing: await engine.source.deletePlan(id) });
+                        const [citing, works] = await Promise.all([
+                          engine.source.deletePlan(id),
+                          engine.source.citingWorks(id),
+                        ]);
+                        setPending({ source, citing, works });
                       })
                     }
                   >
@@ -411,7 +416,7 @@ function DeleteConfirmation({
   onCancel: () => void;
   onConfirm: () => void;
 }) {
-  const { source, citing } = pending;
+  const { source, citing, works } = pending;
   return (
     <div className="confirm">
       <h3>Delete “{source.title || "Untitled"}”?</h3>
@@ -426,6 +431,15 @@ function DeleteConfirmation({
             pointing at nothing.
           </p>
           <CitingList citing={citing} onOpenDocument={onOpenDocument} />
+        </>
+      )}
+
+      {works.length > 0 && (
+        <>
+          <p className="warning">
+            {works.length} work{works.length === 1 ? "" : "s"} cite{works.length === 1 ? "s" : ""}{" "}
+            it too, and stop citing it: {works.map((w) => w.title).join(", ")}.
+          </p>
         </>
       )}
 

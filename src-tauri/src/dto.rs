@@ -28,6 +28,7 @@ pub struct LibraryStatus {
     pub name: String,
     pub topics: usize,
     pub documents: usize,
+    pub works: usize,
     pub writable: bool,
     pub problems: Vec<LibraryProblem>,
 }
@@ -210,6 +211,7 @@ pub enum HitKind {
     Topic,
     Document,
     Source,
+    Work,
 }
 
 impl From<lc_engine::index::Kind> for HitKind {
@@ -218,6 +220,7 @@ impl From<lc_engine::index::Kind> for HitKind {
             lc_engine::index::Kind::Topic => HitKind::Topic,
             lc_engine::index::Kind::Document => HitKind::Document,
             lc_engine::index::Kind::Source => HitKind::Source,
+            lc_engine::index::Kind::Work => HitKind::Work,
         }
     }
 }
@@ -430,6 +433,317 @@ impl From<ExportFormat> for lc_engine::export::Format {
             ExportFormat::Pdf => lc_engine::export::Format::Pdf,
         }
     }
+}
+
+// ---- works -----------------------------------------------------------------------
+//
+// A text and its other versions, lined up row by row — `parallel-text-model.md`. Rows count
+// from 1, in the original, as in the engine.
+
+/// How pasted text is divided into rows.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "kebab-case")]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub enum WorkUnit {
+    Line,
+    Sentence,
+    Paragraph,
+}
+
+impl From<WorkUnit> for lc_engine::works::Unit {
+    fn from(unit: WorkUnit) -> Self {
+        match unit {
+            WorkUnit::Line => lc_engine::works::Unit::Line,
+            WorkUnit::Sentence => lc_engine::works::Unit::Sentence,
+            WorkUnit::Paragraph => lc_engine::works::Unit::Paragraph,
+        }
+    }
+}
+
+impl From<lc_engine::works::Unit> for WorkUnit {
+    fn from(unit: lc_engine::works::Unit) -> Self {
+        match unit {
+            lc_engine::works::Unit::Line => WorkUnit::Line,
+            lc_engine::works::Unit::Sentence => WorkUnit::Sentence,
+            lc_engine::works::Unit::Paragraph => WorkUnit::Paragraph,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "kebab-case")]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub enum EditionKind {
+    Original,
+    Pronunciation,
+    Translation,
+}
+
+impl From<EditionKind> for lc_engine::works::EditionKind {
+    fn from(kind: EditionKind) -> Self {
+        match kind {
+            EditionKind::Original => lc_engine::works::EditionKind::Original,
+            EditionKind::Pronunciation => lc_engine::works::EditionKind::Pronunciation,
+            EditionKind::Translation => lc_engine::works::EditionKind::Translation,
+        }
+    }
+}
+
+impl From<lc_engine::works::EditionKind> for EditionKind {
+    fn from(kind: lc_engine::works::EditionKind) -> Self {
+        match kind {
+            lc_engine::works::EditionKind::Original => EditionKind::Original,
+            lc_engine::works::EditionKind::Pronunciation => EditionKind::Pronunciation,
+            lc_engine::works::EditionKind::Translation => EditionKind::Translation,
+        }
+    }
+}
+
+/// A work in the list of works.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub struct WorkSummary {
+    pub id: Id,
+    pub title: String,
+    /// Each edition's language, in pane order.
+    pub languages: Vec<String>,
+    pub misaligned: bool,
+}
+
+impl From<lc_engine::api::WorkSummary> for WorkSummary {
+    fn from(w: lc_engine::api::WorkSummary) -> Self {
+        WorkSummary {
+            id: w.id.to_string(),
+            title: w.title,
+            languages: w.languages,
+            misaligned: w.misaligned,
+        }
+    }
+}
+
+/// One edition, with its rows. A row is its lines; no lines is a deliberately empty row.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub struct WorkEdition {
+    pub id: Id,
+    pub kind: EditionKind,
+    pub language: String,
+    pub scheme: Option<String>,
+    pub label: Option<String>,
+    pub source: Option<Id>,
+    pub rows: Vec<Vec<String>>,
+    /// Its file was not there, so it reads as having no rows.
+    pub missing: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub struct WorkNote {
+    pub row: usize,
+    pub text: String,
+}
+
+/// `row` is the same text as the earlier row `of`.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub struct WorkRepeat {
+    pub row: usize,
+    pub of: usize,
+}
+
+/// An edition whose row count differs from the original's. Where they stop corresponding is
+/// for a person to see; the engine only knows the counts.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub struct WorkMisalignment {
+    pub edition: Id,
+    pub rows: usize,
+    pub original_rows: usize,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub struct Work {
+    pub id: Id,
+    pub title: String,
+    pub unit: WorkUnit,
+    pub created: String,
+    /// Sources cited by the work as a whole.
+    pub sources: Vec<Id>,
+    /// In pane order; the original among them.
+    pub editions: Vec<WorkEdition>,
+    pub notes: Vec<WorkNote>,
+    pub repeats: Vec<WorkRepeat>,
+    pub misalignments: Vec<WorkMisalignment>,
+    /// Opaque. Hand it back with the next change; a mismatch means a file of the work changed
+    /// underneath, and the change is refused rather than undoing it.
+    #[ts(type = "string & { readonly __opaque: \"WorkRevision\" }")]
+    pub revision: String,
+}
+
+impl From<lc_engine::api::WorkView> for Work {
+    fn from(w: lc_engine::api::WorkView) -> Self {
+        Work {
+            id: w.id.to_string(),
+            title: w.title,
+            unit: w.unit.into(),
+            created: w.created.to_string(),
+            sources: w.sources.iter().map(ToString::to_string).collect(),
+            editions: w
+                .editions
+                .into_iter()
+                .map(|e| WorkEdition {
+                    id: e.id.to_string(),
+                    kind: e.kind.into(),
+                    language: e.language,
+                    scheme: e.scheme,
+                    label: e.label,
+                    source: e.source.map(|s| s.to_string()),
+                    rows: e.cells.into_iter().map(|c| c.lines).collect(),
+                    missing: e.missing,
+                })
+                .collect(),
+            notes: w
+                .notes
+                .into_iter()
+                .map(|n| WorkNote {
+                    row: n.row,
+                    text: n.text,
+                })
+                .collect(),
+            repeats: w
+                .repeats
+                .into_iter()
+                .map(|r| WorkRepeat {
+                    row: r.row,
+                    of: r.of,
+                })
+                .collect(),
+            misalignments: w
+                .misalignments
+                .into_iter()
+                .map(|m| WorkMisalignment {
+                    edition: m.edition.to_string(),
+                    rows: m.rows,
+                    original_rows: m.original_rows,
+                })
+                .collect(),
+            revision: w.revision.token().to_string(),
+        }
+    }
+}
+
+/// An edition to add.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub struct NewEdition {
+    pub kind: EditionKind,
+    pub language: String,
+    pub label: Option<String>,
+    pub scheme: Option<String>,
+    pub source: Option<Id>,
+}
+
+/// What removing an edition, or a work, takes with it.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub struct EditionContents {
+    pub edition: Id,
+    /// Its label, or its kind and language.
+    pub name: String,
+    pub rows_with_text: usize,
+}
+
+impl From<lc_engine::api::EditionContents> for EditionContents {
+    fn from(c: lc_engine::api::EditionContents) -> Self {
+        EditionContents {
+            edition: c.edition.to_string(),
+            name: c.name,
+            rows_with_text: c.rows_with_text,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub struct WorkContents {
+    pub title: String,
+    pub editions: Vec<EditionContents>,
+    pub notes: usize,
+}
+
+/// A row made a repeat, and how many rows now share its text.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub struct RepeatSet {
+    pub work: Work,
+    pub shared: usize,
+}
+
+/// What dividing a work again would do. The shell keeps the plan itself until it is applied.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub struct ResegmentPlan {
+    pub unit: WorkUnit,
+    pub editions: Vec<ResegmentEdition>,
+    /// Notes on rows that would no longer exist; kept in `.conflicts` when applied.
+    pub notes_moved: Vec<WorkNote>,
+    pub repeats_dropped: Vec<WorkRepeat>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub struct ResegmentEdition {
+    pub edition: Id,
+    pub rows_before: usize,
+    pub rows_after: usize,
+    pub empty_lost: usize,
+    pub joined_before: usize,
+    pub joined_after: usize,
+}
+
+impl From<&lc_engine::api::ResegmentPlan> for ResegmentPlan {
+    fn from(p: &lc_engine::api::ResegmentPlan) -> Self {
+        ResegmentPlan {
+            unit: p.unit.into(),
+            editions: p
+                .editions
+                .iter()
+                .map(|e| ResegmentEdition {
+                    edition: e.edition.to_string(),
+                    rows_before: e.rows_before,
+                    rows_after: e.rows_after,
+                    empty_lost: e.empty_lost,
+                    joined_before: e.joined_before,
+                    joined_after: e.joined_after,
+                })
+                .collect(),
+            notes_moved: p
+                .notes_moved
+                .iter()
+                .map(|n| WorkNote {
+                    row: n.row,
+                    text: n.text.clone(),
+                })
+                .collect(),
+            repeats_dropped: p
+                .repeats_dropped
+                .iter()
+                .map(|r| WorkRepeat {
+                    row: r.row,
+                    of: r.of,
+                })
+                .collect(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub struct Resegmented {
+    pub work: Work,
+    /// Where the notes it could not keep in place went, inside the library.
+    pub notes_kept_at: Option<String>,
 }
 
 // ---- backup ----------------------------------------------------------------------
@@ -693,6 +1007,7 @@ impl LibraryStatus {
             name: s.name,
             topics: s.topics,
             documents: s.documents,
+            works: s.works,
             writable: s.writable,
             problems: s
                 .problems

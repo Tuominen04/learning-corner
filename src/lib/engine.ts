@@ -39,6 +39,17 @@ import type { SourceType } from "./bindings/SourceType";
 import type { Topic } from "./bindings/Topic";
 import type { TopicContents } from "./bindings/TopicContents";
 import type { Contents } from "./bindings/Contents";
+import type { EditionContents } from "./bindings/EditionContents";
+import type { EditionKind } from "./bindings/EditionKind";
+import type { NewEdition } from "./bindings/NewEdition";
+import type { RepeatSet } from "./bindings/RepeatSet";
+import type { ResegmentPlan } from "./bindings/ResegmentPlan";
+import type { Resegmented } from "./bindings/Resegmented";
+import type { Work } from "./bindings/Work";
+import type { WorkContents } from "./bindings/WorkContents";
+import type { WorkEdition } from "./bindings/WorkEdition";
+import type { WorkSummary } from "./bindings/WorkSummary";
+import type { WorkUnit } from "./bindings/WorkUnit";
 
 export type {
   Appraisal,
@@ -73,7 +84,21 @@ export type {
   Topic,
   TopicContents,
   Contents,
+  EditionContents,
+  EditionKind,
+  NewEdition,
+  RepeatSet,
+  ResegmentPlan,
+  Resegmented,
+  Work,
+  WorkContents,
+  WorkEdition,
+  WorkSummary,
+  WorkUnit,
 };
+
+/** The opaque token carried between reading a work and changing it. Never inspected. */
+export type WorkRevision = Work["revision"];
 
 /** The opaque token carried between a read and a write. Never inspected. */
 export type Revision = Document["revision"];
@@ -257,6 +282,64 @@ export const engine = {
     open: (source: string) => call<boolean>("source_open", { source }),
     requiredFields: (sourceType: SourceType) =>
       call<Field[]>("source_required_fields", { sourceType }),
+    /** The works citing it, as the work's source or one of its editions'. */
+    citingWorks: (source: string) => call<WorkSummary[]>("source_citing_works", { source }),
+  },
+  /**
+   * Works: a text and its other versions, lined up row by row. Rows count from 1, in the
+   * original. Every change takes the revision from the last read and answers with the work as
+   * it now is; a `Conflict` means one of its files changed underneath, so read it again.
+   */
+  work: {
+    list: () => call<WorkSummary[]>("work_list"),
+    create: (title: string, unit: WorkUnit, text: string, language: string, source: string | null) =>
+      call<Work>("work_create", { title, unit, text, language, source }),
+    read: (work: string) => call<Work>("work_read", { work }),
+    update: (work: string, title: string, sources: string[], revision: WorkRevision) =>
+      call<Work>("work_update", { work, title, sources, revision }),
+    /** Empty text gives the edition an empty row for every row, to fill in one by one. */
+    addEdition: (work: string, edition: NewEdition, text: string, revision: WorkRevision) =>
+      call<Work>("work_add_edition", { work, edition, text, revision }),
+    updateEdition: (
+      work: string,
+      edition: string,
+      label: string | null,
+      scheme: string | null,
+      source: string | null,
+      revision: WorkRevision,
+    ) => call<Work>("work_update_edition", { work, edition, label, scheme, source, revision }),
+    /** Put an edition at `position` among the panes, counting from 1. */
+    moveEdition: (work: string, edition: string, position: number, revision: WorkRevision) =>
+      call<Work>("work_move_edition", { work, edition, position, revision }),
+    removeEditionPlan: (work: string, edition: string) =>
+      call<EditionContents>("work_remove_edition_plan", { work, edition }),
+    removeEdition: (work: string, edition: string, revision: WorkRevision) =>
+      call<Work>("work_remove_edition", { work, edition, revision }),
+    /** Line breaks in `text` become lines within the row. */
+    writeRow: (work: string, edition: string, row: number, text: string, revision: WorkRevision) =>
+      call<Work>("work_write_row", { work, edition, row, text, revision }),
+    insertRow: (work: string, row: number, revision: WorkRevision) =>
+      call<Work>("work_insert_row", { work, row, revision }),
+    removeRow: (work: string, edition: string, row: number, revision: WorkRevision) =>
+      call<Work>("work_remove_row", { work, edition, row, revision }),
+    markEmpty: (work: string, edition: string, row: number, revision: WorkRevision) =>
+      call<Work>("work_mark_empty", { work, edition, row, revision }),
+    join: (work: string, edition: string, row: number, revision: WorkRevision) =>
+      call<Work>("work_join", { work, edition, row, revision }),
+    /** Split before the row's line `line`, counting from 1. */
+    split: (work: string, edition: string, row: number, line: number, revision: WorkRevision) =>
+      call<Work>("work_split", { work, edition, row, line, revision }),
+    setRepeat: (work: string, row: number, of: number | null, revision: WorkRevision) =>
+      call<RepeatSet>("work_set_repeat", { work, row, of, revision }),
+    /** Empty text removes the note. */
+    setNote: (work: string, row: number, text: string, revision: WorkRevision) =>
+      call<Work>("work_set_note", { work, row, text, revision }),
+    /** What dividing again would do. The shell keeps the plan for `resegment`. */
+    resegmentPlan: (work: string, unit: WorkUnit) =>
+      call<ResegmentPlan>("work_resegment_plan", { work, unit }),
+    resegment: () => call<Resegmented>("work_resegment"),
+    deletePlan: (work: string) => call<WorkContents>("work_delete_plan", { work }),
+    delete: (work: string) => call<void>("work_delete", { work }),
   },
   citation: {
     format: (source: string, form: Form, locator: Locator | null = null) =>

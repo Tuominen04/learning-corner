@@ -16,6 +16,7 @@ const SEARCH_AFTER_IDLE_MS = 180;
 export function Search({
   query,
   onOpenDocument,
+  onOpenWork,
 }: {
   /**
    * What to look for. Never blank: an empty box means the tree is shown instead, so App
@@ -23,6 +24,7 @@ export function Search({
    */
   query: string;
   onOpenDocument: (id: string) => void;
+  onOpenWork: (id: string) => void;
 }) {
   // `null` until the first answer comes back, and deliberately *not* cleared while a new
   // query is in flight — the previous results stay on screen for the moment it takes, rather
@@ -73,6 +75,14 @@ export function Search({
                 <button className="hit" onClick={() => onOpenDocument(hit.id)}>
                   <strong>{hit.title}</strong>
                   {hit.excerpt && <span className="excerpt">{hit.excerpt}</span>}
+                </button>
+              ) : hit.kind === "work" ? (
+                <button className="hit" onClick={() => onOpenWork(hit.id)}>
+                  <strong>{hit.title}</strong>
+                  <span className="excerpt">
+                    <em className="kind">Work</em>
+                    {hit.excerpt && ` · ${hit.excerpt}`}
+                  </span>
                 </button>
               ) : (
                 // A topic is not a place you can open — there is no topic view, only the tree.

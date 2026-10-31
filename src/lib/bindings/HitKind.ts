@@ -3,4 +3,4 @@
 /**
  * What a search hit refers to.
  */
-export type HitKind = "topic" | "document" | "source";
+export type HitKind = "topic" | "document" | "source" | "work";

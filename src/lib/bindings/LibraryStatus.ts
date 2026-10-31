@@ -6,4 +6,4 @@ export type LibraryStatus = {
  * The library's folder. It can change while the library is open: renaming the library
  * renames its folder too, when the folder is the library's alone.
  */
-path: string, name: string, topics: number, documents: number, writable: boolean, problems: Array<LibraryProblem>, };
+path: string, name: string, topics: number, documents: number, works: number, writable: boolean, problems: Array<LibraryProblem>, };

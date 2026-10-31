@@ -173,6 +173,7 @@ original. An edition is named by its `id`, never its file.
 | `work.update` | id, title, sources, revision | work |
 | `work.addEdition` | work id, kind, language, label, scheme, source, text, revision | work. The text is divided by the work's unit; a different row count is reported, not refused |
 | `work.updateEdition` | work id, edition id, label, scheme, source, revision | work |
+| `work.moveEdition` | work id, edition id, position (from 1), revision | work. Only the pane order changes |
 | `work.removeEdition` | work id, edition id | `plan` (its text, and how many rows have any) / `apply` |
 | `work.writeRow` | work id, edition id, row, text, revision | work. `text` may hold line breaks: the lines after the first become `+ ` lines. Writing a repeated row writes every repetition |
 | `work.insertRow` | work id, row, revision | work. An empty row (`~`) at that place in every edition |
@@ -192,9 +193,10 @@ inserted — writes every edition at once.
 **Rows** come back across the requested editions. Each cell holds the row's lines and whether
 it is marked empty or joined (made of `+ ` lines), so the interface can show both as
 intentional. A work whose editions do not line up returns the **misalignment report** beside
-the rows: the edition, the first row and file line where it stops corresponding, and each
-edition's rows from that point in its own order, unaligned. It is never hidden behind a
-plausible-looking pairing.
+the rows: each edition out of line, with its row count and the original's. Where they stop
+corresponding is for a person to see, so the report does not guess, and the interface shows
+that edition unaligned rather than paired. It is never hidden behind a plausible-looking
+pairing.
 
 The original edition cannot be removed; a work without one is not a work. Removing any other
 edition is two-phase because it deletes writing.
