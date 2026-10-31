@@ -28,7 +28,7 @@ ts-rs = "12"
 # diff naming the old tag and the new one.
 lc-engine = { 
     git = "https://github.com/Tuominen04/learning-corner-engine", 
-    rev = "07429799e236c49be675437bffd05bea8a068c60" 
+    tag = "v0.21.0" 
 }
 
 [dev-dependencies]
