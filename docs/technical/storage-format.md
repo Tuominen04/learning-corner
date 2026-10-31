@@ -435,8 +435,8 @@ which is not part of the text. Blank lines are ignored. Files are UTF-8, with `\
 written and `\r\n` read.
 
 If an edition's row count differs from the original's after applying these rules, the engine
-reports a misalignment naming the first row and file line where they diverge, and shows the
-text unaligned from that point. It does **not** silently re-pair lines: a wrong alignment that
+reports a misalignment naming the edition and both counts, and that edition is shown
+unaligned. It does **not** silently re-pair lines: a wrong alignment that
 looks right is worse than a visible error. The reasoning, and how notes and repeats follow
 their rows, is in [Parallel text model](parallel-text-model.md).
 

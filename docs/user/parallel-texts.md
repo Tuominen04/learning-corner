@@ -1,8 +1,8 @@
 # Parallel texts
 
 > **Audience:** People using Learning Corner
-> **Status:** Planned
-> **Last reviewed:** 2026-10-29
+> **Status:** Implemented
+> **Last reviewed:** 2026-10-31
 
 For reading something in a language you are still learning: the original, how it is
 pronounced, and what it means — lined up, on screen together, in whatever combination helps
@@ -36,6 +36,22 @@ the Finnish, three panes, all lined up.
 
 The app keeps the rows lined up as you type. Add a row to one edition and every other edition
 gets an empty row in the same place, so nothing slides out of alignment while you work.
+
+## Writing a row
+
+Click a row in any pane to write it. **Enter** saves it; **Shift+Enter** starts a new line
+within the same row; **Esc** leaves it as it was. The row you clicked shows its tools beneath
+it:
+
+- **Add a row above** / **Add a row below** — an empty row in every edition.
+- **Add a note** — see below.
+- **Same text as…** — for a chorus; see Songs.
+- For the edition you are writing in: **Mark empty here**, **Join to the row above**,
+  **Split off the last line**, and **Remove the row**. Removing a row takes it out of every
+  edition, so it waits until no other edition has text in it. The tools that move rows wait
+  until you have saved what you typed.
+
+Each pane's **…** button is where you give an edition a label or a source, or remove it.
 
 Two translations into the same language are welcome — two translators often disagree, and
 that is worth seeing. Give each a label, such as the translator's name and year, so you can
@@ -90,16 +106,17 @@ of the original — **join** them — and a row can be empty in one edition and 
 mistake in the alignment. **Split** undoes a join.
 
 If an edition stops lining up with the original — after a join, or after you edited its file in
-another program — the app says from which row, shows the editions unaligned from there, and
-lets you put it right with join, split or mark empty at the row you choose. It never moves
+another program — the app says which edition, and how many rows more or fewer it has, and marks
+that pane as not lined up. Where the meaning stops matching is for you to see: read down the
+two panes, find the place, and put it right there with join, split or mark empty. It never moves
 lines around by itself to make them fit: a translation quietly lined up against the wrong line
 teaches you something false, and you would not find out.
 
 ## Songs
 
 Songs are works like any other; the difference is only that **line** is almost always the
-right unit, and that a refrain repeats. Mark a row as a repeat of an earlier one, and the two
-are the same text: translate the chorus once, and every repetition shows it. Change one and
+right unit, and that a refrain repeats. Click the repeating row and choose **Same text as…**
+with the row it repeats, and the two are the same text: translate the chorus once, and every repetition shows it. Change one and
 the app changes all, and tells you how many places that was.
 
 ## Notes and sources
@@ -114,7 +131,8 @@ it, is often the whole question.
 
 ## Practising
 
-Hide any pane to test yourself, then reveal it to check. Hide the pronunciation and try to
+Choose **Hide** on a pane to test yourself: its text is blurred, and clicking a row reveals
+just that row. **Show** brings the whole pane back. Hide the pronunciation and try to
 read aloud; hide the translation and try to understand; hide the original and try to
 reconstruct it.
 

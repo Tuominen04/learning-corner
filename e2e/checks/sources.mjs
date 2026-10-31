@@ -81,6 +81,8 @@ await page.addInitScript(() => {
             throw { kind: "LibraryError", message: "the index could not be read" };
           }
           return CITED[args.source] ?? [];
+        case "source_citing_works":
+          return [];
         case "source_delete_plan":
           return CITED[args.source] ?? [];
         case "document_read":

@@ -19,6 +19,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .manage(commands::OpenLibrary::default())
         .manage(commands::PendingPlan::default())
+        .manage(commands::PendingResegment::default())
         .manage(closing::Closing::default())
         // Held while the interface writes what it is holding, and closed when it answers or
         // after two seconds — see `closing.rs`. `destroy` closes without asking again.
@@ -92,6 +93,27 @@ pub fn run() {
             commands::citation_format_many,
             commands::citation_reference_list,
             commands::document_export,
+            commands::work_list,
+            commands::work_create,
+            commands::work_read,
+            commands::work_update,
+            commands::work_add_edition,
+            commands::work_update_edition,
+            commands::work_remove_edition_plan,
+            commands::work_remove_edition,
+            commands::work_write_row,
+            commands::work_insert_row,
+            commands::work_remove_row,
+            commands::work_mark_empty,
+            commands::work_join,
+            commands::work_split,
+            commands::work_set_repeat,
+            commands::work_set_note,
+            commands::work_resegment_plan,
+            commands::work_resegment,
+            commands::work_delete_plan,
+            commands::work_delete,
+            commands::source_citing_works,
             commands::backup_plan,
             commands::backup_apply,
             commands::restore_plan,

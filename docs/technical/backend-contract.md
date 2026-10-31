@@ -192,9 +192,10 @@ inserted — writes every edition at once.
 **Rows** come back across the requested editions. Each cell holds the row's lines and whether
 it is marked empty or joined (made of `+ ` lines), so the interface can show both as
 intentional. A work whose editions do not line up returns the **misalignment report** beside
-the rows: the edition, the first row and file line where it stops corresponding, and each
-edition's rows from that point in its own order, unaligned. It is never hidden behind a
-plausible-looking pairing.
+the rows: each edition out of line, with its row count and the original's. Where they stop
+corresponding is for a person to see, so the report does not guess, and the interface shows
+that edition unaligned rather than paired. It is never hidden behind a plausible-looking
+pairing.
 
 The original edition cannot be removed; a work without one is not a work. Removing any other
 edition is two-phase because it deletes writing.

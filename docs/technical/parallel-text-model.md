@@ -1,7 +1,7 @@
 # Parallel text model
 
 > **Audience:** People building Learning Corner
-> **Status:** Planned
+> **Status:** Implemented
 > **Last reviewed:** 2026-10-29
 
 A text read in a language the reader is still learning, with its other versions lined up
@@ -148,9 +148,15 @@ editions are lined up against it. Editing keeps them lined up:
 If an edition's row count differs from the original's — after a join or split, or because the
 file was edited in a text editor — the engine:
 
-1. reports the first row where they stop corresponding, by row and by line in the file,
-2. shows every edition **unaligned from that point**, each in its own order, and
-3. offers the fixes above at a row the user picks: mark it empty, join, split.
+1. reports **which edition** is out of line, and its row count against the original's,
+2. has it shown **marked as unaligned** — its rows in their own order, never highlighted
+   together with the original's as if they corresponded, and
+3. leaves the fixes above to a row the user picks: mark it empty, join, split.
+
+Where the two stop corresponding is not something the engine can know. Alignment is by
+position, so all it can see is that the counts differ; *where* the meaning stops matching is
+read by a person, who can, and is then one join, split or empty row from putting it right.
+Naming a row it cannot know would be the confident wrong answer this whole page avoids.
 
 It does not shift lines to make the counts agree. A silently repaired alignment is worse than
 a visible break, because the break is obvious and the repair is not — and a learner reading a

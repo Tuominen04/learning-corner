@@ -1,8 +1,8 @@
 # Roadmap
 
 > **Audience:** People building Learning Corner
-> **Status:** In progress — M1 and M2 implemented
-> **Last reviewed:** 2026-10-29
+> **Status:** In progress — M1, M2 and M3 implemented
+> **Last reviewed:** 2026-10-31
 
 Milestones in order. Each is shippable on its own — a person could install it, use it, and get
 something out of it — and each has a definition of done that is checkable rather than a
@@ -123,15 +123,19 @@ nothing unrecoverable.
 
 ---
 
-## M3 · Parallel texts
+## M3 · Parallel texts ← *0.21.0*
 
-- Works, editions, all three kinds; the pronunciation/translation distinction.
-- Dividing by line, sentence, paragraph; two-phase re-division. The **Works** view.
-- Pane selection, both layouts, synchronised scrolling and selection.
-- Misalignment reporting, `~` and `+ ` markers, split, join and mark empty.
-- Repeated rows.
-- Row notes; sources on a work and on each edition; edition labels.
-- Pane hiding, for practice.
+- [x] Works, editions, all three kinds; the pronunciation/translation distinction.
+- [x] Dividing by line, sentence, paragraph; two-phase re-division. The **Works** view.
+- [x] Pane selection, both layouts, the selected row highlighted across panes.
+- [x] Misalignment reporting, `~` and `+ ` markers, split, join and mark empty.
+- [x] Repeated rows.
+- [x] Row notes; sources on a work and on each edition; edition labels.
+- [x] Pane hiding, for practice.
+- [x] The `parallel` fixture and the round-trip property test.
+- [ ] **Seen running by a person**, on Fedora: the Russian/Finnish example made in the app.
+- [ ] Later: remembering which panes were showing; splitting a row at any line, not only its
+      last; scrolling the panes of a long prose text independently.
 
 **Done when:** the Russian/Finnish example works — original, pronunciation, Finnish and
 English, panes chosen freely, hand-edited alignment surviving a round trip through the files.

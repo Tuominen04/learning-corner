@@ -21,6 +21,10 @@ use crate::dto::{
     ExportFormat, Field, Form, Keep, LibraryStatus, Locator, RecentLibrary, RenamedLibrary,
     SavedSource, SearchHit, Source, SourceType, Split, Topic, TopicContents,
 };
+use crate::dto::{
+    EditionContents, NewEdition, RepeatSet, ResegmentPlan, Resegmented, Work, WorkContents,
+    WorkSummary, WorkUnit,
+};
 use crate::recent::Recent;
 
 /// The open library, or none. The interface holds no durable state of its own.
@@ -657,6 +661,354 @@ fn export_to(
     lc_engine::atomic::write_bytes(path, &bytes)
 }
 
+// ---- works ---------------------------------------------------------------------
+//
+// Every change names the work's revision from the last read; the engine refuses with
+// `Conflict` if any of its files changed since. Rows count from 1, in the original.
+
+/// The re-division plan last made, waiting to be applied, or none. Like a backup's, it stays
+/// here and the interface is shown a view of it.
+#[derive(Default)]
+pub struct PendingResegment(pub Mutex<Option<lc_engine::api::ResegmentPlan>>);
+
+fn revision(raw: &str) -> lc_engine::works::WorkRevision {
+    lc_engine::works::WorkRevision::from_token(raw)
+}
+
+fn ids(raw: &[String]) -> Result<Vec<Id>, Error> {
+    raw.iter().map(|r| id(r)).collect()
+}
+
+fn maybe_id(raw: Option<&str>) -> Result<Option<Id>, Error> {
+    raw.map(id).transpose()
+}
+
+#[tauri::command]
+pub fn work_list(state: State<'_, OpenLibrary>) -> Answer<Vec<WorkSummary>> {
+    with(&state, |e| {
+        Ok(e.work_list()?.into_iter().map(WorkSummary::from).collect())
+    })
+}
+
+#[tauri::command]
+pub fn work_create(
+    state: State<'_, OpenLibrary>,
+    title: String,
+    unit: WorkUnit,
+    text: String,
+    language: String,
+    source: Option<String>,
+) -> Answer<Work> {
+    with(&state, |e| {
+        let source = maybe_id(source.as_deref())?;
+        Ok(e.work_create(title, unit.into(), &text, language, source)?
+            .into())
+    })
+}
+
+#[tauri::command]
+pub fn work_read(state: State<'_, OpenLibrary>, work: String) -> Answer<Work> {
+    with(&state, |e| Ok(e.work_read(id(&work)?, &[])?.into()))
+}
+
+#[tauri::command]
+pub fn work_update(
+    state: State<'_, OpenLibrary>,
+    work: String,
+    title: String,
+    sources: Vec<String>,
+    revision: String,
+) -> Answer<Work> {
+    with(&state, |e| {
+        Ok(e.work_update(
+            id(&work)?,
+            title,
+            ids(&sources)?,
+            &self::revision(&revision),
+        )?
+        .into())
+    })
+}
+
+#[tauri::command]
+pub fn work_add_edition(
+    state: State<'_, OpenLibrary>,
+    work: String,
+    edition: NewEdition,
+    text: String,
+    revision: String,
+) -> Answer<Work> {
+    with(&state, |e| {
+        let edition = lc_engine::works::NewEdition {
+            kind: edition.kind.into(),
+            language: edition.language,
+            label: edition.label,
+            scheme: edition.scheme,
+            source: maybe_id(edition.source.as_deref())?,
+        };
+        Ok(
+            e.work_add_edition(id(&work)?, edition, &text, &self::revision(&revision))?
+                .into(),
+        )
+    })
+}
+
+#[tauri::command]
+pub fn work_update_edition(
+    state: State<'_, OpenLibrary>,
+    work: String,
+    edition: String,
+    label: Option<String>,
+    scheme: Option<String>,
+    source: Option<String>,
+    revision: String,
+) -> Answer<Work> {
+    with(&state, |e| {
+        Ok(e.work_update_edition(
+            id(&work)?,
+            id(&edition)?,
+            label,
+            scheme,
+            maybe_id(source.as_deref())?,
+            &self::revision(&revision),
+        )?
+        .into())
+    })
+}
+
+#[tauri::command]
+pub fn work_remove_edition_plan(
+    state: State<'_, OpenLibrary>,
+    work: String,
+    edition: String,
+) -> Answer<EditionContents> {
+    with(&state, |e| {
+        Ok(e.work_remove_edition_plan(id(&work)?, id(&edition)?)?
+            .into())
+    })
+}
+
+#[tauri::command]
+pub fn work_remove_edition(
+    state: State<'_, OpenLibrary>,
+    work: String,
+    edition: String,
+    revision: String,
+) -> Answer<Work> {
+    with(&state, |e| {
+        Ok(
+            e.work_remove_edition(id(&work)?, id(&edition)?, &self::revision(&revision))?
+                .into(),
+        )
+    })
+}
+
+/// One row of one edition. Line breaks in `text` become lines within the row.
+#[tauri::command]
+pub fn work_write_row(
+    state: State<'_, OpenLibrary>,
+    work: String,
+    edition: String,
+    row: usize,
+    text: String,
+    revision: String,
+) -> Answer<Work> {
+    with(&state, |e| {
+        Ok(e.work_write_row(
+            id(&work)?,
+            id(&edition)?,
+            row,
+            &text,
+            &self::revision(&revision),
+        )?
+        .into())
+    })
+}
+
+#[tauri::command]
+pub fn work_insert_row(
+    state: State<'_, OpenLibrary>,
+    work: String,
+    row: usize,
+    revision: String,
+) -> Answer<Work> {
+    with(&state, |e| {
+        Ok(
+            e.work_insert_row(id(&work)?, row, &self::revision(&revision))?
+                .into(),
+        )
+    })
+}
+
+#[tauri::command]
+pub fn work_remove_row(
+    state: State<'_, OpenLibrary>,
+    work: String,
+    edition: String,
+    row: usize,
+    revision: String,
+) -> Answer<Work> {
+    with(&state, |e| {
+        Ok(
+            e.work_remove_row(id(&work)?, id(&edition)?, row, &self::revision(&revision))?
+                .into(),
+        )
+    })
+}
+
+#[tauri::command]
+pub fn work_mark_empty(
+    state: State<'_, OpenLibrary>,
+    work: String,
+    edition: String,
+    row: usize,
+    revision: String,
+) -> Answer<Work> {
+    with(&state, |e| {
+        Ok(
+            e.work_mark_empty(id(&work)?, id(&edition)?, row, &self::revision(&revision))?
+                .into(),
+        )
+    })
+}
+
+#[tauri::command]
+pub fn work_join(
+    state: State<'_, OpenLibrary>,
+    work: String,
+    edition: String,
+    row: usize,
+    revision: String,
+) -> Answer<Work> {
+    with(&state, |e| {
+        Ok(
+            e.work_join(id(&work)?, id(&edition)?, row, &self::revision(&revision))?
+                .into(),
+        )
+    })
+}
+
+#[tauri::command]
+pub fn work_split(
+    state: State<'_, OpenLibrary>,
+    work: String,
+    edition: String,
+    row: usize,
+    line: usize,
+    revision: String,
+) -> Answer<Work> {
+    with(&state, |e| {
+        Ok(e.work_split(
+            id(&work)?,
+            id(&edition)?,
+            row,
+            line,
+            &self::revision(&revision),
+        )?
+        .into())
+    })
+}
+
+#[tauri::command]
+pub fn work_set_repeat(
+    state: State<'_, OpenLibrary>,
+    work: String,
+    row: usize,
+    of: Option<usize>,
+    revision: String,
+) -> Answer<RepeatSet> {
+    with(&state, |e| {
+        let (work, shared) = e.work_set_repeat(id(&work)?, row, of, &self::revision(&revision))?;
+        Ok(RepeatSet {
+            work: work.into(),
+            shared,
+        })
+    })
+}
+
+#[tauri::command]
+pub fn work_set_note(
+    state: State<'_, OpenLibrary>,
+    work: String,
+    row: usize,
+    text: String,
+    revision: String,
+) -> Answer<Work> {
+    with(&state, |e| {
+        Ok(
+            e.work_set_note(id(&work)?, row, &text, &self::revision(&revision))?
+                .into(),
+        )
+    })
+}
+
+/// What dividing the work again by `unit` would do. Nothing is written.
+#[tauri::command]
+pub fn work_resegment_plan(
+    state: State<'_, OpenLibrary>,
+    pending: State<'_, PendingResegment>,
+    work: String,
+    unit: WorkUnit,
+) -> Answer<ResegmentPlan> {
+    let plan = with(&state, |e| e.work_resegment_plan(id(&work)?, unit.into()))?;
+    let view = ResegmentPlan::from(&plan);
+    *lock(&pending.0)? = Some(plan);
+    Ok(view)
+}
+
+/// Divide the work again, as the plan last made showed.
+#[tauri::command]
+pub fn work_resegment(
+    state: State<'_, OpenLibrary>,
+    pending: State<'_, PendingResegment>,
+) -> Answer<Resegmented> {
+    let mut pending = lock(&pending.0)?;
+    let plan = pending
+        .as_ref()
+        .ok_or_else(|| EngineError::from(Error::invalid("plan", "make a plan first")))?;
+    let done = with(&state, |e| e.work_resegment(plan))?;
+    *pending = None;
+    Ok(Resegmented {
+        work: done.work.into(),
+        notes_kept_at: done.notes_kept_at.map(|p| p.to_string_lossy().into_owned()),
+    })
+}
+
+#[tauri::command]
+pub fn work_delete_plan(state: State<'_, OpenLibrary>, work: String) -> Answer<WorkContents> {
+    with(&state, |e| {
+        let plan = e.work_delete_plan(id(&work)?)?;
+        Ok(WorkContents {
+            title: plan.title,
+            editions: plan
+                .editions
+                .into_iter()
+                .map(EditionContents::from)
+                .collect(),
+            notes: plan.notes,
+        })
+    })
+}
+
+#[tauri::command]
+pub fn work_delete(state: State<'_, OpenLibrary>, work: String) -> Answer<()> {
+    with(&state, |e| e.work_delete(id(&work)?))
+}
+
+/// The works citing a source, as the work's source or one of its editions'.
+#[tauri::command]
+pub fn source_citing_works(
+    state: State<'_, OpenLibrary>,
+    source: String,
+) -> Answer<Vec<WorkSummary>> {
+    with(&state, |e| {
+        Ok(e.source_citing_works(id(&source)?)?
+            .into_iter()
+            .map(WorkSummary::from)
+            .collect())
+    })
+}
+
 // ---- backup --------------------------------------------------------------------
 //
 // Two-phase, like the engine: a plan is shown, and nothing is written until it is applied. The
@@ -1114,5 +1466,48 @@ mod tests {
         let wrong = apply_restore(&open, Some(&plan), BTreeMap::new()).unwrap_err();
         assert_eq!(wrong.kind, "Invalid");
         assert!(open.lock().unwrap().is_some(), "the library stays open");
+    }
+
+    #[test]
+    fn a_work_s_revision_survives_the_trip_to_the_interface_and_back() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut engine = Engine::create(dir.path().join("kielet"), "Kielet").unwrap();
+        let view = engine
+            .work_create(
+                "Я вас любил",
+                lc_engine::works::Unit::Line,
+                "Я вас любил:\nлюбовь ещё",
+                "ru",
+                None,
+            )
+            .unwrap();
+        // What the interface holds is the wire type, serialised as JSON and back.
+        let wire: Work =
+            serde_json::from_str(&serde_json::to_string(&Work::from(view)).unwrap()).unwrap();
+        assert_eq!(wire.editions[0].rows, [["Я вас любил:"], ["любовь ещё"]]);
+        let original = id(&wire.editions[0].id).unwrap();
+        let written = engine
+            .work_write_row(
+                id(&wire.id).unwrap(),
+                original,
+                2,
+                "любовь ещё, быть может,",
+                &revision(&wire.revision),
+            )
+            .unwrap();
+        assert_eq!(
+            written.editions[0].cells[1].text(),
+            "любовь ещё, быть может,"
+        );
+        // And the one it replaced is stale now.
+        assert_eq!(
+            EngineError::from(
+                engine
+                    .work_write_row(written.id, original, 1, "x", &revision(&wire.revision))
+                    .unwrap_err()
+            )
+            .kind,
+            "Conflict"
+        );
     }
 }
