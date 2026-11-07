@@ -123,6 +123,7 @@ pub fn run() {
             commands::restore_plan,
             commands::restore_apply,
             commands::backup_cancel,
+            commands::backup_texts,
         ])
         .run(tauri::generate_context!())
         .expect("the application failed to start");

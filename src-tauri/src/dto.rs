@@ -141,6 +141,14 @@ impl From<lc_engine::api::LibraryFolder> for LibraryFolder {
     }
 }
 
+/// The library's and the drive's version of a file changed in both places, as text.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub struct BackupTexts {
+    pub library: String,
+    pub drive: String,
+}
+
 /// What this computer remembers about the open library: the folder it was last backed up to,
 /// and the panes hidden in each work, by work id. Kept in the application's settings.
 #[derive(Debug, Clone, Default, Serialize, Deserialize, TS)]

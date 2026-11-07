@@ -28,6 +28,7 @@ import type { LibraryStatus } from "./bindings/LibraryStatus";
 import type { Locator } from "./bindings/Locator";
 import type { RecentLibrary } from "./bindings/RecentLibrary";
 import type { LibraryRemembered } from "./bindings/LibraryRemembered";
+import type { BackupTexts } from "./bindings/BackupTexts";
 import type { RenamedLibrary } from "./bindings/RenamedLibrary";
 import type { Role } from "./bindings/Role";
 import type { Keep } from "./bindings/Keep";
@@ -75,6 +76,7 @@ export type {
   Locator,
   RecentLibrary,
   LibraryRemembered,
+  BackupTexts,
   RenamedLibrary,
   Role,
   SavedSource,
@@ -384,6 +386,11 @@ export const engine = {
     restoreApply: (answers: Record<string, BackupAnswer>) =>
       call<BackupApplied>("restore_apply", { answers }),
     cancel: () => call<void>("backup_cancel"),
+    /**
+     * Both versions of a file the plan being shown asks about because it changed in both
+     * places, as text; `null` when either is not text or is too large to compare.
+     */
+    texts: (path: string) => call<BackupTexts | null>("backup_texts", { path }),
   },
 };
 

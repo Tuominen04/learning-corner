@@ -235,6 +235,7 @@ Derived edges are computed on read, never stored. See
 | `backup.apply` | plan, and `overwrite` if the drive has changes of its own | what was done |
 | `restore.plan` | drive folder, destination folder | a plan |
 | `restore.apply` | plan, an answer for every file changed in both | what was done |
+| `backup.texts` | plan, the path of a file it asks about | both versions as text, or none if either is not text or is over 1 MiB |
 
 *Back up* copies the open library to the drive. *Bring back* and *restore* are both
 `restore.*`: into the library's own folder it brings back the drive's changes, into an empty

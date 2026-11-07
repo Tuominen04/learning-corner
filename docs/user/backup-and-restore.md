@@ -63,7 +63,8 @@ drive's versions are kept, so nothing is lost either way.
 
 If you changed a document on the other computer **and** the same document on your own since the
 last backup, bringing back asks about that one file. It shows when each copy was last changed
-and how big it is, and you choose **keep this library's**, **take the drive's**, or **keep
+and how big it is, and **Show what differs** lists the lines that are only in one version or
+the other, with a few unchanged lines around them. Then you choose **keep this library's**, **take the drive's**, or **keep
 both** — which saves the drive's version alongside, named *(from backup* and the date*)*, so you
 can merge them yourself. Nothing is brought back until every such file has an answer.
 

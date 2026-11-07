@@ -2,7 +2,7 @@
 
 > **Audience:** People building Learning Corner
 > **Status:** In progress — M1 implemented
-> **Last reviewed:** 2026-10-02
+> **Last reviewed:** 2026-11-07
 
 ## Principles
 
@@ -59,8 +59,9 @@ everything it changes goes back through one. Losing the interface process loses 
 **Desktop shell** — Tauri v2. Owns the window, the menus, the file dialogs, the second window
 for mind maps, and the packaging. It is glue, not logic. Closing the window waits for the
 interface to write what it is holding — two seconds at most, so a hung interface can never
-keep the window open. The one thing it keeps for itself
-between runs is the list of libraries this computer has opened, which lives in the
+keep the window open. What it keeps for itself between runs
+is the list of libraries this computer has opened, with two conveniences per library — the
+folder it was last backed up to, and the panes each of its works shows — all in the
 application's settings rather than in any library
 ([Packaging](packaging-fedora.md#directories)).
 

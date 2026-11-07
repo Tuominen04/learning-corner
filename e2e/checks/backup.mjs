@@ -32,6 +32,12 @@ await page.addInitScript(() => {
           return [{ id: "01J8ZQ6A1M3P5R7T9V1X3Z5B70", name: "Protein", children: [], documents: [] }];
         case "plugin:dialog|open":
           return "/run/media/you/USB/learning";
+        case "backup_texts":
+          window.__textsAsked = args.path;
+          return {
+            library: "Protein is made of amino acids.\nThere are twenty of them.\nThe end.\n",
+            drive: "Protein is made of amino acids.\nThere are twenty-one of them.\nThe end.\n",
+          };
         case "library_remembered":
           return { backup: window.__backupFolder ?? null, hidden_panes: {} };
         case "remember_backup_folder":
@@ -95,6 +101,18 @@ const bringBack = panel.getByRole("button", { name: "Bring back from a drive" })
 check("bringing back waits for every answer", await bringBack.isDisabled());
 check("and says how many are waiting", (await panel.innerText()).includes("1 file needs an answer first."));
 check("keeping both is offered where both sides have the file", await panel.getByText("Keep both").isVisible());
+check("what differs is not read until asked for", (await calls("backup_texts")).length === 0);
+await panel.getByRole("button", { name: "Show what differs" }).click();
+const diff = panel.getByLabel("What differs in topics/protein/both.md");
+await diff.waitFor();
+const diffLines = await diff.locator("span").allInnerTexts();
+check("it asks for that file's two versions", (await calls("backup_texts")).at(-1)?.args?.path === "topics/protein/both.md");
+check("the changed line shows as this library's, then the drive's",
+  diffLines.some((l) => l.startsWith("− There are twenty of them.")) && diffLines.some((l) => l.startsWith("+ There are twenty-one of them.")),
+  JSON.stringify(diffLines));
+check("with the unchanged lines around it", diffLines.some((l) => l.includes("Protein is made of amino acids.")));
+await panel.getByRole("button", { name: "Hide what differs" }).click();
+check("and it folds away again", (await panel.locator(".diff").count()) === 0);
 await panel.getByText("Take the drive's").click();
 check("an answer enables it", await bringBack.isEnabled());
 await bringBack.click();

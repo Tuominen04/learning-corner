@@ -17,9 +17,10 @@ use tauri::State;
 
 use crate::closing::Closing;
 use crate::dto::{
-    BackupAnswer, BackupApplied, BackupPlan, CitationRequest, Document, DocumentRef, EngineError,
-    ExportFormat, Field, Form, Keep, LibraryRemembered, LibraryStatus, Locator, RecentLibrary,
-    RenamedLibrary, SavedSource, SearchHit, Source, SourceType, Split, Topic, TopicContents,
+    BackupAnswer, BackupApplied, BackupPlan, BackupTexts, CitationRequest, Document, DocumentRef,
+    EngineError, ExportFormat, Field, Form, Keep, LibraryRemembered, LibraryStatus, Locator,
+    RecentLibrary, RenamedLibrary, SavedSource, SearchHit, Source, SourceType, Split, Topic,
+    TopicContents,
 };
 use crate::dto::{
     EditionContents, NewEdition, RepeatSet, ResegmentPlan, Resegmented, Work, WorkContents,
@@ -1230,6 +1231,18 @@ fn apply_restore(
 }
 
 /// Forget the plan without applying it.
+/// Both versions of `path`, a file the plan being shown asks about because it changed in both
+/// places, to compare line by line. `None` when either is not text or is too large.
+#[tauri::command]
+pub fn backup_texts(pending: State<'_, PendingPlan>, path: String) -> Answer<Option<BackupTexts>> {
+    let pending = lock(&pending.0)?;
+    let plan = pending.as_ref().ok_or_else(no_plan)?;
+    Ok(Engine::backup_texts(plan, &path)?.map(|t| BackupTexts {
+        library: t.library,
+        drive: t.drive,
+    }))
+}
+
 #[tauri::command]
 pub fn backup_cancel(pending: State<'_, PendingPlan>) -> Answer<()> {
     *lock(&pending.0)? = None;
