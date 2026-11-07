@@ -161,7 +161,8 @@ await page.getByRole("button", { name: "Stacked" }).click();
 check("stacked shows a block per row", (await page.locator(".stacked-row").count()) === 3);
 await page.getByRole("button", { name: "Side by side" }).click();
 await page.locator(".pane-head", { hasText: "Original (Russian)" }).getByRole("button", { name: "Hide" }).click();
-check("a hidden pane's text is blurred", (await page.locator(".work-cell.practising").count()) === 3);
+check("a hidden pane's rows are there to click", (await page.locator(".work-cell.practising").count()) === 3);
+check("and none of its text is drawn", (await page.locator(".work-cell.practising").allInnerTexts()).every((t) => t.trim() === ""));
 await page.getByRole("button", { name: "Original (Russian), row 1" }).click();
 check("clicking a hidden row reveals just that row", (await page.locator(".work-cell.practising").count()) === 2);
 

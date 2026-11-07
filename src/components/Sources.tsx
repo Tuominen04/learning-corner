@@ -258,18 +258,9 @@ export function Sources({ onOpenDocument }: { onOpenDocument: (id: string) => vo
                     {describe(source)}
                   </span>
                 </div>
-                <span className="source-actions">
-                  {/* Not hidden until hover, unlike Edit and Delete. "Which of these am I
-                      actually using" is a question you ask of the whole list, by looking down
-                      it — the same reason the PDF marker stays visible. */}
-                  <button
-                    className="ghost used-in"
-                    aria-expanded={source.id ? opened.has(source.id) : false}
-                    title="Which documents cite this"
-                    onClick={() => toggleUses(source)}
-                  >
-                    Used in
-                  </button>
+                {/* A column of its own, straight after the title, so the markers line up down
+                    the list — and empty where a source has no paper, so the actions do too. */}
+                <span className="source-paper">
                   {source.file && (
                     // Reading the paper is the point of keeping it, so it is one click from
                     // the list rather than something you go into an edit form to reach.
@@ -283,6 +274,19 @@ export function Sources({ onOpenDocument }: { onOpenDocument: (id: string) => vo
                       PDF
                     </button>
                   )}
+                </span>
+                <span className="source-actions">
+                  {/* Not hidden until hover, unlike Edit and Delete. "Which of these am I
+                      actually using" is a question you ask of the whole list, by looking down
+                      it — the same reason the PDF marker stays visible. */}
+                  <button
+                    className="ghost used-in"
+                    aria-expanded={source.id ? opened.has(source.id) : false}
+                    title="Which documents cite this"
+                    onClick={() => toggleUses(source)}
+                  >
+                    Used in
+                  </button>
                   <button className="ghost" onClick={() => setEditing(source)}>
                     Edit
                   </button>

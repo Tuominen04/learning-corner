@@ -111,7 +111,11 @@ export function SourceForm({
     required.map(fieldToEditable).filter((f): f is Editable => f !== null),
   );
   const offered = fieldsFor(source.type);
-  const shown = extras ? offered : offered.filter((f) => requiredEditables.has(f));
+  // A field with something in it is never folded away: hiding the extras must not hide what
+  // somebody already typed.
+  const shown = extras
+    ? offered
+    : offered.filter((f) => requiredEditables.has(f) || (source[f] ?? "") !== "");
   const hidden = offered.length - shown.length;
 
   function set<K extends keyof Source>(key: K, value: Source[K]) {
@@ -214,7 +218,6 @@ export function SourceForm({
 
       <Contributors
         contributors={source.contributors}
-        needed={required.includes("authors")}
         onChange={setContributor}
         onAdd={(kind) =>
           setSource((s) => ({ ...s, contributors: [...s.contributors, emptyContributor(kind)] }))
@@ -281,6 +284,11 @@ export function SourceForm({
       {hidden > 0 && !extras && (
         <button className="ghost" onClick={() => setExtras(true)}>
           Show {hidden} more field{hidden === 1 ? "" : "s"}
+        </button>
+      )}
+      {extras && (
+        <button className="ghost" onClick={() => setExtras(false)}>
+          Show fewer fields
         </button>
       )}
 
@@ -393,15 +401,16 @@ export function SourceForm({
   );
 }
 
+// Not marked as needed even where APA 7 names an author first: a source with nobody named is
+// still cited — by its title — so the mark only made an optional box look compulsory. Saving
+// without anyone still says the source is incomplete, as before.
 function Contributors({
   contributors,
-  needed,
   onChange,
   onAdd,
   onRemove,
 }: {
   contributors: Contributor[];
-  needed: boolean;
   onChange: (index: number, next: Contributor) => void;
   onAdd: (kind: "person" | "group") => void;
   onRemove: (index: number) => void;
@@ -409,7 +418,7 @@ function Contributors({
   return (
     <div className="contributors">
       <span className="field-label">
-        Who made it{needed && <em> · needed</em>}
+        Who made it
       </span>
 
       {contributors.length === 0 && (

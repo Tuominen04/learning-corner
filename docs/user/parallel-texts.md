@@ -2,7 +2,7 @@
 
 > **Audience:** People using Learning Corner
 > **Status:** Implemented
-> **Last reviewed:** 2026-10-31
+> **Last reviewed:** 2026-11-07
 
 For reading something in a language you are still learning: the original, how it is
 pronounced, and what it means — lined up, on screen together, in whatever combination helps
@@ -135,8 +135,8 @@ it, is often the whole question.
 
 ## Practising
 
-Choose **Hide** on a pane to test yourself: its text is blurred, and clicking a row reveals
-just that row. **Show** brings the whole pane back. Hide the pronunciation and try to
+Choose **Hide** on a pane to test yourself: its text disappears, leaving an outline where each
+row was, and clicking a row reveals just that row. **Show** brings the whole pane back. Hide the pronunciation and try to
 read aloud; hide the translation and try to understand; hide the original and try to
 reconstruct it.
 

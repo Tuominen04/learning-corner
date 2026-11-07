@@ -187,7 +187,8 @@ export function WorkView({
         type="button"
         className={classes.join(" ")}
         key={key}
-        aria-label={`${editionName(edition)}, row ${row}`}
+        aria-label={`${editionName(edition)}, row ${row}${hidden ? ", hidden" : ""}`}
+        title={hidden ? "Click to reveal this row" : undefined}
         onClick={() => {
           setSelected(row);
           if (hidden) {
@@ -198,7 +199,8 @@ export function WorkView({
           setEditing({ edition: edition.id, row, text: rowText(lines) });
         }}
       >
-        {lines === undefined ? (
+        {/* Hidden to practise: nothing drawn, so there is nothing to read through. */}
+        {hidden ? null : lines === undefined ? (
           <span className="beyond-end">—</span>
         ) : lines.length === 0 ? (
           <span className="empty-row" title="Deliberately empty — a ~ in the file">
