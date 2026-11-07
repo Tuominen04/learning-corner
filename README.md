@@ -95,7 +95,11 @@ writes your library — [learning-corner-engine](https://github.com/Tuominen04/l
 
 ## Status
 
-**0.21.0 adds Milestone 3: parallel texts.** A work's original, pronunciations and translations
+**0.22.0 tidies the screens.** Everything you can click now looks clickable; backing up,
+bringing back and switching library are in a menu at the top left; and a translation's language
+can be put right after it is added.
+
+**0.21.0 added Milestone 3: parallel texts.** A work's original, pronunciations and translations
 lined up row by row, side by side or stacked, with notes, a chorus translated once, and panes
 you can hide to test yourself.
 
