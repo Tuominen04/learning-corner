@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   engine,
   EngineFailure,
+  shell,
   type EditionContents,
   type EditionKind,
   type ResegmentPlan,
@@ -91,6 +92,34 @@ export function WorkView({
       document.removeEventListener("keydown", escape);
     };
   }, []);
+
+  // The panes this work was showing when it was last left, as this computer remembers them.
+  // A choice made before the answer arrives wins; an edition no longer in the work is ignored.
+  const panesChosen = useRef(false);
+  useEffect(() => {
+    let live = true;
+    shell
+      .remembered()
+      .then((kept) => {
+        if (!live || panesChosen.current) return;
+        const hidden = kept.hidden_panes[initial.id] ?? [];
+        setHiddenPanes(new Set(hidden.filter((id) => initial.editions.some((e) => e.id === id))));
+      })
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [initial]);
+
+  function togglePane(id: string) {
+    panesChosen.current = true;
+    const next = new Set(hiddenPanes);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setHiddenPanes(next);
+    const kept = work.editions.map((e) => e.id).filter((e) => next.has(e));
+    void shell.rememberHiddenPanes(work.id, kept).catch(() => {});
+  }
 
   useEffect(() => {
     engine.source
@@ -444,14 +473,7 @@ export function WorkView({
             <input
               type="checkbox"
               checked={!hiddenPanes.has(e.id)}
-              onChange={() =>
-                setHiddenPanes((was) => {
-                  const next = new Set(was);
-                  if (next.has(e.id)) next.delete(e.id);
-                  else next.add(e.id);
-                  return next;
-                })
-              }
+              onChange={() => togglePane(e.id)}
             />
             {editionName(e)}
           </label>

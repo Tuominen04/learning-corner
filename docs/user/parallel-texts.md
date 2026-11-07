@@ -70,6 +70,9 @@ The pane selector at the top lists every edition of the work. Tick the ones you 
 - **Original + translation** — for meaning.
 - **Original + pronunciation + Finnish + English** — for taking a text apart properly.
 
+The app remembers your choice for each work on this computer, and the work opens with the same
+panes next time. An edition you add later starts out showing.
+
 Two layouts:
 
 - **Side by side** — editions as columns. Best on a wide screen, and best for comparing two

@@ -72,6 +72,11 @@ await page.addInitScript(() => {
           work.editions.splice(args.position - 1, 0, moved);
           return answer();
         }
+        case "library_remembered":
+          return { backup: null, hidden_panes: window.__hidden ?? {} };
+        case "remember_hidden_panes":
+          window.__hidden = { ...(window.__hidden ?? {}), [args.work]: args.editions };
+          return null;
         case "work_split": {
           const rows = edition(args.edition).rows;
           const rest = rows[args.row - 1].splice(args.line - 1);
@@ -216,6 +221,18 @@ await page.waitForFunction(() => document.querySelectorAll(".work-cell").length 
 const splitArgs = (await calls("work_split")).at(-1)?.args;
 check("the split is asked for before line 2", splitArgs?.row === 1 && splitArgs?.line === 2, JSON.stringify(splitArgs));
 check("and the rest of the row moves down as one row", (await page.getByRole("button", { name: "Finnish translation, row 2" }).innerText()).includes("kolme"));
+
+// The panes showing are remembered: hide one, leave, come back, and it is still hidden.
+await page.getByRole("checkbox", { name: "Pronunciation" }).uncheck();
+const hiddenSent = (await calls("remember_hidden_panes")).at(-1)?.args;
+check("hiding a pane is remembered for this work", hiddenSent?.work === "01J9WORK0000000000000000AA" && hiddenSent?.editions.length === 1, JSON.stringify(hiddenSent));
+await page.getByRole("button", { name: "← Works" }).click();
+await page.locator(".work-item").click();
+await page.locator(".pane-head").first().waitFor();
+await page.waitForFunction(() => document.querySelectorAll(".pane-head").length === 2, null, { timeout: 3000 }).catch(() => {});
+check("and opened again, it is still hidden", (await page.locator(".pane-head").count()) === 2 && !(await page.getByRole("checkbox", { name: "Pronunciation" }).isChecked()));
+await page.getByRole("checkbox", { name: "Pronunciation" }).check();
+check("showing it again forgets it", JSON.stringify((await calls("remember_hidden_panes")).at(-1)?.args?.editions) === "[]");
 
 await browser.close();
 finish();
