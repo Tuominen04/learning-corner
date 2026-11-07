@@ -1056,6 +1056,16 @@ button.danger-text, .ghost.danger-text { color: var(--error); }
 .split-at { display: inline-flex; align-items: center; gap: 0.1rem; }
 .row-tools { display: flex; flex-wrap: wrap; gap: 0.2rem 0.4rem; align-items: center; font-size: 0.85em; padding: 0.3rem 0.5rem; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); }
 
+/* Scrolling separately: a column per pane, each its own scroll, as tall as the view allows. */
+.work-separate { margin-top: 0.8rem; }
+.work-separate > .row-tools-wrap { margin: 0 0 0.6rem; }
+.work-columns { display: grid; gap: 0 0.6rem; }
+.work-column { min-width: 0; display: flex; flex-direction: column; }
+.work-column .pane-head { position: static; }
+.column-rows { position: relative; overflow-y: auto; max-height: calc(100vh - 16rem); min-height: 12rem; padding-right: 0.2rem; }
+.column-row { display: grid; grid-template-columns: 2rem 1fr; gap: 0 0.3rem; margin-bottom: 1px; }
+.column-row .row-marks { padding-top: 0.35rem; }
+.column-row.selected .work-cell:not(.unaligned) { background: #22252f; border-color: #3a3e4c; }
 .work-stacked { margin-top: 0.8rem; }
 .stacked-heads { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
 .stacked-heads .pane-head { position: static; border: none; }
