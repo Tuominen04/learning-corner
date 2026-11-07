@@ -24,7 +24,9 @@ that fails you on the day the app will not start.
 1. Plug in the drive.
 2. Open the menu (☰) at the top left, choose **Back up…**, then **Choose a folder…**.
 3. The first time, pick an empty folder on the drive. After that, pick the same folder each
-   time — the app recognises its own copy, and refuses a folder holding something else.
+   time — the app recognises its own copy, and refuses a folder holding something else. The
+   folder picker opens at the folder this library was last backed up to or brought back from,
+   when that drive is plugged in.
 4. It shows you what it is about to do — *142 files to copy to the drive, nothing to remove* —
    and the files it means. Nothing is written until you choose **Back up**.
 

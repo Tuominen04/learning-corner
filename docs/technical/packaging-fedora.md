@@ -2,7 +2,7 @@
 
 > **Audience:** People building and releasing Learning Corner
 > **Status:** In progress — M0 implemented
-> **Last reviewed:** 2026-10-17
+> **Last reviewed:** 2026-11-07
 
 Fedora is the first target ([ADR 0001](adr/0001-tauri-rust-stack.md)). Windows and macOS come
 after the Linux build is solid, and are packaging work rather than a rewrite.
@@ -56,7 +56,10 @@ opening it on another machine needs nothing else.
 the user a file-picker dialog and nothing more.
 
 The file is `recent-libraries.toml`: the ten libraries opened most recently, each with its path,
-its name, and when it was opened. Renaming a library renames it here too, without moving it up
+its name, and when it was opened — and two conveniences of this computer's, when there are any:
+the folder it was last backed up to or brought back from (`backup`), which the backup panel's
+folder dialog opens at while that folder is there, and the panes hidden in each of its works
+(`hidden_panes`, edition ids by work id). Opening a library again keeps both. Renaming a library renames it here too, without moving it up
 the list, and if its folder followed the new name the entry follows the folder. The shell reads
 and writes it and the engine never sees it —
 the list is about this computer, not about any library. Everything else follows from its being

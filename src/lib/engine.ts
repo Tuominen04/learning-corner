@@ -27,6 +27,7 @@ import type { LibraryFolder } from "./bindings/LibraryFolder";
 import type { LibraryStatus } from "./bindings/LibraryStatus";
 import type { Locator } from "./bindings/Locator";
 import type { RecentLibrary } from "./bindings/RecentLibrary";
+import type { LibraryRemembered } from "./bindings/LibraryRemembered";
 import type { RenamedLibrary } from "./bindings/RenamedLibrary";
 import type { Role } from "./bindings/Role";
 import type { Keep } from "./bindings/Keep";
@@ -73,6 +74,7 @@ export type {
   LibraryStatus,
   Locator,
   RecentLibrary,
+  LibraryRemembered,
   RenamedLibrary,
   Role,
   SavedSource,
@@ -397,6 +399,13 @@ export const shell = {
   recentLibraries: () => call<RecentLibrary[]>("recent_libraries"),
   /** Take a library off the list. The library itself is not touched. */
   forgetLibrary: (path: string) => call<void>("forget_library", { path }),
+  /** What this computer remembers about the open library: its backup folder, hidden panes. */
+  remembered: () => call<LibraryRemembered>("library_remembered"),
+  /** The open library was just backed up to, or brought back from, `folder`. */
+  rememberBackupFolder: (folder: string) => call<void>("remember_backup_folder", { folder }),
+  /** In the open library, `work` now hides `editions` — none, to show every pane. */
+  rememberHiddenPanes: (work: string, editions: string[]) =>
+    call<void>("remember_hidden_panes", { work, editions }),
   /**
    * Run `save` when the window is about to close, then let it close.
    *

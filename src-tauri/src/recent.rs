@@ -5,8 +5,12 @@
 //! follows from that. A list that cannot be read is an empty list, a list that cannot be
 //! written is the old list next time, and neither ever stops a library from opening.
 //!
-//! Nothing from inside a library is kept here — only where it is and what it was called.
+//! Nothing from inside a library is kept here — only where it is, what it was called, and two
+//! conveniences of this computer's: the folder it was last backed up to, and which panes each
+//! of its works was showing. Neither is the library's business: a drive's path means nothing
+//! on another computer, and a pane's being shown is not a change to back up.
 
+use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
@@ -24,8 +28,9 @@ const KEEP: usize = 10;
 const HEADER: &str = "\
 # The libraries this computer has opened, most recent first.
 #
-# A convenience only: deleting this file costs one folder dialog. Nothing in it is needed to
-# open a library, and nothing from inside any library is kept here.
+# A convenience only: deleting this file costs one folder dialog, the folder each library was
+# last backed up to, and which panes its works were showing. Nothing in it is needed to open a
+# library, and nothing from inside any library is kept here.
 
 ";
 
@@ -36,6 +41,19 @@ pub struct Entry {
     /// and still reads when the folder is on a drive that is not plugged in.
     pub name: String,
     pub opened: Timestamp,
+    /// The folder it was last backed up to or brought back from, on this computer.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub backup: Option<PathBuf>,
+    /// The editions hidden in each work, by work id. A work showing every pane is not listed.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub hidden_panes: BTreeMap<String, Vec<String>>,
+}
+
+/// What this computer remembers about one library, beyond where it is.
+#[derive(Debug, Default, Clone, PartialEq)]
+pub struct Remembered {
+    pub backup: Option<PathBuf>,
+    pub hidden_panes: BTreeMap<String, Vec<String>>,
 }
 
 #[derive(Debug, Default, Serialize, Deserialize)]
@@ -81,13 +99,20 @@ impl Recent {
 
         let path = fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf());
         let mut libraries = read(file);
-        libraries.retain(|entry| entry.path != path);
+        // What was remembered about it stays with it: opening is not forgetting.
+        let before = libraries.iter().position(|entry| entry.path == path);
+        let (backup, hidden_panes) = before
+            .map(|at| libraries.remove(at))
+            .map(|e| (e.backup, e.hidden_panes))
+            .unwrap_or_default();
         libraries.insert(
             0,
             Entry {
                 path,
                 name: name.to_string(),
                 opened: Timestamp::now(),
+                backup,
+                hidden_panes,
             },
         );
         libraries.truncate(KEEP);
@@ -122,6 +147,52 @@ impl Recent {
             .unwrap_or(at);
         libraries[at].path = to;
         libraries[at].name = name.to_string();
+        write(file, libraries)
+    }
+
+    /// What is remembered about the library at `path`; nothing, if it is not on the list.
+    pub fn remembered(&self, path: &Path) -> Remembered {
+        let path = fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf());
+        self.list()
+            .into_iter()
+            .find(|entry| entry.path == path)
+            .map(|e| Remembered {
+                backup: e.backup,
+                hidden_panes: e.hidden_panes,
+            })
+            .unwrap_or_default()
+    }
+
+    /// The library at `path` was just backed up to, or brought back from, `folder`.
+    pub fn backed_up(&self, path: &Path, folder: &Path) -> Result<()> {
+        let folder = fs::canonicalize(folder).unwrap_or_else(|_| folder.to_path_buf());
+        self.change(path, |entry| entry.backup = Some(folder))
+    }
+
+    /// In the library at `path`, `work` now hides `editions` — none, to show every pane.
+    pub fn panes_hidden(&self, path: &Path, work: &str, editions: Vec<String>) -> Result<()> {
+        self.change(path, |entry| {
+            if editions.is_empty() {
+                entry.hidden_panes.remove(work);
+            } else {
+                entry.hidden_panes.insert(work.to_string(), editions);
+            }
+        })
+    }
+
+    /// Change the entry for the library at `path`, in place. One not on the list is not put
+    /// there: what is remembered about a library goes with the library's place on the list.
+    fn change(&self, path: &Path, edit: impl FnOnce(&mut Entry)) -> Result<()> {
+        let file = self.file.lock().unwrap_or_else(|e| e.into_inner());
+        let Some(file) = file.as_deref() else {
+            return Ok(());
+        };
+        let path = fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf());
+        let mut libraries = read(file);
+        let Some(entry) = libraries.iter_mut().find(|entry| entry.path == path) else {
+            return Ok(());
+        };
+        edit(entry);
         write(file, libraries)
     }
 
@@ -348,6 +419,59 @@ mod tests {
         recent.opened(dir.path(), "Learning").unwrap();
         recent.forget(dir.path()).unwrap();
         assert!(recent.list().is_empty());
+    }
+
+    #[test]
+    fn a_backup_folder_and_hidden_panes_are_remembered_per_library() {
+        let (dir, recent, [learning, russian, _]) = setup();
+        recent.opened(&learning, "Learning").unwrap();
+        recent.opened(&russian, "Russian").unwrap();
+        let drive = dir.path().join("drive");
+        fs::create_dir(&drive).unwrap();
+
+        recent.backed_up(&learning, &drive).unwrap();
+        recent
+            .panes_hidden(&russian, "WORK", vec!["ED1".into(), "ED2".into()])
+            .unwrap();
+
+        let learned = recent.remembered(&learning);
+        assert_eq!(learned.backup, Some(fs::canonicalize(&drive).unwrap()));
+        assert!(learned.hidden_panes.is_empty());
+        let russian_now = recent.remembered(&russian);
+        assert_eq!(russian_now.backup, None);
+        assert_eq!(russian_now.hidden_panes["WORK"], ["ED1", "ED2"]);
+
+        // Showing every pane again forgets the work.
+        recent.panes_hidden(&russian, "WORK", vec![]).unwrap();
+        assert!(recent.remembered(&russian).hidden_panes.is_empty());
+    }
+
+    #[test]
+    fn what_is_remembered_survives_opening_again_and_renaming() {
+        let (dir, recent, [learning, russian, _]) = setup();
+        recent.opened(&learning, "Learning").unwrap();
+        recent.backed_up(&learning, dir.path()).unwrap();
+        recent
+            .panes_hidden(&learning, "WORK", vec!["ED".into()])
+            .unwrap();
+        recent.opened(&russian, "Russian").unwrap();
+        recent.opened(&learning, "Learning").unwrap();
+
+        let nutrition = dir.path().join("nutrition");
+        fs::rename(&learning, &nutrition).unwrap();
+        recent.renamed(&learning, &nutrition, "Nutrition").unwrap();
+
+        let kept = recent.remembered(&nutrition);
+        assert!(kept.backup.is_some());
+        assert_eq!(kept.hidden_panes["WORK"], ["ED"]);
+    }
+
+    #[test]
+    fn nothing_is_remembered_for_a_library_not_on_the_list() {
+        let (dir, recent, [learning, _, _]) = setup();
+        recent.backed_up(&learning, dir.path()).unwrap();
+        assert!(recent.list().is_empty());
+        assert_eq!(recent.remembered(&learning), Remembered::default());
     }
 
     #[test]

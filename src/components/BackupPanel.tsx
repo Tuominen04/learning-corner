@@ -5,6 +5,7 @@ import { canKeepBoth, described, size, summary, unanswered } from "../lib/backup
 import {
   engine,
   EngineFailure,
+  shell,
   type BackupAnswer,
   type BackupApplied,
   type BackupEntry,
@@ -66,9 +67,14 @@ export function BackupPanel({
 
   function chooseDrive() {
     void attempt(async () => {
+      // Where this library went last time, on this computer: the dialog opens there, or where
+      // it always did when the drive is not plugged in. Never a reason not to show the dialog.
+      const last =
+        mode === "restore" ? null : await shell.remembered().then((r) => r.backup, () => null);
       const drive = await openFolder({
         directory: true,
         multiple: false,
+        ...(last ? { defaultPath: last } : {}),
         title:
           mode === "backup"
             ? "Choose the folder to back up to — an empty one, or an earlier backup of this library"
@@ -120,6 +126,7 @@ export function BackupPanel({
           ? await engine.backup.apply(overwrite)
           : await engine.backup.restoreApply(answers);
       setApplied(done);
+      if (mode !== "restore") void shell.rememberBackupFolder(plan.drive_path).catch(() => {});
       onApplied(done, mode);
     });
   }

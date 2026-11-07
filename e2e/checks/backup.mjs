@@ -32,6 +32,11 @@ await page.addInitScript(() => {
           return [{ id: "01J8ZQ6A1M3P5R7T9V1X3Z5B70", name: "Protein", children: [], documents: [] }];
         case "plugin:dialog|open":
           return "/run/media/you/USB/learning";
+        case "library_remembered":
+          return { backup: window.__backupFolder ?? null, hidden_panes: {} };
+        case "remember_backup_folder":
+          window.__backupFolder = args.folder;
+          return null;
         case "backup_plan":
           return plan("backup", [
             { path: "topics/protein/what.md", outcome: "changed-in-library", action: "copy-to-drive", library: side, drive: side, drive_change: false },
@@ -64,6 +69,8 @@ await page.getByRole("button", { name: "Back up…" }).click();
 const panel = page.locator(".backup-panel");
 await panel.getByRole("button", { name: "Choose a folder…" }).click();
 await panel.locator("[role=status]").waitFor();
+const dialogs = () => calls("plugin:dialog|open").then((all) => all.map((c) => c.args.options?.defaultPath ?? null));
+check("never backed up from here, the dialog opens where it always did", (await dialogs())[0] === null, JSON.stringify(await dialogs()));
 check("the plan is summarised", (await panel.locator("[role=status]").innerText()).includes("2 files to copy to the drive, nothing to remove."));
 check("nothing is applied by planning", (await calls("backup_apply")).length === 0);
 const backUp = panel.getByRole("button", { name: "Back up", exact: true });
@@ -75,6 +82,7 @@ await backUp.click();
 await panel.getByText("Backed up:").waitFor();
 check("the shell is told to overwrite", (await calls("backup_apply")).at(-1)?.args?.overwrite === true);
 check("and where the replaced version was kept is shown", (await panel.innerText()).includes(".conflicts/"));
+check("the folder it went to is remembered", (await calls("remember_backup_folder")).at(-1)?.args?.folder === "/run/media/you/USB/learning");
 await panel.getByRole("button", { name: "Done" }).click();
 
 // Bring back: a file changed in both places needs an answer before anything is applied.
@@ -82,6 +90,7 @@ await page.getByRole("button", { name: "Library menu" }).click();
 await page.getByRole("button", { name: "Bring back…" }).click();
 await panel.getByRole("button", { name: "Choose a folder…" }).click();
 await panel.locator("[role=status]").waitFor();
+check("and the next dialog opens there", (await dialogs()).at(-1) === "/run/media/you/USB/learning", JSON.stringify(await dialogs()));
 const bringBack = panel.getByRole("button", { name: "Bring back from a drive" });
 check("bringing back waits for every answer", await bringBack.isDisabled());
 check("and says how many are waiting", (await panel.innerText()).includes("1 file needs an answer first."));
