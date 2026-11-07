@@ -334,18 +334,46 @@ export function WorkView({
             >
               Join to the row above
             </button>
-            <button
-              className="ghost"
-              disabled={busy || unsaved || (editingEdition.rows[row - 1]?.length ?? 0) < 2}
-              title="Make this row's last line a row of its own, moving this edition's later rows down"
-              onClick={() => {
-                const lines = editingEdition.rows[row - 1]?.length ?? 0;
+            {(() => {
+              // Two lines can only split one way, so it stays one button. More, and the
+              // question is where: everything from the chosen line on becomes the next row.
+              const lines = editingEdition.rows[row - 1] ?? [];
+              const split = (line: number) => {
                 setEditing(null);
-                void act((rev) => engine.work.split(work.id, editingEdition.id, row, lines, rev));
-              }}
-            >
-              Split off the last line
-            </button>
+                void act((rev) => engine.work.split(work.id, editingEdition.id, row, line, rev));
+              };
+              if (lines.length <= 2) {
+                return (
+                  <button
+                    className="ghost"
+                    disabled={busy || unsaved || lines.length < 2}
+                    title="Make this row's last line a row of its own, moving this edition's later rows down"
+                    onClick={() => split(2)}
+                  >
+                    Split off the last line
+                  </button>
+                );
+              }
+              // Buttons rather than a list to choose from: the tools must not take focus from
+              // the row being written, and a list box cannot open without taking it.
+              return (
+                <span className="split-at" role="group" aria-label="Split before line">
+                  <span className="tools-label">Split before line</span>
+                  {lines.slice(1).map((text, i) => (
+                    <button
+                      key={i + 2}
+                      className="ghost"
+                      disabled={busy || unsaved}
+                      aria-label={`Split before line ${i + 2}`}
+                      title={`A new row from line ${i + 2}: ${opening(text)}`}
+                      onClick={() => split(i + 2)}
+                    >
+                      {i + 2}
+                    </button>
+                  ))}
+                </span>
+              );
+            })()}
             <button
               className="ghost danger-text"
               disabled={busy || unsaved}
@@ -986,6 +1014,12 @@ function LanguagePicker({ value, onChange }: { value: string; onChange: (code: s
       )}
     </span>
   );
+}
+
+/** A line's first few words, enough to tell lines apart in a list. */
+function opening(line: string): string {
+  const words = line.trim().split(/\s+/);
+  return words.length > 6 ? `${words.slice(0, 6).join(" ")}…` : line.trim() || "(blank)";
 }
 
 export { LanguagePicker };

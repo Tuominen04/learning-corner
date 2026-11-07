@@ -47,9 +47,11 @@ it:
 - **Add a note** — see below.
 - **Same text as…** — for a chorus; see Songs.
 - For the edition you are writing in: **Mark empty here**, **Join to the row above**,
-  **Split off the last line**, and **Remove the row**. Removing a row takes it out of every
-  edition, so it waits until no other edition has text in it. The tools that move rows wait
-  until you have saved what you typed.
+  splitting, and **Remove the row**. A row of two lines offers **Split off the last line**; a
+  longer one offers **Split before line** with a button for each line, and everything from the
+  line you choose becomes the next row. Removing a row takes it out of every edition, so it
+  waits until no other edition has text in it. The tools that move rows wait until you have
+  saved what you typed.
 
 Each pane's **…** button is where you give an edition a label or a source, put right the
 language it is in, or remove it.

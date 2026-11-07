@@ -1053,6 +1053,7 @@ button.danger-text, .ghost.danger-text { color: var(--error); }
 .work-cell.practising:hover { border-color: var(--accent); background: transparent; }
 .cell-editor { width: 100%; resize: vertical; font: inherit; line-height: 1.5; border-color: var(--accent); }
 .row-tools-wrap { margin: 0.1rem 0 0.6rem; }
+.split-at { display: inline-flex; align-items: center; gap: 0.1rem; }
 .row-tools { display: flex; flex-wrap: wrap; gap: 0.2rem 0.4rem; align-items: center; font-size: 0.85em; padding: 0.3rem 0.5rem; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); }
 
 .work-stacked { margin-top: 0.8rem; }
