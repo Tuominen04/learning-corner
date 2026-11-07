@@ -149,6 +149,7 @@ check("and the name stays what it was", (await heading()) === "Nutrition");
 
 // ---- the start screen hears about it --------------------------------------------------
 
+await page.getByRole("button", { name: "Library menu" }).click();
 await page.getByRole("button", { name: "Switch library" }).click();
 await page.waitForSelector(".picker .recent");
 const listedName = await page.locator(".recent-library strong").first().innerText();

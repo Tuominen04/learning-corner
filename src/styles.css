@@ -7,6 +7,9 @@
   --page: #f4f1ea;
   --ink: #23242a;
   --ink-soft: #5d6070;
+  /* What can be clicked: the body text's colour, so an action never reads as a caption or as
+     switched off. Dimmed only when it is actually disabled. */
+  --action: #e6e4de;
   --line: #2b2e38;
   --accent: #c68a4a;
   --warning: #d8a24a;
@@ -38,11 +41,12 @@ button.secondary { background: transparent; }
 button.ghost {
   border: none;
   background: none;
-  color: var(--ink-soft);
+  color: var(--action);
   padding: 0.1rem 0.35rem;
   font-size: 0.8em;
 }
 button.ghost:hover { color: var(--accent); }
+button.ghost:disabled:hover { color: var(--action); }
 
 /* An example of what goes in a box, never something already in it: dimmed well below typed
    text, so a form shows at a glance which boxes are still empty. */
@@ -125,7 +129,34 @@ aside {
    Switch button is, and a pencil drawn over a button is two controls in one place. */
 .library-name .pencil { position: static; flex: none; margin-left: 0.2rem; }
 .library-name .rename-input { font-weight: 600; }
-.library-head .switch { flex: none; }
+/* The library menu: a button at the far left of the sidebar's head, its list dropping over
+   whatever is below it rather than pushing the sidebar down. */
+.library-menu { position: relative; flex: none; }
+.library-menu .menu-toggle { font-size: 1.05em; padding: 0.15rem 0.4rem; }
+.library-menu .menu-toggle[aria-expanded="true"] { color: var(--accent); }
+.menu-list {
+  position: absolute;
+  top: calc(100% + 0.3rem);
+  left: 0;
+  z-index: 10;
+  min-width: 12rem;
+  list-style: none;
+  margin: 0;
+  padding: 0.3rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 0.6rem 1.6rem rgba(0, 0, 0, 0.55);
+}
+.menu-list button.ghost {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font-size: 0.92em;
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
+}
+.menu-list button.ghost:hover:not(:disabled) { background: #23262f; }
 .folder-note { color: var(--ink-soft); font-size: 0.9em; margin: 0 0 1rem; }
 .counts { font-size: 0.82em; color: var(--ink-soft); }
 
@@ -363,7 +394,7 @@ button.hit:hover { background: #23262f; }
 }
 .toolbar { display: flex; flex-wrap: wrap; gap: 0.3rem; }
 .toolbar .levels { display: flex; gap: 0.3rem; }
-button.tool { padding: 0.25rem 0.6rem; font-size: 0.85em; }
+button.tool { padding: 0.25rem 0.6rem; font-size: 0.85em; color: var(--action); }
 
 /* The heading you are standing in, so the buttons say what the cursor is in as well as what
    it could become. Dark on the accent rather than light: this is the one button that is
@@ -435,7 +466,7 @@ button.tool.on { background: var(--accent); color: var(--ground); border-color: 
 button.small { padding: 0.2rem 0.5rem; font-size: 0.85em; }
 
 /* The one marker in the source list that says a source has its paper, not just its details. */
-.paper-open { color: var(--accent); font-weight: 600; letter-spacing: 0.04em; font-size: 0.8em; }
+button.ghost.paper-open, .paper-open { color: var(--accent); font-weight: 600; letter-spacing: 0.04em; font-size: 0.8em; }
 .paper-open:hover { text-decoration: underline; }
 
 /* ---- reference list ---- */
@@ -589,20 +620,23 @@ button.view.selected { background: #2a2d38; color: #fff; border-color: var(--acc
 
 .source-list { list-style: none; margin: 1.2rem 0; padding: 0; }
 .source-list li { border-bottom: 1px solid var(--line); }
+/* Title, then the PDF marker, then the actions — each in a column of its own, so the markers
+   line up down the list whether or not a row has its paper. */
 .source-row {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 2.6rem auto;
   align-items: baseline;
   gap: 1rem;
   padding: 0.7rem 0;
 }
+.source-paper { justify-self: start; }
 .source-row strong { display: block; }
 .source-meta { font-size: 0.82em; color: var(--ink-soft); }
 .source-actions { display: flex; gap: 0.2rem; align-items: center; white-space: nowrap; }
 /* Edit and Delete are actions, and stay out of the way until the row is under the pointer.
    The PDF marker is not an action — it is the answer to "which of these do I actually have
    the paper for", which is a question you ask by scanning the list, never by hovering it. */
-.source-actions > :not(.paper-open):not(.used-in) { opacity: 0; }
+.source-actions > :not(.used-in) { opacity: 0; }
 .source-row:hover .source-actions > * { opacity: 1; }
 
 /* ---- where a source is used ---- */
@@ -656,7 +690,8 @@ p.uses { font-size: 0.88em; max-width: 42rem; }
   color: var(--ink-soft);
   margin: 1.5rem 0 0.3rem;
 }
-.field em { font-style: normal; color: var(--warning); }
+/* "needed", the same wherever a label says it: under a field of its own or a group's label. */
+.field em, .field-label em { font-style: normal; color: var(--warning); }
 .hint { font-size: 0.8em; color: var(--ink-soft); margin: 0.25rem 0 0; }
 .field .hint { margin-top: 0.3rem; }
 
@@ -685,7 +720,7 @@ p.uses { font-size: 0.88em; max-width: 42rem; }
 }
 
 .appraisal { margin: 1.5rem 0; }
-.appraisal summary { cursor: pointer; font-size: 0.85em; color: var(--ink-soft); }
+.appraisal summary { cursor: pointer; font-size: 0.85em; color: var(--action); }
 .appraisal summary:hover { color: var(--accent); }
 
 /* ---- deleting ---- */
@@ -952,7 +987,6 @@ button.cite-option.chosen { background: #2a2d38; color: #fff; }
 }
 
 /* Back up, bring back, restore. */
-.backup-buttons { margin-top: 0.5rem; gap: 0.3rem; flex-wrap: wrap; }
 .backup-panel { max-width: 46rem; }
 .backup-panel .where { font-size: 0.9em; color: var(--ink-soft); overflow-wrap: anywhere; }
 .backup-panel .drive-changes { border-left: 3px solid var(--warning); padding: 0.2rem 0 0.4rem 0.8rem; margin: 1rem 0; }
@@ -1013,8 +1047,10 @@ button.danger-text, .ghost.danger-text { color: var(--error); }
 .work-cell .empty-row::before { content: "~ "; }
 .work-cell.unaligned { border-left: 2px dashed var(--warning); }
 .work-cell.beyond .beyond-end { color: var(--line); }
-.work-cell.practising { filter: blur(5px); user-select: none; }
-.work-cell.practising:hover { filter: blur(4px); }
+/* Hidden to practise: the text is not drawn at all, only the place where it is — a dashed
+   outline to click. Nothing to squint through. */
+.work-cell.practising { border: 1px dashed var(--line); }
+.work-cell.practising:hover { border-color: var(--accent); background: transparent; }
 .cell-editor { width: 100%; resize: vertical; font: inherit; line-height: 1.5; border-color: var(--accent); }
 .row-tools-wrap { margin: 0.1rem 0 0.6rem; }
 .row-tools { display: flex; flex-wrap: wrap; gap: 0.2rem 0.4rem; align-items: center; font-size: 0.85em; padding: 0.3rem 0.5rem; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); }

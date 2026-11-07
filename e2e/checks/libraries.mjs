@@ -188,6 +188,7 @@ const entry = (path, name, found = true, opened = new Date().toISOString()) => (
   await page.keyboard.press("Control+End");
   await page.keyboard.type(" LAST WORDS");
   // Inside the pause the editor waits for before it writes.
+  await page.getByRole("button", { name: "Library menu" }).click();
   await page.getByRole("button", { name: "Switch library" }).click();
   await page.waitForSelector(".picker .recent");
 
@@ -250,6 +251,7 @@ const entry = (path, name, found = true, opened = new Date().toISOString()) => (
 
   // ---- forgetting one ---------------------------------------------------------
 
+  await page.getByRole("button", { name: "Library menu" }).click();
   await page.getByRole("button", { name: "Switch library" }).click();
   await page.waitForSelector(".picker .recent");
   await page.getByRole("button", { name: "Take “Learning” off this list" }).click();
@@ -313,6 +315,7 @@ const entry = (path, name, found = true, opened = new Date().toISOString()) => (
     window.__failWrites = true;
   });
   await page.keyboard.type(" CANNOT BE WRITTEN");
+  await page.getByRole("button", { name: "Library menu" }).click();
   await page.getByRole("button", { name: "Switch library" }).click();
   // Either the refusal appears, or the start screen does — which is the failure being looked for.
   await page.waitForSelector("main > p.error, .picker", { timeout: 5000 });
@@ -335,6 +338,7 @@ const entry = (path, name, found = true, opened = new Date().toISOString()) => (
     "and the reason beside them",
     (await page.locator(".editor").innerText()).includes("the drive has gone"),
   );
+  await page.getByRole("button", { name: "Library menu" }).click();
   await page.getByRole("button", { name: "Switch library" }).click();
   await page.waitForSelector(".picker");
   check(

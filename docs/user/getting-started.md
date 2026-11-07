@@ -2,7 +2,7 @@
 
 > **Audience:** People using Learning Corner
 > **Status:** Implemented
-> **Last reviewed:** 2026-10-29
+> **Last reviewed:** 2026-11-07
 
 This page takes you from nothing to a first document with a source behind it. Fifteen
 minutes, and you never need to be online.
@@ -99,7 +99,7 @@ Full detail in [Sources and citations](sources-and-citations.md).
 
 ## 6. Back it up
 
-Plug in an external drive and choose **Back up…**, under the library's name. The app copies your library onto the drive
+Plug in an external drive and choose **Back up…** from the menu (☰) at the top left. The app copies your library onto the drive
 as ordinary folders and files — nothing packed, nothing encrypted, nothing you need this app
 to read again.
 

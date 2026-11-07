@@ -59,6 +59,7 @@ await page.goto(URL, { waitUntil: "networkidle" });
 await page.waitForSelector(".tree");
 
 // Back up: the plan first, and the drive's change held back until it is agreed to.
+await page.getByRole("button", { name: "Library menu" }).click();
 await page.getByRole("button", { name: "Back up…" }).click();
 const panel = page.locator(".backup-panel");
 await panel.getByRole("button", { name: "Choose a folder…" }).click();
@@ -77,6 +78,7 @@ check("and where the replaced version was kept is shown", (await panel.innerText
 await panel.getByRole("button", { name: "Done" }).click();
 
 // Bring back: a file changed in both places needs an answer before anything is applied.
+await page.getByRole("button", { name: "Library menu" }).click();
 await page.getByRole("button", { name: "Bring back…" }).click();
 await panel.getByRole("button", { name: "Choose a folder…" }).click();
 await panel.locator("[role=status]").waitFor();
@@ -94,6 +96,7 @@ check("the drive is named by the plan, not the interface", (await calls("restore
 
 // Cancelling forgets the plan in the shell.
 await panel.getByRole("button", { name: "Done" }).click();
+await page.getByRole("button", { name: "Library menu" }).click();
 await page.getByRole("button", { name: "Back up…" }).click();
 await panel.getByRole("button", { name: "Choose a folder…" }).click();
 await panel.locator("[role=status]").waitFor();

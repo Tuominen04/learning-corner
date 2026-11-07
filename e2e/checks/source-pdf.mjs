@@ -66,8 +66,13 @@ check("PDF document is in the list of kinds, after Report",
   JSON.stringify(kinds) === JSON.stringify(["Book", "Chapter in a book", "Journal article", "Web page", "Video", "Audio", "Report", "PDF document"]),
   JSON.stringify(kinds));
 
-// A book still needs somebody named.
+// A book still needs somebody named — and says so the way every other field does.
 check("a book: who made it is needed", (await who()).includes("needed"), await who());
+const neededStyle = await form.locator(".contributors .field-label em").evaluate((e) => {
+  const s = getComputedStyle(e);
+  return `${s.fontStyle} ${s.color}`;
+});
+check("in the same upright amber as the others", neededStyle === "normal rgb(216, 162, 74)", neededStyle);
 
 // A web page need not name anybody.
 await chooseType("Web page");
@@ -84,6 +89,7 @@ check("a date is asked for", (await form.locator(".date-field > .field-label").f
 check("and three more fields are offered", (await page.getByRole("button", { name: "Show 3 more fields" }).count()) === 1);
 check("no date you read it: a document does not change", !(await form.innerText()).includes("When you read it"));
 await page.getByRole("button", { name: "Show 3 more fields" }).click();
+check("and they can be folded away again", (await page.getByRole("button", { name: "Show fewer fields" }).count()) === 1);
 const offered = (await form.locator("label.field > span").allInnerTexts()).map((t) => t.replace(" · needed", "").trim());
 check("who published it, its DOI and its web address", ["Publisher", "DOI", "Web address"].every((f) => offered.includes(f)) && !offered.includes("Site name") && !offered.includes("Edition"),
   JSON.stringify(offered));

@@ -300,14 +300,17 @@ export const engine = {
     /** Empty text gives the edition an empty row for every row, to fill in one by one. */
     addEdition: (work: string, edition: NewEdition, text: string, revision: WorkRevision) =>
       call<Work>("work_add_edition", { work, edition, text, revision }),
+    /** A translation given another language has its file renamed to match. */
     updateEdition: (
       work: string,
       edition: string,
+      language: string,
       label: string | null,
       scheme: string | null,
       source: string | null,
       revision: WorkRevision,
-    ) => call<Work>("work_update_edition", { work, edition, label, scheme, source, revision }),
+    ) =>
+      call<Work>("work_update_edition", { work, edition, language, label, scheme, source, revision }),
     /** Put an edition at `position` among the panes, counting from 1. */
     moveEdition: (work: string, edition: string, position: number, revision: WorkRevision) =>
       call<Work>("work_move_edition", { work, edition, position, revision }),
