@@ -753,11 +753,15 @@ pub fn work_add_edition(
     })
 }
 
+// One argument per thing the edition's form asks, as the frontend names them; a struct would
+// only move the same list one level down.
 #[tauri::command]
+#[allow(clippy::too_many_arguments)]
 pub fn work_update_edition(
     state: State<'_, OpenLibrary>,
     work: String,
     edition: String,
+    language: String,
     label: Option<String>,
     scheme: Option<String>,
     source: Option<String>,
@@ -767,6 +771,7 @@ pub fn work_update_edition(
         Ok(e.work_update_edition(
             id(&work)?,
             id(&edition)?,
+            language,
             label,
             scheme,
             maybe_id(source.as_deref())?,

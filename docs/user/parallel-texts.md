@@ -51,7 +51,8 @@ it:
   edition, so it waits until no other edition has text in it. The tools that move rows wait
   until you have saved what you typed.
 
-Each pane's **…** button is where you give an edition a label or a source, or remove it.
+Each pane's **…** button is where you give an edition a label or a source, put right the
+language it is in, or remove it.
 
 Two translations into the same language are welcome — two translators often disagree, and
 that is worth seeing. Give each a label, such as the translator's name and year, so you can

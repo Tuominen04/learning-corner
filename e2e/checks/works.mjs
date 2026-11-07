@@ -72,6 +72,10 @@ await page.addInitScript(() => {
           work.editions.splice(args.position - 1, 0, moved);
           return answer();
         }
+        case "work_update_edition": {
+          Object.assign(edition(args.edition), { language: args.language, label: args.label, scheme: args.scheme, source: args.source });
+          return answer();
+        }
         case "work_insert_row":
           for (const e of work.editions) e.rows.splice(args.row - 1, 0, []);
           return answer();
@@ -147,6 +151,22 @@ await page.waitForFunction(() => document.querySelector(".pane-head strong")?.te
 const moved = (await calls("work_move_edition")).at(-1)?.args;
 check("a pane moves a place to the left", moved?.position === 1, JSON.stringify(moved));
 check("the first pane cannot move further left", await page.getByRole("button", { name: "Move Finnish translation left" }).isDisabled());
+
+// A translation's language can be put right afterwards, from the same question as adding it.
+await page.locator(".pane-head", { hasText: "Finnish translation" }).getByRole("button", { name: "…" }).click();
+const details = page.locator(".edition-form");
+check("its details ask what it is translated into", (await details.innerText()).includes("Translated into"));
+check("starting from the language it has", (await details.getByRole("combobox", { name: "Language" }).inputValue()) === "fi");
+await details.getByRole("combobox", { name: "Language" }).selectOption("en");
+await details.getByRole("button", { name: "Save" }).click();
+await page.locator(".pane-head", { hasText: "English translation" }).waitFor();
+const changed = (await calls("work_update_edition")).at(-1)?.args;
+check("the new language is what is saved", changed?.language === "en", JSON.stringify(changed));
+// And back, so the rest reads as before.
+await page.locator(".pane-head", { hasText: "English translation" }).getByRole("button", { name: "…" }).click();
+await details.getByRole("combobox", { name: "Language" }).selectOption("fi");
+await details.getByRole("button", { name: "Save" }).click();
+await page.locator(".pane-head", { hasText: "Finnish translation" }).waitFor();
 
 // A pronunciation reads in italics, set apart from the meaning.
 await page.getByRole("button", { name: "Add pronunciation" }).click();

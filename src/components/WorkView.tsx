@@ -715,8 +715,8 @@ function WorkPanel({
           sources={sources}
           busy={busy}
           onCancel={onClose}
-          onSave={(label, scheme, source) =>
-            void act((rev) => engine.work.updateEdition(work.id, e.id, label, scheme, source, rev)).then((ok) => ok && onClose())
+          onSave={(language, label, scheme, source) =>
+            void act((rev) => engine.work.updateEdition(work.id, e.id, language, label, scheme, source, rev)).then((ok) => ok && onClose())
           }
           onRemove={
             e.kind === "original"
@@ -1076,15 +1076,27 @@ function EditionDetails({
   sources: Source[];
   busy: boolean;
   onCancel: () => void;
-  onSave: (label: string | null, scheme: string | null, source: string | null) => void;
+  onSave: (language: string, label: string | null, scheme: string | null, source: string | null) => void;
   onRemove: (() => void) | null;
 }) {
+  const [language, setLanguage] = useState(edition.language);
   const [label, setLabel] = useState(edition.label ?? "");
   const [scheme, setScheme] = useState(edition.scheme ?? "");
   const [source, setSource] = useState(edition.source ?? "");
   return (
     <div className="confirm edition-form">
       <h3>{editionName(edition)}</h3>
+      {/* The same question as when it was added, so a wrong language can be put right. */}
+      <label className="field">
+        <span>
+          {edition.kind === "translation"
+            ? "Translated into"
+            : edition.kind === "pronunciation"
+              ? "Language it is the pronunciation of"
+              : "Language"}
+        </span>
+        <LanguagePicker value={language} onChange={setLanguage} />
+      </label>
       <label className="field">
         <span>Label (optional)</span>
         <input value={label} onChange={(e) => setLabel(e.target.value)} />
@@ -1098,9 +1110,9 @@ function EditionDetails({
       <SourceSelect sources={sources} value={source} onChange={setSource} />
       <div className="row">
         <button
-          disabled={busy}
+          disabled={busy || language.trim() === ""}
           onClick={() =>
-            onSave(label.trim() || null, edition.kind === "pronunciation" ? scheme.trim() || null : null, source || null)
+            onSave(language.trim(), label.trim() || null, edition.kind === "pronunciation" ? scheme.trim() || null : null, source || null)
           }
         >
           Save
