@@ -218,6 +218,7 @@ export function SourceForm({
 
       <Contributors
         contributors={source.contributors}
+        needed={required.includes("authors")}
         onChange={setContributor}
         onAdd={(kind) =>
           setSource((s) => ({ ...s, contributors: [...s.contributors, emptyContributor(kind)] }))
@@ -401,16 +402,15 @@ export function SourceForm({
   );
 }
 
-// Not marked as needed even where APA 7 names an author first: a source with nobody named is
-// still cited — by its title — so the mark only made an optional box look compulsory. Saving
-// without anyone still says the source is incomplete, as before.
 function Contributors({
   contributors,
+  needed,
   onChange,
   onAdd,
   onRemove,
 }: {
   contributors: Contributor[];
+  needed: boolean;
   onChange: (index: number, next: Contributor) => void;
   onAdd: (kind: "person" | "group") => void;
   onRemove: (index: number) => void;
@@ -418,7 +418,7 @@ function Contributors({
   return (
     <div className="contributors">
       <span className="field-label">
-        Who made it
+        Who made it{needed && <em> · needed</em>}
       </span>
 
       {contributors.length === 0 && (

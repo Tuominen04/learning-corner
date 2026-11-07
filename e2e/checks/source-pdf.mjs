@@ -66,8 +66,13 @@ check("PDF document is in the list of kinds, after Report",
   JSON.stringify(kinds) === JSON.stringify(["Book", "Chapter in a book", "Journal article", "Web page", "Video", "Audio", "Report", "PDF document"]),
   JSON.stringify(kinds));
 
-// Who made it is never marked as needed: a source with nobody named is cited by its title.
-check("a book: who made it is not marked as needed", !(await who()).includes("needed"), await who());
+// A book still needs somebody named — and says so the way every other field does.
+check("a book: who made it is needed", (await who()).includes("needed"), await who());
+const neededStyle = await form.locator(".contributors .field-label em").evaluate((e) => {
+  const s = getComputedStyle(e);
+  return `${s.fontStyle} ${s.color}`;
+});
+check("in the same upright amber as the others", neededStyle === "normal rgb(216, 162, 74)", neededStyle);
 
 // A web page need not name anybody.
 await chooseType("Web page");

@@ -163,6 +163,7 @@ async function rename(page, name) {
     (await page.locator(".folder-note").count()) === 0,
   );
 
+  await page.getByRole("button", { name: "Library menu" }).click();
   await page.getByRole("button", { name: "Switch library" }).click();
   await page.waitForSelector(".picker .recent");
   const where = await page.locator(".recent-library .where").first().innerText();

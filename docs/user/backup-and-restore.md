@@ -2,7 +2,7 @@
 
 > **Audience:** People using Learning Corner
 > **Status:** Implemented
-> **Last reviewed:** 2026-10-29
+> **Last reviewed:** 2026-11-07
 
 Your library is on one computer. Computers fail. This page is how you stop that from
 mattering.
@@ -22,7 +22,7 @@ that fails you on the day the app will not start.
 ## Backing up
 
 1. Plug in the drive.
-2. Choose **Back up…** under the library's name, then **Choose a folder…**.
+2. Open the menu (☰) at the top left, choose **Back up…**, then **Choose a folder…**.
 3. The first time, pick an empty folder on the drive. After that, pick the same folder each
    time — the app recognises its own copy, and refuses a folder holding something else.
 4. It shows you what it is about to do — *142 files to copy to the drive, nothing to remove* —
@@ -46,7 +46,7 @@ You can take the drive to another computer and open the library from it — to s
 or to work away from your desk. If you change anything there, bring it home:
 
 1. Plug the drive into your own computer.
-2. Choose **Bring back…** under the library's name, and pick the copy on the drive.
+2. Open the menu (☰) at the top left, choose **Bring back…**, and pick the copy on the drive.
 3. It shows you what changed on the drive, and you confirm. Those changes come into your
    library.
 

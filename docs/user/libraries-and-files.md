@@ -2,7 +2,7 @@
 
 > **Audience:** People using Learning Corner
 > **Status:** Implemented
-> **Last reviewed:** 2026-10-02
+> **Last reviewed:** 2026-11-07
 
 ## What a library is
 
@@ -33,7 +33,7 @@ it should go. The app makes a folder for it there, named after it — *Russian* 
 library goes, and whatever else is in it stays as it was. A library cannot go inside another
 one; the app says so if you try.
 
-**Switch library**, at the top of the sidebar, closes the library you are in and takes you back
+**Switch library**, in the menu (☰) at the top left of the sidebar, closes the library you are in and takes you back
 to the start screen. The libraries you have opened before are listed there, the most recent
 first, and one click opens any of them; making a new library or opening another folder is on
 the same screen. Whatever you had just typed is saved before the library closes.
