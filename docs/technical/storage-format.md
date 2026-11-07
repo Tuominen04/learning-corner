@@ -2,7 +2,7 @@
 
 > **Audience:** People building Learning Corner
 > **Status:** In progress — M1 implemented
-> **Last reviewed:** 2026-10-19
+> **Last reviewed:** 2026-11-07
 
 The library on disk is the source of truth ([ADR 0003](adr/0003-files-as-source-of-truth.md)).
 This document specifies it. It is normative: the engine implements this, and the format is
@@ -412,8 +412,9 @@ of  = 1                             # … is the same text as row 1
 The order of `[[editions]]` is the order of the panes. Exactly one is `original`. An edition's
 `id` is what the interface names it by; its `file` is the engine's business, made from its
 kind and language — `original.txt`, `pronunciation.txt`, `translation.fi.txt`, with `-2`, `-3`
-added when the name is taken — and never renamed afterwards, so a file somebody found once is
-where it stays.
+added when the name is taken. It is renamed only when a translation's language is changed, so
+a file never says one language and holds another; otherwise a file somebody found once is where
+it stays. The new file is written before the old one is removed.
 
 Edition files are the text itself, one row per line — deliberately plain, so that a
 translation can be pasted in and read by anything:

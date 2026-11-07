@@ -111,7 +111,11 @@ export function SourceForm({
     required.map(fieldToEditable).filter((f): f is Editable => f !== null),
   );
   const offered = fieldsFor(source.type);
-  const shown = extras ? offered : offered.filter((f) => requiredEditables.has(f));
+  // A field with something in it is never folded away: hiding the extras must not hide what
+  // somebody already typed.
+  const shown = extras
+    ? offered
+    : offered.filter((f) => requiredEditables.has(f) || (source[f] ?? "") !== "");
   const hidden = offered.length - shown.length;
 
   function set<K extends keyof Source>(key: K, value: Source[K]) {
@@ -281,6 +285,11 @@ export function SourceForm({
       {hidden > 0 && !extras && (
         <button className="ghost" onClick={() => setExtras(true)}>
           Show {hidden} more field{hidden === 1 ? "" : "s"}
+        </button>
+      )}
+      {extras && (
+        <button className="ghost" onClick={() => setExtras(false)}>
+          Show fewer fields
         </button>
       )}
 

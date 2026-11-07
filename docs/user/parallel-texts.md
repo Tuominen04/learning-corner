@@ -2,7 +2,7 @@
 
 > **Audience:** People using Learning Corner
 > **Status:** Implemented
-> **Last reviewed:** 2026-10-31
+> **Last reviewed:** 2026-11-07
 
 For reading something in a language you are still learning: the original, how it is
 pronounced, and what it means — lined up, on screen together, in whatever combination helps
@@ -51,7 +51,8 @@ it:
   edition, so it waits until no other edition has text in it. The tools that move rows wait
   until you have saved what you typed.
 
-Each pane's **…** button is where you give an edition a label or a source, or remove it.
+Each pane's **…** button is where you give an edition a label or a source, put right the
+language it is in, or remove it.
 
 Two translations into the same language are welcome — two translators often disagree, and
 that is worth seeing. Give each a label, such as the translator's name and year, so you can
@@ -135,8 +136,8 @@ it, is often the whole question.
 
 ## Practising
 
-Choose **Hide** on a pane to test yourself: its text is blurred, and clicking a row reveals
-just that row. **Show** brings the whole pane back. Hide the pronunciation and try to
+Choose **Hide** on a pane to test yourself: its text disappears, leaving an outline where each
+row was, and clicking a row reveals just that row. **Show** brings the whole pane back. Hide the pronunciation and try to
 read aloud; hide the translation and try to understand; hide the original and try to
 reconstruct it.
 

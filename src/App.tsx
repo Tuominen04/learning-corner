@@ -10,6 +10,7 @@ import { Search } from "./components/Search";
 import { Sources } from "./components/Sources";
 import { TopicTree } from "./components/TopicTree";
 import { Works } from "./components/Works";
+import { LibraryMenu, type LibraryAction } from "./components/LibraryMenu";
 import {
   engine,
   EngineFailure,
@@ -401,11 +402,36 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
     }
   }
 
+  // Backing up writes to the library, so a library open for reading only offers just Switch.
+  const libraryActions: LibraryAction[] = [
+    ...(library.writable
+      ? [
+          {
+            label: "Back up…",
+            title: "Copy this library to a drive, so the drive is exactly like it",
+            onChoose: () => setBackingUp("backup"),
+          },
+          {
+            label: "Bring back…",
+            title: "Copy what was changed on a backup into this library",
+            onChoose: () => setBackingUp("bring-back"),
+          },
+        ]
+      : []),
+    {
+      label: closing ? "Closing…" : "Switch library",
+      title: "Close this library and go back to the start screen, to open another one or make a new one",
+      onChoose: () => void close(),
+      disabled: closing,
+    },
+  ];
+
   return (
     <div className="app">
       <aside>
         <div className="library">
           <div className="library-head">
+            <LibraryMenu actions={libraryActions} />
             {/* The folder, on hover: two libraries can share a name — a backup opened from a
                 drive is called exactly what the original is — and only where it is tells
                 them apart. */}
@@ -422,37 +448,11 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
                 }
               />
             </span>
-            <button
-              className="ghost switch"
-              onClick={() => void close()}
-              disabled={closing}
-              title="Close this library and go back to the start screen, to open another one or make a new one"
-            >
-              {closing ? "Closing…" : "Switch library"}
-            </button>
           </div>
           <span className="counts">
             {count(library.topics, "topic")} · {count(library.documents, "document")}
             {library.works > 0 && ` · ${count(library.works, "work")}`}
           </span>
-          {library.writable && (
-            <div className="row backup-buttons">
-              <button
-                className="ghost"
-                onClick={() => setBackingUp("backup")}
-                title="Copy this library to a drive, so the drive is exactly like it"
-              >
-                Back up…
-              </button>
-              <button
-                className="ghost"
-                onClick={() => setBackingUp("bring-back")}
-                title="Copy what was changed on a backup into this library"
-              >
-                Bring back…
-              </button>
-            </div>
-          )}
           {!library.writable && (
             <p className="warning">
               This library was written by a newer version. It is open for reading only.
