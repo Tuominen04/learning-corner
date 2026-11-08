@@ -2,7 +2,7 @@
 
 > **Audience:** People building Learning Corner
 > **Status:** In progress — M1, M2 and M3 implemented
-> **Last reviewed:** 2026-10-31
+> **Last reviewed:** 2026-11-07
 
 Milestones in order. Each is shippable on its own — a person could install it, use it, and get
 something out of it — and each has a definition of done that is checkable rather than a
@@ -136,6 +136,11 @@ nothing unrecoverable.
 - [ ] **Seen running by a person**, on Fedora: the Russian/Finnish example made in the app.
 - [ ] Later: remembering which panes were showing; splitting a row at any line, not only its
       last; scrolling the panes of a long prose text independently.
+
+Then *0.22.0*, from using it: what can be clicked looks clickable, the library's actions in a
+menu at the top left, the PDF marker in a column of its own, the extra source fields folding away
+again, a hidden pane showing no text rather than blurred text, and an edition's language
+changeable after it is added — its file renamed to match.
 
 **Done when:** the Russian/Finnish example works — original, pronunciation, Finnish and
 English, panes chosen freely, hand-edited alignment surviving a round trip through the files.
