@@ -996,6 +996,18 @@ button.cite-option.chosen { background: #2a2d38; color: #fff; }
 .backup-entries li.ask { padding: 0.6rem 0; border-top: 1px solid var(--line, rgba(255, 255, 255, 0.08)); }
 .backup-entries .outcome { font-size: 0.85em; color: var(--ink-soft); }
 .backup-entries .answers { margin: 0.3rem 0 0 1rem; }
+/* What differs in a file changed in both places: the library's lines red, the drive's green,
+   in a monospaced block so lines line up. Never taller than about twenty lines. */
+.show-difference { margin: 0.1rem 0 0.4rem; padding-left: 0; }
+.difference { margin: 0 0 0.6rem; }
+.difference-key { margin: 0 0 0.3rem; }
+.diff { margin: 0; padding: 0.4rem 0; max-height: 22em; overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; font-size: 0.85em; line-height: 1.45; }
+.diff > span { display: block; padding: 0 0.6rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+.diff-library, .only-library { color: #f0a8a8; }
+.diff-library { background: rgba(224, 108, 108, 0.12); }
+.diff-drive, .only-drive { color: #a8dcb0; }
+.diff-drive { background: rgba(108, 192, 120, 0.12); }
+.diff-skip { color: var(--ink-soft); font-style: italic; }
 
 /* Works: a text and its other versions, lined up row by row. */
 .works { max-width: 52rem; }
@@ -1053,8 +1065,19 @@ button.danger-text, .ghost.danger-text { color: var(--error); }
 .work-cell.practising:hover { border-color: var(--accent); background: transparent; }
 .cell-editor { width: 100%; resize: vertical; font: inherit; line-height: 1.5; border-color: var(--accent); }
 .row-tools-wrap { margin: 0.1rem 0 0.6rem; }
+.split-at { display: inline-flex; align-items: center; gap: 0.1rem; }
 .row-tools { display: flex; flex-wrap: wrap; gap: 0.2rem 0.4rem; align-items: center; font-size: 0.85em; padding: 0.3rem 0.5rem; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); }
 
+/* Scrolling separately: a column per pane, each its own scroll, as tall as the view allows. */
+.work-separate { margin-top: 0.8rem; }
+.work-separate > .row-tools-wrap { margin: 0 0 0.6rem; }
+.work-columns { display: grid; gap: 0 0.6rem; }
+.work-column { min-width: 0; display: flex; flex-direction: column; }
+.work-column .pane-head { position: static; }
+.column-rows { position: relative; overflow-y: auto; max-height: calc(100vh - 16rem); min-height: 12rem; padding-right: 0.2rem; }
+.column-row { display: grid; grid-template-columns: 2rem 1fr; gap: 0 0.3rem; margin-bottom: 1px; }
+.column-row .row-marks { padding-top: 0.35rem; }
+.column-row.selected .work-cell:not(.unaligned) { background: #22252f; border-color: #3a3e4c; }
 .work-stacked { margin-top: 0.8rem; }
 .stacked-heads { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
 .stacked-heads .pane-head { position: static; border: none; }

@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   engine,
   EngineFailure,
+  shell,
   type EditionContents,
   type EditionKind,
   type ResegmentPlan,
@@ -36,7 +37,7 @@ import { RenameableName } from "./RenameableName";
 // show, the layout, and the panes hidden for practice are this window's and nobody else's —
 // they are how somebody is reading today, not part of the text.
 
-type Layout = "side" | "stacked";
+type Layout = "side" | "stacked" | "separate";
 
 type Editing = { edition: string; row: number; text: string };
 
@@ -68,6 +69,9 @@ export function WorkView({
   const rowsRef = useRef<HTMLDivElement>(null);
   const [editing, setEditing] = useState<Editing | null>(null);
   const [panel, setPanel] = useState<Panel | null>(null);
+  // Scrolling separately: the pane a row was chosen in, which the others line up with.
+  const columnsRef = useRef<HTMLDivElement>(null);
+  const anchor = useRef<string | null>(null);
   const [sources, setSources] = useState<Source[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
@@ -91,6 +95,51 @@ export function WorkView({
       document.removeEventListener("keydown", escape);
     };
   }, []);
+
+  // The panes this work was showing when it was last left, as this computer remembers them.
+  // A choice made before the answer arrives wins; an edition no longer in the work is ignored.
+  const panesChosen = useRef(false);
+  useEffect(() => {
+    let live = true;
+    shell
+      .remembered()
+      .then((kept) => {
+        if (!live || panesChosen.current) return;
+        const hidden = kept.hidden_panes[initial.id] ?? [];
+        setHiddenPanes(new Set(hidden.filter((id) => initial.editions.some((e) => e.id === id))));
+      })
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [initial]);
+
+  // Scrolling separately, choosing a row brings it level in every pane: each scrolls so the row
+  // sits where it sits in the pane it was chosen in, which itself does not move.
+  useEffect(() => {
+    if (layout !== "separate" || selected === null || columnsRef.current === null) return;
+    const columns = [...columnsRef.current.querySelectorAll<HTMLElement>(".column-rows")];
+    const rowIn = (column: HTMLElement) =>
+      column.querySelector<HTMLElement>(`[data-row="${selected}"]`);
+    const lead = columns.find((c) => c.dataset.edition === anchor.current) ?? columns[0];
+    const leadRow = lead ? rowIn(lead) : null;
+    const at = lead && leadRow ? leadRow.offsetTop - lead.scrollTop : 0;
+    for (const column of columns) {
+      if (column === lead) continue;
+      const row = rowIn(column);
+      if (row) column.scrollTop = Math.max(0, row.offsetTop - at);
+    }
+  }, [layout, selected]);
+
+  function togglePane(id: string) {
+    panesChosen.current = true;
+    const next = new Set(hiddenPanes);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setHiddenPanes(next);
+    const kept = work.editions.map((e) => e.id).filter((e) => next.has(e));
+    void shell.rememberHiddenPanes(work.id, kept).catch(() => {});
+  }
 
   useEffect(() => {
     engine.source
@@ -334,18 +383,46 @@ export function WorkView({
             >
               Join to the row above
             </button>
-            <button
-              className="ghost"
-              disabled={busy || unsaved || (editingEdition.rows[row - 1]?.length ?? 0) < 2}
-              title="Make this row's last line a row of its own, moving this edition's later rows down"
-              onClick={() => {
-                const lines = editingEdition.rows[row - 1]?.length ?? 0;
+            {(() => {
+              // Two lines can only split one way, so it stays one button. More, and the
+              // question is where: everything from the chosen line on becomes the next row.
+              const lines = editingEdition.rows[row - 1] ?? [];
+              const split = (line: number) => {
                 setEditing(null);
-                void act((rev) => engine.work.split(work.id, editingEdition.id, row, lines, rev));
-              }}
-            >
-              Split off the last line
-            </button>
+                void act((rev) => engine.work.split(work.id, editingEdition.id, row, line, rev));
+              };
+              if (lines.length <= 2) {
+                return (
+                  <button
+                    className="ghost"
+                    disabled={busy || unsaved || lines.length < 2}
+                    title="Make this row's last line a row of its own, moving this edition's later rows down"
+                    onClick={() => split(2)}
+                  >
+                    Split off the last line
+                  </button>
+                );
+              }
+              // Buttons rather than a list to choose from: the tools must not take focus from
+              // the row being written, and a list box cannot open without taking it.
+              return (
+                <span className="split-at" role="group" aria-label="Split before line">
+                  <span className="tools-label">Split before line</span>
+                  {lines.slice(1).map((text, i) => (
+                    <button
+                      key={i + 2}
+                      className="ghost"
+                      disabled={busy || unsaved}
+                      aria-label={`Split before line ${i + 2}`}
+                      title={`A new row from line ${i + 2}: ${opening(text)}`}
+                      onClick={() => split(i + 2)}
+                    >
+                      {i + 2}
+                    </button>
+                  ))}
+                </span>
+              );
+            })()}
             <button
               className="ghost danger-text"
               disabled={busy || unsaved}
@@ -416,14 +493,7 @@ export function WorkView({
             <input
               type="checkbox"
               checked={!hiddenPanes.has(e.id)}
-              onChange={() =>
-                setHiddenPanes((was) => {
-                  const next = new Set(was);
-                  if (next.has(e.id)) next.delete(e.id);
-                  else next.add(e.id);
-                  return next;
-                })
-              }
+              onChange={() => togglePane(e.id)}
             />
             {editionName(e)}
           </label>
@@ -434,6 +504,13 @@ export function WorkView({
           </button>
           <button className={layout === "stacked" ? "view selected" : "view"} onClick={() => setLayout("stacked")}>
             Stacked
+          </button>
+          <button
+            className={layout === "separate" ? "view selected" : "view"}
+            onClick={() => setLayout("separate")}
+            title="Each pane scrolls on its own, for long prose; choosing a row lines the others up with it"
+          >
+            Scroll separately
           </button>
         </span>
       </div>
@@ -486,6 +563,37 @@ export function WorkView({
               {selected === row && <div className="row-tools-wrap" style={{ gridColumn: "1 / -1" }}>{rowTools(row)}</div>}
             </div>
           ))}
+        </div>
+      ) : layout === "separate" ? (
+        <div className="work-separate" ref={rowsRef}>
+          {selected !== null && <div className="row-tools-wrap">{rowTools(selected)}</div>}
+          <div
+            className="work-columns"
+            ref={columnsRef}
+            style={{ gridTemplateColumns: `repeat(${Math.max(visible.length, 1)}, minmax(10rem, 1fr))` }}
+          >
+            {visible.map((e) => (
+              <div className="work-column" key={e.id}>
+                {paneHead(e)}
+                <div
+                  className="column-rows"
+                  data-edition={e.id}
+                  onClickCapture={() => {
+                    anchor.current = e.id;
+                  }}
+                >
+                  {Array.from({ length: rows }, (_, i) => i + 1).map((row) => (
+                    <div className={`column-row${selected === row ? " selected" : ""}`} key={row} data-row={row}>
+                      <span className="row-marks">
+                        <span className="row-number">{row}</span>
+                      </span>
+                      {cell(e, row)}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       ) : (
         <div className="work-stacked" ref={rowsRef}>
@@ -986,6 +1094,12 @@ function LanguagePicker({ value, onChange }: { value: string; onChange: (code: s
       )}
     </span>
   );
+}
+
+/** A line's first few words, enough to tell lines apart in a list. */
+function opening(line: string): string {
+  const words = line.trim().split(/\s+/);
+  return words.length > 6 ? `${words.slice(0, 6).join(" ")}…` : line.trim() || "(blank)";
 }
 
 export { LanguagePicker };

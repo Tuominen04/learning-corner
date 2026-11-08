@@ -59,6 +59,9 @@ pub fn run() {
             commands::library_rebuild_index,
             commands::library_rename,
             commands::recent_libraries,
+            commands::library_remembered,
+            commands::remember_backup_folder,
+            commands::remember_hidden_panes,
             commands::forget_library,
             commands::ready_to_close,
             commands::topic_tree,
@@ -120,6 +123,7 @@ pub fn run() {
             commands::restore_plan,
             commands::restore_apply,
             commands::backup_cancel,
+            commands::backup_texts,
         ])
         .run(tauri::generate_context!())
         .expect("the application failed to start");

@@ -17,9 +17,10 @@ use tauri::State;
 
 use crate::closing::Closing;
 use crate::dto::{
-    BackupAnswer, BackupApplied, BackupPlan, CitationRequest, Document, DocumentRef, EngineError,
-    ExportFormat, Field, Form, Keep, LibraryStatus, Locator, RecentLibrary, RenamedLibrary,
-    SavedSource, SearchHit, Source, SourceType, Split, Topic, TopicContents,
+    BackupAnswer, BackupApplied, BackupPlan, BackupTexts, CitationRequest, Document, DocumentRef,
+    EngineError, ExportFormat, Field, Form, Keep, LibraryRemembered, LibraryStatus, Locator,
+    RecentLibrary, RenamedLibrary, SavedSource, SearchHit, Source, SourceType, Split, Topic,
+    TopicContents,
 };
 use crate::dto::{
     EditionContents, NewEdition, RepeatSet, ResegmentPlan, Resegmented, Work, WorkContents,
@@ -160,6 +161,60 @@ pub fn recent_libraries(recent: State<'_, Recent>) -> Vec<RecentLibrary> {
             opened: entry.opened.to_string(),
         })
         .collect()
+}
+
+/// What this computer remembers about the open library. Nothing, if it is not on the list.
+#[tauri::command]
+pub fn library_remembered(
+    state: State<'_, OpenLibrary>,
+    recent: State<'_, Recent>,
+) -> Answer<LibraryRemembered> {
+    with(&state, |e| {
+        let kept = recent.remembered(e.root());
+        Ok(LibraryRemembered {
+            // Only a folder that is there now: a drive not plugged in is the dialog's usual
+            // starting place, not a path it cannot open.
+            backup: kept
+                .backup
+                .filter(|p| p.is_dir())
+                .map(|p| p.to_string_lossy().into_owned()),
+            hidden_panes: kept.hidden_panes,
+        })
+    })
+}
+
+/// The open library was just backed up to, or brought back from, `folder`.
+///
+/// Like everything kept with the list, a failure is logged and not reported: the backup
+/// itself worked.
+#[tauri::command]
+pub fn remember_backup_folder(
+    state: State<'_, OpenLibrary>,
+    recent: State<'_, Recent>,
+    folder: String,
+) -> Answer<()> {
+    with(&state, |e| {
+        if let Err(err) = recent.backed_up(e.root(), Path::new(&folder)) {
+            eprintln!("the backup folder was not remembered: {err}");
+        }
+        Ok(())
+    })
+}
+
+/// In the open library, `work` now hides `editions` — none, to show every pane.
+#[tauri::command]
+pub fn remember_hidden_panes(
+    state: State<'_, OpenLibrary>,
+    recent: State<'_, Recent>,
+    work: String,
+    editions: Vec<String>,
+) -> Answer<()> {
+    with(&state, |e| {
+        if let Err(err) = recent.panes_hidden(e.root(), &work, editions) {
+            eprintln!("which panes were showing was not remembered: {err}");
+        }
+        Ok(())
+    })
 }
 
 /// Take a library off the start screen's list. The library itself is not touched.
@@ -1176,6 +1231,18 @@ fn apply_restore(
 }
 
 /// Forget the plan without applying it.
+/// Both versions of `path`, a file the plan being shown asks about because it changed in both
+/// places, to compare line by line. `None` when either is not text or is too large.
+#[tauri::command]
+pub fn backup_texts(pending: State<'_, PendingPlan>, path: String) -> Answer<Option<BackupTexts>> {
+    let pending = lock(&pending.0)?;
+    let plan = pending.as_ref().ok_or_else(no_plan)?;
+    Ok(Engine::backup_texts(plan, &path)?.map(|t| BackupTexts {
+        library: t.library,
+        drive: t.drive,
+    }))
+}
+
 #[tauri::command]
 pub fn backup_cancel(pending: State<'_, PendingPlan>) -> Answer<()> {
     *lock(&pending.0)? = None;

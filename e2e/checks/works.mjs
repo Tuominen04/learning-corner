@@ -72,6 +72,17 @@ await page.addInitScript(() => {
           work.editions.splice(args.position - 1, 0, moved);
           return answer();
         }
+        case "library_remembered":
+          return { backup: null, hidden_panes: window.__hidden ?? {} };
+        case "remember_hidden_panes":
+          window.__hidden = { ...(window.__hidden ?? {}), [args.work]: args.editions };
+          return null;
+        case "work_split": {
+          const rows = edition(args.edition).rows;
+          const rest = rows[args.row - 1].splice(args.line - 1);
+          rows.splice(args.row, 0, rest);
+          return answer();
+        }
         case "work_update_edition": {
           Object.assign(edition(args.edition), { language: args.language, label: args.label, scheme: args.scheme, source: args.source });
           return answer();
@@ -191,6 +202,37 @@ await page.getByRole("button", { name: "← Works" }).click();
 await page.locator(".work-list").waitFor();
 const item = await page.locator(".work-item").innerText();
 check("the list names the languages, in pane order, and the misalignment", item.includes("Finnish · Russian") && item.includes("not lined up"), item);
+
+// A row of three lines splits before whichever line is chosen, not only its last.
+await page.locator(".work-item").click();
+await page.locator(".work-view").waitFor();
+await page.locator(".pane-head", { hasText: "Finnish translation" }).waitFor({ timeout: 3000 }).catch(() => {});
+check("opened again, a work is shown as it is now, every edition in it", (await page.locator(".pane-head").count()) === 3, String(await page.locator(".pane-head").count()));
+await page.getByRole("button", { name: "Finnish translation, row 1" }).click();
+await page.getByRole("textbox", { name: "Finnish translation, row 1" }).fill("yksi\nkaksi\nkolme");
+await page.getByRole("textbox", { name: "Finnish translation, row 1" }).press("Enter");
+await page.locator(".work-cell", { hasText: "kolme" }).waitFor();
+await page.getByRole("button", { name: "Finnish translation, row 1" }).click();
+const splitters = page.getByRole("group", { name: "Split before line" }).getByRole("button");
+check("a three-line row offers to split before line 2 or 3", JSON.stringify(await splitters.allInnerTexts()) === JSON.stringify(["2", "3"]), JSON.stringify(await splitters.allInnerTexts()));
+check("each says which line it starts the new row from", (await page.getByRole("button", { name: "Split before line 2" }).getAttribute("title"))?.includes("kaksi"));
+await page.getByRole("button", { name: "Split before line 2" }).click();
+await page.waitForFunction(() => document.querySelectorAll(".work-cell").length > 0 && [...document.querySelectorAll(".work-cell")].some((c) => c.getAttribute("aria-label") === "Finnish translation, row 2" && c.textContent.includes("kaksi")));
+const splitArgs = (await calls("work_split")).at(-1)?.args;
+check("the split is asked for before line 2", splitArgs?.row === 1 && splitArgs?.line === 2, JSON.stringify(splitArgs));
+check("and the rest of the row moves down as one row", (await page.getByRole("button", { name: "Finnish translation, row 2" }).innerText()).includes("kolme"));
+
+// The panes showing are remembered: hide one, leave, come back, and it is still hidden.
+await page.getByRole("checkbox", { name: "Pronunciation" }).uncheck();
+const hiddenSent = (await calls("remember_hidden_panes")).at(-1)?.args;
+check("hiding a pane is remembered for this work", hiddenSent?.work === "01J9WORK0000000000000000AA" && hiddenSent?.editions.length === 1, JSON.stringify(hiddenSent));
+await page.getByRole("button", { name: "← Works" }).click();
+await page.locator(".work-item").click();
+await page.locator(".pane-head").first().waitFor();
+await page.waitForFunction(() => document.querySelectorAll(".pane-head").length === 2, null, { timeout: 3000 }).catch(() => {});
+check("and opened again, it is still hidden", (await page.locator(".pane-head").count()) === 2 && !(await page.getByRole("checkbox", { name: "Pronunciation" }).isChecked()));
+await page.getByRole("checkbox", { name: "Pronunciation" }).check();
+check("showing it again forgets it", JSON.stringify((await calls("remember_hidden_panes")).at(-1)?.args?.editions) === "[]");
 
 await browser.close();
 finish();

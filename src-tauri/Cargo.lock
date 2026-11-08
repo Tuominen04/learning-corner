@@ -2002,8 +2002,8 @@ dependencies = [
 
 [[package]]
 name = "lc-engine"
-version = "0.22.0"
-source = "git+https://github.com/Tuominen04/learning-corner-engine?tag=v0.22.0#3539664268bc0d7ea55566f410dfaf7f378bcdf5"
+version = "0.23.0"
+source = "git+https://github.com/Tuominen04/learning-corner-engine?tag=v0.23.0#66dac14525dcce246bdd337f468fa08240fe221c"
 dependencies = [
  "blake3",
  "flate2",

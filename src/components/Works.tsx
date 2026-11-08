@@ -60,6 +60,11 @@ export function Works({
     };
   }, [open, onOpen]);
 
+  // A work left is forgotten, so opening it again shows it as it is now. Kept, it would be
+  // shown at once as it was when first read — and the view takes its work only once, so the
+  // fresh read arriving after would never reach it.
+  if (open === null && current !== null) setCurrent(null);
+
   if (open !== null && current?.id === open) {
     return (
       <WorkView

@@ -27,6 +27,8 @@ import type { LibraryFolder } from "./bindings/LibraryFolder";
 import type { LibraryStatus } from "./bindings/LibraryStatus";
 import type { Locator } from "./bindings/Locator";
 import type { RecentLibrary } from "./bindings/RecentLibrary";
+import type { LibraryRemembered } from "./bindings/LibraryRemembered";
+import type { BackupTexts } from "./bindings/BackupTexts";
 import type { RenamedLibrary } from "./bindings/RenamedLibrary";
 import type { Role } from "./bindings/Role";
 import type { Keep } from "./bindings/Keep";
@@ -73,6 +75,8 @@ export type {
   LibraryStatus,
   Locator,
   RecentLibrary,
+  LibraryRemembered,
+  BackupTexts,
   RenamedLibrary,
   Role,
   SavedSource,
@@ -382,6 +386,11 @@ export const engine = {
     restoreApply: (answers: Record<string, BackupAnswer>) =>
       call<BackupApplied>("restore_apply", { answers }),
     cancel: () => call<void>("backup_cancel"),
+    /**
+     * Both versions of a file the plan being shown asks about because it changed in both
+     * places, as text; `null` when either is not text or is too large to compare.
+     */
+    texts: (path: string) => call<BackupTexts | null>("backup_texts", { path }),
   },
 };
 
@@ -397,6 +406,13 @@ export const shell = {
   recentLibraries: () => call<RecentLibrary[]>("recent_libraries"),
   /** Take a library off the list. The library itself is not touched. */
   forgetLibrary: (path: string) => call<void>("forget_library", { path }),
+  /** What this computer remembers about the open library: its backup folder, hidden panes. */
+  remembered: () => call<LibraryRemembered>("library_remembered"),
+  /** The open library was just backed up to, or brought back from, `folder`. */
+  rememberBackupFolder: (folder: string) => call<void>("remember_backup_folder", { folder }),
+  /** In the open library, `work` now hides `editions` — none, to show every pane. */
+  rememberHiddenPanes: (work: string, editions: string[]) =>
+    call<void>("remember_hidden_panes", { work, editions }),
   /**
    * Run `save` when the window is about to close, then let it close.
    *

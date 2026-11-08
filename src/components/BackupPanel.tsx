@@ -2,9 +2,11 @@ import { open as openFolder } from "@tauri-apps/plugin-dialog";
 import { useState } from "react";
 
 import { canKeepBoth, described, size, summary, unanswered } from "../lib/backup";
+import { folded, lineDiff, type Shown } from "../lib/diff";
 import {
   engine,
   EngineFailure,
+  shell,
   type BackupAnswer,
   type BackupApplied,
   type BackupEntry,
@@ -66,9 +68,14 @@ export function BackupPanel({
 
   function chooseDrive() {
     void attempt(async () => {
+      // Where this library went last time, on this computer: the dialog opens there, or where
+      // it always did when the drive is not plugged in. Never a reason not to show the dialog.
+      const last =
+        mode === "restore" ? null : await shell.remembered().then((r) => r.backup, () => null);
       const drive = await openFolder({
         directory: true,
         multiple: false,
+        ...(last ? { defaultPath: last } : {}),
         title:
           mode === "backup"
             ? "Choose the folder to back up to — an empty one, or an earlier backup of this library"
@@ -120,6 +127,7 @@ export function BackupPanel({
           ? await engine.backup.apply(overwrite)
           : await engine.backup.restoreApply(answers);
       setApplied(done);
+      if (mode !== "restore") void shell.rememberBackupFolder(plan.drive_path).catch(() => {});
       onApplied(done, mode);
     });
   }
@@ -295,6 +303,7 @@ function Entry({
           <p className="hint">
             Here: <Version side={entry.library} /> · On the drive: <Version side={entry.drive} />
           </p>
+          {entry.library && entry.drive && <Difference path={entry.path} />}
           <Choice
             name={entry.path}
             checked={answer === "keep-library"}
@@ -324,6 +333,78 @@ function Entry({
         </div>
       )}
     </li>
+  );
+}
+
+/**
+ * What differs between the two versions, line by line, on request: asked for only when somebody
+ * wants it, since most answers are known from the name and the dates alone.
+ */
+function Difference({ path }: { path: string }) {
+  type Seen =
+    | { kind: "closed" }
+    | { kind: "looking" }
+    | { kind: "shown"; lines: Shown[] }
+    | { kind: "said"; why: string };
+  const [seen, setSeen] = useState<Seen>({ kind: "closed" });
+
+  function show() {
+    setSeen({ kind: "looking" });
+    engine.backup
+      .texts(path)
+      .then((texts) => {
+        if (texts === null) {
+          setSeen({ kind: "said", why: "Not text, or too large to compare here — open the two files to see." });
+          return;
+        }
+        const diff = lineDiff(texts.library, texts.drive);
+        setSeen(
+          diff === null
+            ? { kind: "said", why: "Too long to compare here — open the two files to see." }
+            : { kind: "shown", lines: folded(diff) },
+        );
+      })
+      .catch((thrown: unknown) =>
+        setSeen({ kind: "said", why: thrown instanceof EngineFailure ? thrown.message : String(thrown) }),
+      );
+  }
+
+  if (seen.kind === "closed") {
+    return (
+      <button className="ghost small show-difference" onClick={show}>
+        Show what differs
+      </button>
+    );
+  }
+  return (
+    <div className="difference">
+      <button className="ghost small show-difference" onClick={() => setSeen({ kind: "closed" })}>
+        Hide what differs
+      </button>
+      {seen.kind === "looking" && <p className="hint">Reading both…</p>}
+      {seen.kind === "said" && <p className="hint">{seen.why}</p>}
+      {seen.kind === "shown" && (
+        <>
+          <p className="hint difference-key">
+            <span className="only-library">− only here</span> · <span className="only-drive">+ only on the drive</span>
+          </p>
+          <pre className="diff" aria-label={`What differs in ${path}`}>
+            {seen.lines.map((line, i) =>
+              line.kind === "skip" ? (
+                <span key={i} className="diff-skip">
+                  ⋯ {line.count} line{line.count === 1 ? "" : "s"} the same
+                </span>
+              ) : (
+                <span key={i} className={`diff-${line.kind}`}>
+                  {line.kind === "library" ? "− " : line.kind === "drive" ? "+ " : "  "}
+                  {line.text || " "}
+                </span>
+              ),
+            )}
+          </pre>
+        </>
+      )}
+    </div>
   );
 }
 
