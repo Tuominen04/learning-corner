@@ -147,6 +147,24 @@ English, panes chosen freely, hand-edited alignment surviving a round trip throu
 
 ---
 
+## Pages instead of topics — *proposed*
+
+One kind of thing in the tree: every page is a document, and any page can have pages under it,
+in the order you put them ([ADR 0009](adr/0009-pages-not-topics.md)). Library format 2, with
+format 1 libraries converted on opening after a copy is written beside them. Before M4, because
+a map's nodes reference pages and there should be no topics left to reference.
+
+- [ ] Format 2 and the migration from `v1`, tested against the frozen fixture; `v2` frozen.
+- [ ] One **+** per page; moving to another parent and another place among siblings.
+- [ ] Deleting a page with sub-pages asks first; splitting makes a sub-page.
+- [ ] **Seen running by a person**, on Fedora: a real library converted, and the protein example
+      rebuilt as *Protein* with *History*, *Current*, *Type 1* and *Type 2* under it.
+
+**Done when:** a format 1 library opens as format 2 looking the same, with a page where each
+topic was, and its copy beside it untouched.
+
+---
+
 ## M4 · Mind maps
 
 - A map in a second window, updating live.
