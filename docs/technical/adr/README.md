@@ -24,6 +24,7 @@ reason it was made are the useful part of the history.
 | [0006](0006-engine-dependency-pinning.md) | The engine is pinned by git tag | Accepted |
 | [0007](0007-bindings-with-ts-rs.md) | TypeScript bindings generated with ts-rs | Accepted |
 | [0008](0008-narrow-editor-schema.md) | A narrow editor schema until Markdown serialisation exists | Accepted |
+| [0009](0009-pages-not-topics.md) | Every page is a document, and any page can have pages under it | Proposed |
 
 ## Template
 
