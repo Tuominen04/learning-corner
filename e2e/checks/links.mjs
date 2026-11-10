@@ -53,22 +53,19 @@ await page.addInitScript(
           case "library_open":
           case "library_create":
           case "library_status":
-            return { name: "Learning", topics: 2, documents: 3, writable: true, problems: [] };
-          case "topic_tree":
+            return { name: "Learning", documents: 3, writable: true, problems: [] };
+          case "page_tree":
             return [
               {
                 id: "01J8ZQ6A1M3P5R7T9V1X3Z5B7D",
-                name: "Protein",
-                documents: [
-                  { id: here, title: TITLES[here] },
-                  { id: there, title: TITLES[there] },
-                ],
+                title: "Protein",
                 children: [
+                  { id: here, title: TITLES[here], children: [] },
+                  { id: there, title: TITLES[there], children: [] },
                   {
                     id: "01J8ZQ6A1M3P5R7T9V1X3Z5B7E",
-                    name: "In the body",
-                    documents: [{ id: nested, title: TITLES[nested] }],
-                    children: [],
+                    title: "In the body",
+                    children: [{ id: nested, title: TITLES[nested], children: [] }],
                   },
                 ],
               },
@@ -156,8 +153,8 @@ check("the link picker opens", (await page.getByText("Link to a document").count
 
 const offered = await page.locator(".cite-option strong").allTextContents();
 check(
-  "it offers the other documents, however deep",
-  offered.sort().join("|") === "How protein is used|Types of protein",
+  "it offers every other page, however deep — the pages with pages under them too",
+  offered.sort().join("|") === "How protein is used|In the body|Protein|Types of protein",
   JSON.stringify(offered),
 );
 

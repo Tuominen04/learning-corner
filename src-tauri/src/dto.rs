@@ -11,7 +11,7 @@
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use lc_engine::api::{DocumentSummary, DocumentView, Status, TopicNode};
+use lc_engine::api::{DocumentSummary, DocumentView, PageNode, Status};
 use lc_engine::citation as engine_src;
 use lc_engine::citation::format as engine_fmt;
 use lc_engine::store::Revision;
@@ -26,7 +26,7 @@ pub struct LibraryStatus {
     /// renames its folder too, when the folder is the library's alone.
     pub path: String,
     pub name: String,
-    pub topics: usize,
+    /// How many pages the library holds.
     pub documents: usize,
     pub works: usize,
     pub writable: bool,
@@ -57,13 +57,13 @@ pub struct RecentLibrary {
     pub found: bool,
 }
 
+/// One page in the tree, with the pages under it in the person's order (ADR 0009).
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "../../src/lib/bindings/")]
-pub struct Topic {
+pub struct Page {
     pub id: Id,
-    pub name: String,
-    pub children: Vec<Topic>,
-    pub documents: Vec<DocumentRef>,
+    pub title: String,
+    pub children: Vec<Page>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
@@ -79,7 +79,8 @@ pub struct Document {
     pub id: Id,
     pub title: String,
     pub body: String,
-    pub topic: Id,
+    /// The page this one is under; none at the top of the tree.
+    pub parent: Option<Id>,
     pub modified: String,
     /// Opaque. Hand it back to `document_write` unchanged; a mismatch means the file changed
     /// underneath and the write is refused rather than overwriting someone's edit.
@@ -92,28 +93,21 @@ pub struct Document {
     pub revision: Revision,
 }
 
-/// What a topic holds, so that deleting it can be a decision rather than a surprise.
+/// What is under a page, so that deleting it can be a decision rather than a surprise.
 ///
-/// Documents named rather than counted: "3 documents" is a number somebody agrees to, and a
-/// list of titles is a thing they recognise.
+/// Pages named rather than counted: "3 pages" is a number somebody agrees to, and a list of
+/// titles is a thing they recognise.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "../../src/lib/bindings/")]
-pub struct TopicContents {
-    /// Topics nested anywhere below this one.
-    pub topics: u32,
-    /// Every document anywhere below this one.
-    pub documents: Vec<DocumentRef>,
+pub struct PageContents {
+    /// Every page anywhere under this one.
+    pub pages: Vec<DocumentRef>,
 }
 
-impl From<lc_engine::api::TopicContents> for TopicContents {
-    fn from(contents: lc_engine::api::TopicContents) -> Self {
-        TopicContents {
-            topics: u32::try_from(contents.topics).unwrap_or(u32::MAX),
-            documents: contents
-                .documents
-                .into_iter()
-                .map(DocumentRef::from)
-                .collect(),
+impl From<lc_engine::api::PageContents> for PageContents {
+    fn from(contents: lc_engine::api::PageContents) -> Self {
+        PageContents {
+            pages: contents.pages.into_iter().map(DocumentRef::from).collect(),
         }
     }
 }
@@ -158,6 +152,15 @@ pub struct LibraryRemembered {
     pub hidden_panes: std::collections::BTreeMap<String, Vec<String>>,
 }
 
+/// A library just converted to the current format, and the folder its copy went to.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub struct MigratedLibrary {
+    pub status: LibraryStatus,
+    /// The format 1 library as it was, copied whole beside it before anything changed.
+    pub copy: String,
+}
+
 /// A library just renamed, and what became of its folder.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "../../src/lib/bindings/")]
@@ -166,14 +169,14 @@ pub struct RenamedLibrary {
     pub folder: LibraryFolder,
 }
 
-/// What becomes of what is inside a topic being deleted. There is no default, on purpose.
+/// What becomes of the pages under a page being deleted. There is no default, on purpose.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "kebab-case")]
 #[ts(export, export_to = "../../src/lib/bindings/")]
 pub enum Contents {
-    /// Delete the topic and everything under it.
+    /// Delete the page and every page under it.
     Delete,
-    /// Move what is directly inside up to the parent, then delete the empty topic.
+    /// Move the pages directly under it into its place, then delete it alone.
     MoveUp,
 }
 
@@ -213,7 +216,7 @@ impl From<lc_engine::api::Split> for Split {
 #[ts(export, export_to = "../../src/lib/bindings/")]
 pub struct SearchHit {
     pub id: Id,
-    /// What was found. One index holds topics, documents and sources, so this is what lets a
+    /// What was found. One index holds pages, sources and works, so this is what lets a
     /// result be drawn and acted on — opening a source is not opening a document.
     pub kind: HitKind,
     pub title: String,
@@ -225,7 +228,6 @@ pub struct SearchHit {
 #[serde(rename_all = "kebab-case")]
 #[ts(export, export_to = "../../src/lib/bindings/")]
 pub enum HitKind {
-    Topic,
     Document,
     Source,
     Work,
@@ -234,7 +236,6 @@ pub enum HitKind {
 impl From<lc_engine::index::Kind> for HitKind {
     fn from(kind: lc_engine::index::Kind) -> Self {
         match kind {
-            lc_engine::index::Kind::Topic => HitKind::Topic,
             lc_engine::index::Kind::Document => HitKind::Document,
             lc_engine::index::Kind::Source => HitKind::Source,
             lc_engine::index::Kind::Work => HitKind::Work,
@@ -1022,7 +1023,6 @@ impl LibraryStatus {
         Ok(LibraryStatus {
             path: engine.root().to_string_lossy().into_owned(),
             name: s.name,
-            topics: s.topics,
             documents: s.documents,
             works: s.works,
             writable: s.writable,
@@ -1038,13 +1038,12 @@ impl LibraryStatus {
     }
 }
 
-impl From<TopicNode> for Topic {
-    fn from(t: TopicNode) -> Self {
-        Topic {
-            id: t.id.to_string(),
-            name: t.name,
-            children: t.children.into_iter().map(Topic::from).collect(),
-            documents: t.documents.into_iter().map(DocumentRef::from).collect(),
+impl From<PageNode> for Page {
+    fn from(p: PageNode) -> Self {
+        Page {
+            id: p.id.to_string(),
+            title: p.title,
+            children: p.children.into_iter().map(Page::from).collect(),
         }
     }
 }
@@ -1064,7 +1063,7 @@ impl From<DocumentView> for Document {
             id: d.id.to_string(),
             title: d.title,
             body: d.body,
-            topic: d.topic.to_string(),
+            parent: d.parent.map(|p| p.to_string()),
             modified: d.modified.to_string(),
             revision: d.revision,
         }
@@ -1310,7 +1309,7 @@ mod export_bindings {
         LibraryStatus::export_all(&config).unwrap();
         RenamedLibrary::export_all(&config).unwrap();
         RecentLibrary::export_all(&config).unwrap();
-        Topic::export_all(&config).unwrap();
+        Page::export_all(&config).unwrap();
         Document::export_all(&config).unwrap();
         SearchHit::export_all(&config).unwrap();
         EngineError::export_all(&config).unwrap();
@@ -1320,7 +1319,7 @@ mod export_bindings {
         Locator::export_all(&config).unwrap();
         CitationRequest::export_all(&config).unwrap();
         Split::export_all(&config).unwrap();
-        TopicContents::export_all(&config).unwrap();
+        PageContents::export_all(&config).unwrap();
         Contents::export_all(&config).unwrap();
     }
 }
@@ -1349,8 +1348,10 @@ mod wire {
         // kind that arrives as the wrong variant sends somebody to the wrong screen. Both the
         // conversion and the JSON spelling are checked, because either can drift alone.
         let (_dir, mut engine) = library();
-        let topic = engine.topic_create(None, "Protein").unwrap();
-        engine.document_create(topic, "What protein is").unwrap();
+        let topic = engine.document_create(None, "Protein").unwrap();
+        engine
+            .document_create(Some(topic), "What protein is")
+            .unwrap();
 
         let mut source = lc_engine::citation::source::Source::new(
             lc_engine::citation::source::SourceType::JournalArticle,
@@ -1376,7 +1377,7 @@ mod wire {
         let received: Vec<SearchHit> = serde_json::from_str(&sent).unwrap();
         assert_eq!(hits, received);
 
-        for kind in [HitKind::Topic, HitKind::Document, HitKind::Source] {
+        for kind in [HitKind::Document, HitKind::Source] {
             assert!(
                 received.iter().any(|h| h.kind == kind),
                 "expected a {kind:?} among {received:?}"
@@ -1399,8 +1400,10 @@ mod wire {
         // Exactly what happens in the application: read a document, hand the revision to a
         // client as JSON, take it back from that client, write with it.
         let (_dir, mut engine) = library();
-        let topic = engine.topic_create(None, "Protein").unwrap();
-        let id = engine.document_create(topic, "What protein is").unwrap();
+        let topic = engine.document_create(None, "Protein").unwrap();
+        let id = engine
+            .document_create(Some(topic), "What protein is")
+            .unwrap();
 
         let read: Document = engine.document_read(id).unwrap().into();
 
@@ -1421,22 +1424,26 @@ mod wire {
     #[test]
     fn a_document_moved_while_it_is_open_still_saves() {
         // The editor holds the revision it last read, and goes on writing with it. Moving the
-        // document, or the topic it is in, must not make that revision stale: the next keystroke
+        // page, or the page it is under, must not make that revision stale: the next keystroke
         // after a move would be refused as somebody else's change on disk.
         let (_dir, mut engine) = library();
-        let protein = engine.topic_create(None, "Protein").unwrap();
-        let inside = engine.topic_create(Some(protein), "In the body").unwrap();
-        let id = engine.document_create(protein, "What protein is").unwrap();
+        let protein = engine.document_create(None, "Protein").unwrap();
+        let inside = engine
+            .document_create(Some(protein), "In the body")
+            .unwrap();
+        let id = engine
+            .document_create(Some(protein), "What protein is")
+            .unwrap();
         let held: Document = engine.document_read(id).unwrap().into();
 
-        let moved: Document = engine.document_move(id, inside).unwrap().into();
+        let moved: Document = engine.document_move(id, Some(inside), None).unwrap().into();
         assert_eq!(
             moved.revision, held.revision,
             "moving a file is not editing it"
         );
 
-        // And then the topic it is now in, to the top level.
-        engine.topic_move(inside, None).unwrap();
+        // And then the page it is now under, to the top level.
+        engine.document_move(inside, None, None).unwrap();
         let held: Document = serde_json::from_str(&serde_json::to_string(&held).unwrap()).unwrap();
         engine
             .document_write(id, "Written after both moves.", held.revision)
@@ -1774,8 +1781,10 @@ mod wire {
         source.site = Some("Aalto University".into());
         let (id, _) = engine.source_create(source).unwrap();
 
-        let topic = engine.topic_create(None, "Protein").unwrap();
-        let doc = engine.document_create(topic, "What protein is").unwrap();
+        let topic = engine.document_create(None, "Protein").unwrap();
+        let doc = engine
+            .document_create(Some(topic), "What protein is")
+            .unwrap();
         let revision = engine.document_read(doc).unwrap().revision;
         engine
             .document_write(
@@ -1812,8 +1821,10 @@ mod wire {
         // survive a JSON round trip *and* still be recognised as stale: the bug that shipped
         // once was not in the engine or in the interface but in the gap between them.
         let (_dir, mut engine) = library();
-        let topic = engine.topic_create(None, "Protein").unwrap();
-        let id = engine.document_create(topic, "What protein is").unwrap();
+        let topic = engine.document_create(None, "Protein").unwrap();
+        let id = engine
+            .document_create(Some(topic), "What protein is")
+            .unwrap();
 
         // What the interface is holding, having read the document and been handed it as JSON.
         let read: Document = engine.document_read(id).unwrap().into();
@@ -1848,8 +1859,10 @@ mod wire {
         // The guard. A JavaScript number holds integers exactly only to 2^53, and a revision
         // carries nanoseconds since the epoch — roughly two hundred times larger.
         let (_dir, mut engine) = library();
-        let topic = engine.topic_create(None, "Protein").unwrap();
-        let id = engine.document_create(topic, "What protein is").unwrap();
+        let topic = engine.document_create(None, "Protein").unwrap();
+        let id = engine
+            .document_create(Some(topic), "What protein is")
+            .unwrap();
         let read: Document = engine.document_read(id).unwrap().into();
 
         let value = serde_json::to_value(&read).unwrap();

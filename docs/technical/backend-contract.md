@@ -2,7 +2,7 @@
 
 > **Audience:** People building Learning Corner
 > **Status:** In progress — M1 and M2 implemented
-> **Last reviewed:** 2026-11-07
+> **Last reviewed:** 2026-11-10
 
 Every operation the interface may ask of the engine. This document is normative for both
 repositories and is the specification the engine is built against — see
@@ -67,23 +67,22 @@ for the start screen, in the application's settings rather than in any library
 ([Packaging](packaging-fedora.md#directories)), and a command-line client would have no use for
 it.
 
-## Topics and documents
+## Pages
+
+Every entry in the tree is a page — a document that can have pages under it
+([ADR 0009](adr/0009-pages-not-topics.md)).
 
 | Operation | Takes | Returns |
 | --------- | ----- | ------- |
-| `topic.create` | parent topic (optional), name | topic |
-| `topic.rename` | id, name | topic |
-| `topic.move` | id, new parent | topic |
-| `topic.deletePlan` | id | every document anywhere below it, by name, and how many topics |
-| `topic.delete` | id, `delete` / `move-up` | nothing — there is no default for the contents, on purpose |
-| `topic.tree` | — | the full topic tree |
-| `document.create` | topic id, title | document |
-| `document.read` | id | document, with resolved citations and links |
+| `page.tree` | — | every page, nested, each level in its order |
+| `document.create` | parent page (optional: the top level), title | the new page's id, at the end of its level |
+| `document.read` | id | document, with the page it is under (`parent`) |
 | `document.write` | id, content, expected revision | document, or `Conflict` |
-| `document.split` | id, range, new title, expected revision | both documents; citations in the range move; a link is left behind |
-| `document.rename` | id, title | document |
-| `document.move` | id, topic id | document |
-| `document.delete` | id | `plan` / `apply` |
+| `document.split` | id, range, new title, expected revision | both documents; the new one is a sub-page of the original; citations in the range move; a link is left behind |
+| `document.rename` | id, title | document; its file and folder follow, its place among its siblings is kept |
+| `document.move` | id, parent page (optional), position (optional) | document; with every page under it. The same parent only reorders |
+| `document.deletePlan` | id | every page anywhere under it, by name |
+| `document.delete` | id, `delete` / `move-up` | nothing — there is no default for the pages under it, on purpose |
 | `document.backlinks` | id | documents linking here, derived from `[[…]]` and never stored |
 | `document.attachImage` | id, path, `copy`/`move` | the filename to write into the body |
 | `document.image` | id, filename | the picture, or `null` when there is nothing to show |
@@ -224,7 +223,7 @@ Derived edges are computed on read, never stored. See
 
 | Operation | Takes | Returns |
 | --------- | ----- | ------- |
-| `search.query` | text, filters (topic, source, entity kind) | ranked results with excerpts |
+| `search.query` | text, filters (page, source, entity kind) | ranked results with excerpts |
 | `search.suggest` | prefix | titles, for `[[` completion |
 
 ## Backup

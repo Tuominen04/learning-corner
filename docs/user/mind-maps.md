@@ -2,7 +2,7 @@
 
 > **Audience:** People using Learning Corner
 > **Status:** Planned
-> **Last reviewed:** 2026-09-06
+> **Last reviewed:** 2026-11-10
 
 Once you have more than a handful of documents, a list in a sidebar stops telling you
 anything. A **map** shows the same work as a picture: what you have written, and how it
@@ -24,7 +24,7 @@ the document you are writing, and keep it there while you work. It updates as yo
 
 ## What is on it
 
-- **Nodes** — your documents and topics.
+- **Nodes** — your pages.
 - **Lines** — the links between them, drawn from the links already in your documents. Write
   `[[Protein sources]]` in a document and the line appears.
 - **Your own lines** — drag from one node to another to connect two documents that ought to
@@ -40,7 +40,7 @@ get to it.
 **Arrange automatically** gives you a starting layout. Then move things by hand: your own
 arrangement carries meaning that no automatic layout can guess, and the app keeps it.
 
-Filter the map to one topic, or to a distance around one node — *show me this document and
+Filter the map to the pages under one page, or to a distance around one node — *show me this document and
 everything within two steps of it* — when the whole library is too much at once.
 
 ## More than one map

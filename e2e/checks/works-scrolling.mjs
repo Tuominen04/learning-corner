@@ -32,8 +32,8 @@ await page.addInitScript(() => {
           return [{ path: "/home/you/kielet", name: "Kielet", opened: new Date().toISOString(), found: true }];
         case "library_open":
         case "library_status":
-          return { path: "/home/you/kielet", name: "Kielet", topics: 0, documents: 0, works: 1, writable: true, problems: [] };
-        case "topic_tree":
+          return { path: "/home/you/kielet", name: "Kielet", documents: 0, works: 1, writable: true, problems: [] };
+        case "page_tree":
         case "source_list":
           return [];
         case "work_list":

@@ -10,7 +10,7 @@ page.on("pageerror", (e) => check("no page errors", false, e.message));
 
 await page.addInitScript(() => {
   window.__calls = [];
-  const status = { path: "/home/you/kielet", name: "Kielet", topics: 0, documents: 0, works: 0, writable: true, problems: [] };
+  const status = { path: "/home/you/kielet", name: "Kielet", documents: 0, works: 0, writable: true, problems: [] };
   let work = null;
   let revision = 1;
   const misalignments = () => {
@@ -34,7 +34,7 @@ await page.addInitScript(() => {
         case "library_open":
         case "library_status":
           return status;
-        case "topic_tree":
+        case "page_tree":
         case "source_list":
           return [];
         case "work_list":

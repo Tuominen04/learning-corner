@@ -1,37 +1,23 @@
 import { describe, expect, it } from "vitest";
 
 import { linkable, titlesOf } from "./links";
-import type { Topic } from "./engine";
+import type { Page } from "./engine";
 
-// The tree, as the sidebar holds it: nested topics, each with documents.
-const LIBRARY: Topic[] = [
-  {
-    id: "T1",
-    name: "Protein",
-    documents: [
-      { id: "D1", title: "What protein is" },
-      { id: "D2", title: "Notes" },
-    ],
-    children: [
-      {
-        id: "T2",
-        name: "In the body",
-        documents: [{ id: "D3", title: "How protein is used" }],
-        children: [],
-      },
-    ],
-  },
-  {
-    id: "T3",
-    name: "Sleep",
-    documents: [{ id: "D4", title: "Notes" }],
-    children: [],
-  },
+const page = (id: string, title: string, children: Page[] = []): Page => ({ id, title, children });
+
+// The tree, as the sidebar holds it: pages, with pages under them.
+const LIBRARY: Page[] = [
+  page("P1", "Protein", [
+    page("D1", "What protein is"),
+    page("D2", "Notes"),
+    page("P2", "In the body", [page("D3", "How protein is used")]),
+  ]),
+  page("P3", "Sleep", [page("D4", "Notes")]),
 ];
 
 describe("what there is to link to", () => {
-  it("finds every document, however deep", () => {
-    expect(linkable(LIBRARY).map((d) => d.id).sort()).toEqual(["D1", "D2", "D3", "D4"]);
+  it("finds every page, however deep, in the tree's order", () => {
+    expect(linkable(LIBRARY).map((d) => d.id)).toEqual(["P1", "D1", "D2", "P2", "D3", "P3", "D4"]);
   });
 
   it("says where each one lives", () => {
@@ -49,21 +35,23 @@ describe("what there is to link to", () => {
   it("leaves out the document being written", () => {
     // A document linking to itself is not a connection, and offering it offers a mistake.
     expect(linkable(LIBRARY, "D1").map((d) => d.id)).not.toContain("D1");
-    expect(linkable(LIBRARY, "D1")).toHaveLength(3);
+    expect(linkable(LIBRARY, "D1")).toHaveLength(6);
   });
 
   it("is empty for an empty library rather than throwing", () => {
     expect(linkable([])).toEqual([]);
-    expect(linkable([{ id: "T", name: "Empty", documents: [], children: [] }])).toEqual([]);
+    // And a page at the top is under nothing: its path is empty.
+    expect(linkable([page("T", "Alone")])).toEqual([{ id: "T", title: "Alone", where: "" }]);
   });
 });
 
 describe("titles, for drawing a link", () => {
-  it("knows every document in the library", () => {
+  it("knows every page in the library", () => {
     const titles = titlesOf(LIBRARY);
     expect(titles.get("D1")).toBe("What protein is");
     expect(titles.get("D3")).toBe("How protein is used");
-    expect(titles.size).toBe(4);
+    expect(titles.get("P1")).toBe("Protein");
+    expect(titles.size).toBe(7);
   });
 
   it("does not know a document that is not there", () => {

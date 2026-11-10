@@ -26,7 +26,7 @@ import {
   type DocumentRef,
   type Form,
   type Source,
-  type Topic,
+  type Page,
 } from "../lib/engine";
 import { insertLink, titlesOf } from "../lib/links";
 import { insertImage } from "../lib/pictures";
@@ -83,7 +83,7 @@ const SAVE_AFTER_IDLE_MS = 600;
 
 export function Editor({
   document,
-  topics,
+  pages,
   onSaved,
   onRename,
   onOpenDocument,
@@ -92,7 +92,7 @@ export function Editor({
 }: {
   document: Doc;
   /** The whole library, for drawing links as titles and for choosing what to link to. */
-  topics: Topic[];
+  pages: Page[];
   onSaved: (d: Doc) => void;
   onRename: (id: string, title: string) => void;
   onOpenDocument: (id: string) => void;
@@ -334,8 +334,8 @@ export function Editor({
    * disagree with the sidebar beside it.
    */
   const links = useMemo<LinkTargets>(
-    () => ({ titles: titlesOf(topics), open: onOpenDocument }),
-    [topics, onOpenDocument],
+    () => ({ titles: titlesOf(pages), open: onOpenDocument }),
+    [pages, onOpenDocument],
   );
 
   // Which sources the document on disk cites, as one sorted string.
@@ -682,7 +682,7 @@ export function Editor({
 
             {panel.tool === "link" && (
               <LinkPicker
-                topics={topics}
+                pages={pages}
                 exclude={document.id}
                 onChoose={linked}
                 onCancel={() => setPanel(null)}

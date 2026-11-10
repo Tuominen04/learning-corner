@@ -2,7 +2,7 @@
 
 > **Audience:** People building Learning Corner
 > **Status:** In progress — M1 implemented
-> **Last reviewed:** 2026-10-19
+> **Last reviewed:** 2026-11-10
 
 There is no server, no network, and one user. That removes whole categories of testing and
 concentrates the risk in one place: **the library on disk.** Test accordingly.
@@ -110,7 +110,7 @@ jsdom where an editor has to exist.
 the shell would be. Each file in `e2e/checks/` replaces `window.__TAURI_INTERNALS__` before the
 page loads, so every `invoke` reaches a stub that answers the way the real command does and
 records what it was asked. They catch what jsdom cannot: a node view that draws nothing, tools
-that scroll out of reach, a drag that lands on the wrong topic, a selection ProseMirror never
+that scroll out of reach, a drag that lands on the wrong page, a selection ProseMirror never
 saw, words still in the editor when the window closes. Each check is named for the behaviour it
 holds, so a failure reads as the bug it is.
 
@@ -136,7 +136,8 @@ A set of small libraries checked into the engine repository, in
 | Fixture | Exercises | Exists |
 | ------- | --------- | ------ |
 | `minimal` | An empty library | Since M1 |
-| `damaged` | Broken front matter, duplicate identifiers, an orphaned citation, a broken source and topic, a person's own notes left beside the documents | Since M1 |
+| `damaged` | Broken front matter, duplicate identifiers, an orphaned citation, a broken source, a folder of pages whose page is gone, a person's own notes left beside the pages | Since M1; format 2 since pages |
+| `v2` | `v1` as the engine converts it — pages, not topics. Frozen | Since pages |
 | `v1`, `v2`, … | One library per historical format version, frozen forever | `v1` since M1 |
 | `parallel` | The Russian/Finnish work — original, pronunciation, Finnish and English — with a repeated chorus, notes, an edition citing a source, and a second work misaligned by a hand edit | With M3 |
 

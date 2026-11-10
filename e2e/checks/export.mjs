@@ -25,9 +25,9 @@ await page.addInitScript(({ DOC }) => {
           return [{ path: "/home/you/learning", name: "Learning", opened: new Date().toISOString(), found: true }];
         case "library_open":
         case "library_status":
-          return { path: "/home/you/learning", name: "Learning", topics: 1, documents: 1, writable: true, problems: [] };
-        case "topic_tree":
-          return [{ id: "01J8ZQ6A1M3P5R7T9V1X3Z5B70", name: "Protein", children: [], documents: [{ id: DOC, title: "What protein is" }] }];
+          return { path: "/home/you/learning", name: "Learning", documents: 1, writable: true, problems: [] };
+        case "page_tree":
+          return [{ id: "01J8ZQ6A1M3P5R7T9V1X3Z5B70", title: "Protein", children: [{ id: DOC, title: "What protein is", children: [] }] }];
         case "document_read":
           return doc();
         case "document_write":

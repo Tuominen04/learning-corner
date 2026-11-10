@@ -56,14 +56,13 @@ await page.addInitScript(
           case "library_open":
           case "library_create":
           case "library_status":
-            return { name: "Learning", topics: 1, documents: 1, writable: true, problems: [] };
-          case "topic_tree":
+            return { name: "Learning", documents: 1, writable: true, problems: [] };
+          case "page_tree":
             return [
               {
                 id: "01J8ZQ6A1M3P5R7T9V1X3Z5B7D",
-                name: "Protein",
-                documents: [{ id: here, title: "What protein is" }],
-                children: [],
+                title: "Protein",
+                children: [{ id: here, title: "What protein is", children: [] }],
               },
             ];
           case "document_read":

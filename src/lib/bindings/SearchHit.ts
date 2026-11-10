@@ -3,7 +3,7 @@ import type { HitKind } from "./HitKind";
 
 export type SearchHit = { id: string, 
 /**
- * What was found. One index holds topics, documents and sources, so this is what lets a
+ * What was found. One index holds pages, sources and works, so this is what lets a
  * result be drawn and acted on — opening a source is not opening a document.
  */
 kind: HitKind, title: string, excerpt: string, };

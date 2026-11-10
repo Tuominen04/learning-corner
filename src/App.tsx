@@ -3,12 +3,17 @@ import { useCallback, useEffect, useState } from "react";
 import { BackupPanel, type BackupMode } from "./components/BackupPanel";
 import { DeleteConfirm, type Deleting } from "./components/DeleteConfirm";
 import { Editor } from "./components/Editor";
-import { LibraryPicker, type Opened } from "./components/LibraryPicker";
+import {
+  LibraryPicker,
+  needsConverting,
+  type Opened,
+  type ToConvert,
+} from "./components/LibraryPicker";
 import { MovePicker } from "./components/MovePicker";
 import { RenameableName } from "./components/RenameableName";
 import { Search } from "./components/Search";
 import { Sources } from "./components/Sources";
-import { TopicTree } from "./components/TopicTree";
+import { PageTree } from "./components/PageTree";
 import { Works } from "./components/Works";
 import { LibraryMenu, type LibraryAction } from "./components/LibraryMenu";
 import {
@@ -20,9 +25,9 @@ import {
   type Document,
   type LibraryFolder,
   type LibraryStatus,
-  type Topic,
+  type Page,
 } from "./lib/engine";
-import { canMove, nameOf, placeName, placeOf, type Moving, type Place } from "./lib/moving";
+import { canMove, nameOf, placeName, spotOf, type Moving, type Spot } from "./lib/moving";
 import { basename } from "./lib/paths";
 import { couldNotOpen } from "./lib/recent";
 import { saveEverything } from "./lib/saving";
@@ -32,7 +37,7 @@ type Screen =
   /** Just started, and finding out whether there is a library to go back to. */
   | { kind: "starting"; reopening: string | null }
   /** The start screen, perhaps saying why the last library did not open again. */
-  | { kind: "picking"; notice: string | null }
+  | { kind: "picking"; notice: string | null; convert?: ToConvert | null }
   | { kind: "open"; opened: Opened };
 
 export function App() {
@@ -113,6 +118,7 @@ export function App() {
       return (
         <LibraryPicker
           notice={screen.notice}
+          convert={screen.convert ?? null}
           onOpened={(opened) => setScreen({ kind: "open", opened })}
         />
       );
@@ -129,7 +135,7 @@ export function App() {
   }
 }
 
-/** "1 topic", "3 topics". */
+/** "1 page", "3 pages". */
 function count(n: number, noun: string): string {
   return `${n} ${noun}${n === 1 ? "" : "s"}`;
 }
@@ -170,6 +176,10 @@ async function reopenLast(reopening: (name: string) => void): Promise<Screen> {
     const status = await engine.library.open(last.path);
     return { kind: "open", opened: { path: last.path, status } };
   } catch (thrown) {
+    // Made by an earlier version: asked about on the start screen, never converted unasked.
+    if (needsConverting(thrown)) {
+      return { kind: "picking", notice: null, convert: { path: last.path, name: last.name } };
+    }
     return { kind: "picking", notice: couldNotOpen(last, thrown) };
   }
 }
@@ -177,11 +187,11 @@ async function reopenLast(reopening: (name: string) => void): Promise<Screen> {
 /** An open library: the tree beside, and whatever is being worked on. */
 function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void }) {
   const [library, setLibrary] = useState<LibraryStatus>(opened.status);
-  const [topics, setTopics] = useState<Topic[]>([]);
+  const [pages, setPages] = useState<Page[]>([]);
   const [open, setOpen] = useState<Document | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Sources are library-wide rather than living under a topic, so they are a place you go
+  // Sources are library-wide rather than living under a page, so they are a place you go
   // rather than something you select in the tree.
   const [view, setView] = useState<"documents" | "sources" | "works">("documents");
 
@@ -207,15 +217,20 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
 
   // Something worth knowing that is not a failure: why a renamed library's folder kept its
   // name. Cleared by the next thing done, like an error.
-  const [note, setNote] = useState<string | null>(null);
+  // Said once, as the library opens, when it was converted on the way in: where its copy is.
+  const [note, setNote] = useState<string | null>(
+    opened.converted
+      ? `Converted: every topic is a page now. The library as it was is copied to ${opened.converted} — delete the copy once you are happy.`
+      : null,
+  );
 
   // What is being moved, while the move button's question is up. In the main area, like a
-  // deletion's confirmation: it lists every topic, and the sidebar is too narrow to read them.
+  // deletion's confirmation: it lists every page, and the sidebar is too narrow to read them.
   const [moving, setMoving] = useState<Moving | null>(null);
 
   // The move just made, and where it came from, so it can be undone. A drag that let go over
-  // the wrong topic is a moment's slip, and putting it back should cost a click, not a search.
-  const [moved, setMoved] = useState<{ what: Moving; from: Place; to: Place } | null>(null);
+  // the wrong page is a moment's slip, and putting it back should cost a click, not a search.
+  const [moved, setMoved] = useState<{ what: Moving; from: Spot; to: Spot } | null>(null);
 
   // A backup or a bring-back, while its panel is up. In the main area: a plan lists files.
   const [backingUp, setBackingUp] = useState<BackupMode | null>(null);
@@ -250,10 +265,10 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
   const refresh = useCallback(async () => {
     try {
       const [tree, status] = await Promise.all([
-        engine.topic.tree(),
+        engine.page.tree(),
         engine.library.status(),
       ]);
-      setTopics(tree);
+      setPages(tree);
       setLibrary(status);
     } catch (thrown) {
       setError(thrown instanceof EngineFailure ? thrown.message : String(thrown));
@@ -264,10 +279,10 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
   // mounting *is* opening one; the status came with the opening and is already current.
   useEffect(() => {
     let live = true;
-    engine.topic
+    engine.page
       .tree()
       .then((tree) => {
-        if (live) setTopics(tree);
+        if (live) setPages(tree);
       })
       .catch((thrown: unknown) => {
         if (live) setError(thrown instanceof EngineFailure ? thrown.message : String(thrown));
@@ -307,8 +322,8 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
   /**
    * What happens after something is deleted.
    *
-   * The open document may have been the thing deleted, or inside the topic that was, or
-   * *moved* by it — "keep them" lifts documents into the parent, which changes their topic
+   * The open page may have been the one deleted, or under the one that was, or *moved* by it
+   * — "keep them" lifts the pages under it into its place, which changes their parent
    * and nothing else. Asking the engine is simpler and more honest than working out which of
    * those happened from here: if it can still be read it is still there, and if it cannot,
    * the editor must not go on showing text that no longer exists anywhere.
@@ -343,28 +358,24 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
   }
 
   /**
-   * Move a topic or a document — by drag, by Ctrl+V, by the move button, or to undo the last.
+   * Move a page — by drag, by Ctrl+V, by Alt+↑/↓, by the move button, or to undo the last.
    *
    * Whatever was typed last is written first, like closing a library: the document being moved
    * may be the one open, with words still waiting for a pause in the typing. Then the open
    * document is read again, because it may have been moved, or have been inside a topic that
    * was; its words and its revision do not change, only where it is.
    */
-  async function move(what: Moving, to: Place) {
+  async function move(what: Moving, to: Spot) {
     setMoving(null);
-    const from = placeOf(topics, what);
-    if (from === undefined || !canMove(topics, what, to)) return;
+    const from = spotOf(pages, what.id);
+    if (from === undefined || !canMove(pages, what, to)) return;
     await guard(async () => {
       await saveEverything();
-      if (what.kind === "document") {
-        if (to === null) return;
-        const doc = await engine.document.move(what.id, to);
-        setOpen((current) => (current?.id === doc.id ? doc : current));
-      } else {
-        await engine.topic.move(what.id, to);
-        const was = open?.id;
-        if (was) setOpen(await engine.document.read(was));
-      }
+      await engine.document.move(what.id, to.parent, to.position);
+      // The open page may be the one moved or under it: its words and revision are the same,
+      // only where it is changed.
+      const was = open?.id;
+      if (was) setOpen(await engine.document.read(was));
       await refresh();
       setMoved({ what, from, to });
     });
@@ -450,7 +461,7 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
             </span>
           </div>
           <span className="counts">
-            {count(library.topics, "topic")} · {count(library.documents, "document")}
+            {count(library.documents, "page")}
             {library.works > 0 && ` · ${count(library.works, "work")}`}
           </span>
           {!library.writable && (
@@ -487,7 +498,7 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search your writing"
-            aria-label="Search your topics and documents"
+            aria-label="Search your pages and works"
           />
           {query !== "" && (
             <button className="ghost" onClick={() => setQuery("")} title="Clear the search">
@@ -506,31 +517,19 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
             }}
           />
         ) : (
-        <TopicTree
-          topics={topics}
+        <PageTree
+          pages={pages}
           selected={view === "documents" ? (open?.id ?? null) : null}
-          onSelectDocument={openDocument}
-          onAddDocument={(topicId) =>
+          onSelect={openDocument}
+          onAdd={(parent) =>
             void guard(async () => {
-              const id = await engine.document.create(topicId, "Untitled");
+              const id = await engine.document.create(parent, "Untitled");
               await refresh();
               setOpen(await engine.document.read(id));
               setView("documents");
             })
           }
-          onAddTopic={(parent) =>
-            void guard(async () => {
-              await engine.topic.create(parent, "New topic");
-              await refresh();
-            })
-          }
-          onRenameTopic={(id, name) =>
-            void guard(async () => {
-              await engine.topic.rename(id, name);
-              await refresh();
-            })
-          }
-          onRenameDocument={renameDocument}
+          onRename={renameDocument}
           onDelete={setDeleting}
           onMove={setMoving}
           onMoveTo={(what, to) => void move(what, to)}
@@ -558,7 +557,12 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
         {moved && (
           <p className="folder-note moved" role="status">
             Moved “{nameOf(moved.what)}”{" "}
-            {moved.to === null ? "to the top level" : `into ${placeName(topics, moved.to)}`}.{" "}
+            {moved.to.parent === moved.from.parent
+              ? "to another place among the pages beside it"
+              : moved.to.parent === null
+                ? "to the top level"
+                : `under ${placeName(pages, moved.to.parent)}`}
+            .{" "}
             <button className="ghost undo" onClick={() => void move(moved.what, moved.from)}>
               Undo
             </button>
@@ -575,17 +579,17 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
           <DeleteConfirm
             // Keyed, so opening the confirmation for something else starts it afresh rather
             // than showing the last thing's contents for a moment.
-            key={`${deleting.kind}:${deleting.id}`}
+            key={deleting.id}
             what={deleting}
             onDeleted={afterDelete}
             onCancel={() => setDeleting(null)}
           />
         ) : moving ? (
           <MovePicker
-            key={`${moving.kind}:${moving.id}`}
+            key={moving.id}
             what={moving}
-            topics={topics}
-            onMove={(to) => void move(moving, to)}
+            pages={pages}
+            onMove={(to) => void move(moving, { parent: to, position: null })}
             onCancel={() => setMoving(null)}
           />
         ) : view === "sources" ? (
@@ -599,7 +603,7 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
           <Editor
             key={`${open.id}:${reloaded}`}
             document={open}
-            topics={topics}
+            pages={pages}
             onSaved={(saved) => {
               // Only while it is still the open document. The editor writes what is waiting
               // as it goes, so a save can land after somebody has moved on to another one,
@@ -614,8 +618,9 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
           />
         ) : (
           <p className="empty">
-            Choose a document, or start one. A topic is a subject; a document is a page inside
-            it. Both are meant to be split apart later, so do not plan the whole structure now.
+            Choose a page, or start one. Put what a subject is about in brief at the top of its
+            page, and add pages under it as it grows — they are meant to be split apart later, so
+            do not plan the whole structure now.
           </p>
         )}
       </main>

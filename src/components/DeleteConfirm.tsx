@@ -5,26 +5,18 @@ import {
   EngineFailure,
   type Contents,
   type DocumentRef,
-  type TopicContents,
+  type PageContents,
 } from "../lib/engine";
 
-// Deleting something, having been shown what goes with it.
+// Deleting a page, having been shown what goes with it.
 //
 // Two-phase without exception, like deleting a source: what would be lost is named before
-// anything is removed, never after. Named rather than counted — "3 documents" is a number
-// somebody agrees to, and a list of titles is a thing they recognise. One of them being called
-// "Thesis notes" is how a mistake gets caught before it happens.
+// anything is removed, never after. Named rather than counted — "3 pages" is a number somebody
+// agrees to, and a list of titles is a thing they recognise. One of them being called "Thesis
+// notes" is how a mistake gets caught before it happens.
 
-/** What is being deleted, and enough about where it sits to describe the choices. */
-export type Deleting =
-  | { kind: "document"; id: string; title: string }
-  | {
-      kind: "topic";
-      id: string;
-      name: string;
-      /** The topic above, which is where "move up" puts things. `null` at the top level. */
-      parent: { id: string; name: string } | null;
-    };
+/** The page being deleted. */
+export type Deleting = { id: string; title: string; hasChildren: boolean };
 
 export function DeleteConfirm({
   what,
@@ -37,31 +29,26 @@ export function DeleteConfirm({
 }) {
   // What the delete would reach, asked for when the dialog opens. `null` until it answers.
   const [linking, setLinking] = useState<DocumentRef[] | null>(null);
-  const [inside, setInside] = useState<TopicContents | null>(null);
+  const [under, setUnder] = useState<PageContents | null>(null);
   const [contents, setContents] = useState<Contents | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let live = true;
-    const ask =
-      what.kind === "document"
-        ? engine.document.backlinks(what.id).then((found) => {
-            if (live) setLinking(found ?? []);
-          })
-        : engine.topic.deletePlan(what.id).then((plan) => {
-            if (!live) return;
-            setInside(plan);
-            // The safe answer is chosen for you when there is one. Moving the contents up
-            // deletes no writing, so offering it pre-selected is not deciding anything that
-            // matters; deleting them never is.
-            if (plan.documents.length > 0 || plan.topics > 0) {
-              setContents(what.parent !== null || plan.documents.length === 0 ? "move-up" : null);
-            }
-          });
-    ask.catch((thrown: unknown) => {
-      if (live) setError(thrown instanceof EngineFailure ? thrown.message : String(thrown));
-    });
+    Promise.all([engine.document.backlinks(what.id), engine.document.deletePlan(what.id)])
+      .then(([found, plan]) => {
+        if (!live) return;
+        setLinking(found ?? []);
+        setUnder(plan);
+        // The safe answer is chosen for you. Keeping the pages under it deletes no writing,
+        // so offering it pre-selected is not deciding anything that matters; deleting them
+        // never is.
+        if (plan.pages.length > 0) setContents("move-up");
+      })
+      .catch((thrown: unknown) => {
+        if (live) setError(thrown instanceof EngineFailure ? thrown.message : String(thrown));
+      });
     return () => {
       live = false;
     };
@@ -71,12 +58,9 @@ export function DeleteConfirm({
     setBusy(true);
     setError(null);
     try {
-      if (what.kind === "document") {
-        await engine.document.delete(what.id);
-      } else {
-        // An empty topic has nothing to decide about, and either answer does the same thing.
-        await engine.topic.delete(what.id, contents ?? "delete");
-      }
+      // A page with nothing under it has nothing to decide about, and either answer does the
+      // same thing.
+      await engine.document.delete(what.id, contents ?? "delete");
       onDeleted();
     } catch (thrown) {
       setError(thrown instanceof EngineFailure ? thrown.message : String(thrown));
@@ -84,27 +68,24 @@ export function DeleteConfirm({
     }
   }
 
-  const name = what.kind === "document" ? what.title : what.name;
-  const loading = what.kind === "document" ? linking === null : inside === null;
-  const empty = inside !== null && inside.documents.length === 0 && inside.topics === 0;
-  // A topic with anything inside it has to have been told what to do with it.
-  const decided = what.kind === "document" || empty || contents !== null;
+  const loading = linking === null || under === null;
+  const decided = under !== null && (under.pages.length === 0 || contents !== null);
 
   return (
     <div className="confirm delete-confirm">
-      <h3>Delete “{name || "Untitled"}”?</h3>
+      <h3>Delete “{what.title || "Untitled"}”?</h3>
 
       {loading ? (
-        <p className="empty">Looking at what is in it…</p>
-      ) : what.kind === "document" ? (
-        <DocumentConsequences linking={linking ?? []} />
+        <p className="empty">Looking at what is under it…</p>
       ) : (
-        <TopicConsequences
-          inside={inside!}
-          parent={what.parent}
-          contents={contents}
-          onChoose={setContents}
-        />
+        <>
+          <Linking linking={linking} />
+          <Under under={under} contents={contents} onChoose={setContents} />
+          <p className="hint">
+            Any pictures it shows stay in its folder. The library may hold the only copy of a
+            picture you moved in, so they are left for you to remove yourself if you want to.
+          </p>
+        </>
       )}
 
       {error && <p className="error">{error}</p>}
@@ -125,85 +106,57 @@ export function DeleteConfirm({
   );
 }
 
-function DocumentConsequences({ linking }: { linking: DocumentRef[] }) {
+function Linking({ linking }: { linking: DocumentRef[] }) {
+  if (linking.length === 0) return <p>Nothing links to it.</p>;
   return (
     <>
-      {linking.length === 0 ? (
-        <p>Nothing links to it.</p>
-      ) : (
-        <>
-          <p className="warning">
-            {linking.length} document{linking.length === 1 ? " links" : "s link"} to it. Those
-            links will say the document is missing — the sentences around them stay exactly
-            as you wrote them.
-          </p>
-          <ul>
-            {linking.map((doc) => (
-              <li key={doc.id}>{doc.title}</li>
-            ))}
-          </ul>
-        </>
-      )}
-      <p className="hint">
-        Any pictures it shows stay in the topic's folder. The library may hold the only copy of
-        a picture you moved in, so they are left for you to remove yourself if you want to.
+      <p className="warning">
+        {linking.length} page{linking.length === 1 ? " links" : "s link"} to it. Those links will
+        say the page is missing — the sentences around them stay exactly as you wrote them.
       </p>
+      <ul>
+        {linking.map((doc) => (
+          <li key={doc.id}>{doc.title}</li>
+        ))}
+      </ul>
     </>
   );
 }
 
-function TopicConsequences({
-  inside,
-  parent,
+function Under({
+  under,
   contents,
   onChoose,
 }: {
-  inside: TopicContents;
-  parent: { id: string; name: string } | null;
+  under: PageContents;
   contents: Contents | null;
   onChoose: (contents: Contents) => void;
 }) {
-  if (inside.documents.length === 0 && inside.topics === 0) {
-    return <p>Nothing is in it.</p>;
-  }
-
-  // A document cannot sit outside a topic, so at the top level there is nowhere to move
-  // documents up to. Said here rather than discovered when the engine refuses.
-  const canMoveUp = parent !== null || inside.documents.length === 0;
-
+  if (under.pages.length === 0) return null;
+  const n = under.pages.length;
   return (
     <>
       <p className="warning">
-        It holds{" "}
-        {inside.documents.length > 0 &&
-          `${inside.documents.length} document${inside.documents.length === 1 ? "" : "s"}`}
-        {inside.documents.length > 0 && inside.topics > 0 && " and "}
-        {inside.topics > 0 && `${inside.topics} topic${inside.topics === 1 ? "" : "s"}`}.
+        {n} page{n === 1 ? " is" : "s are"} under it.
       </p>
-      {inside.documents.length > 0 && (
-        <ul>
-          {inside.documents.map((doc) => (
-            <li key={doc.id}>{doc.title}</li>
-          ))}
-        </ul>
-      )}
+      <ul>
+        {under.pages.map((page) => (
+          <li key={page.id}>{page.title}</li>
+        ))}
+      </ul>
 
       <span className="field-label">What should happen to them?</span>
-      <label className={canMoveUp ? "choice" : "choice unavailable"}>
+      <label className="choice">
         <input
           type="radio"
           name="contents"
           checked={contents === "move-up"}
-          disabled={!canMoveUp}
           onChange={() => onChoose("move-up")}
         />
         <span>
           <strong>Keep them</strong>
-          {parent !== null
-            ? `Move them up into “${parent.name}”, then delete the empty topic`
-            : canMoveUp
-              ? "Move them up to the top level, then delete the empty topic"
-              : "Not possible here: at the top level a document has no topic to go into"}
+          Move the pages directly under it up into its place, each with the pages under it,
+          then delete this page alone
         </span>
       </label>
       <label className="choice">

@@ -10,7 +10,7 @@ page.on("pageerror", (e) => check("no page errors", false, e.message));
 
 await page.addInitScript(() => {
   window.__calls = [];
-  const status = { path: "/home/you/learning", name: "Learning", topics: 1, documents: 1, writable: true, problems: [] };
+  const status = { path: "/home/you/learning", name: "Learning", documents: 1, writable: true, problems: [] };
   const side = { size: 2048, modified: "2026-10-20T10:00:00Z" };
   const plan = (direction, entries) => ({
     direction, library_name: "Learning", library_path: status.path, drive_path: "/run/media/you/USB/learning",
@@ -28,8 +28,8 @@ await page.addInitScript(() => {
         case "library_open":
         case "library_status":
           return status;
-        case "topic_tree":
-          return [{ id: "01J8ZQ6A1M3P5R7T9V1X3Z5B70", name: "Protein", children: [], documents: [] }];
+        case "page_tree":
+          return [{ id: "01J8ZQ6A1M3P5R7T9V1X3Z5B70", title: "Protein", children: [] }];
         case "plugin:dialog|open":
           return "/run/media/you/USB/learning";
         case "backup_texts":

@@ -26,10 +26,10 @@ Start at **[Getting started](user/getting-started.md)**.
 | -------------------------------------------------------- | --------------------------------------------------------------------- |
 | [Getting started](user/getting-started.md)               | Installing on Fedora, creating your first library, a short tour        |
 | [Libraries and your files](user/libraries-and-files.md)  | What a library is, where it lives, using more than one, moving it      |
-| [Topics and documents](user/documents-and-topics.md)     | Writing, splitting a topic as it grows, linking documents together     |
+| [Pages](user/pages.md)                    | Writing, putting pages under pages as a subject grows, linking pages   |
 | [Sources and citations](user/sources-and-citations.md)   | Saving sources, citing them, the automatic APA 7 reference list        |
 | [Parallel texts](user/parallel-texts.md)                 | Original, pronunciation, and translation side by side                  |
-| [Mind maps](user/mind-maps.md)                           | Seeing how your topics connect, in its own window                      |
+| [Mind maps](user/mind-maps.md)                           | Seeing how your pages connect, in its own window                       |
 | [Backup and restore](user/backup-and-restore.md)         | Copying to a drive, restoring, and deciding which copy is right        |
 | [FAQ](user/faq.md)                                       | Short answers to the common questions                                  |
 | [Glossary](user/glossary.md)                             | What the words mean                                                    |
