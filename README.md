@@ -95,7 +95,12 @@ writes your library — [learning-corner-engine](https://github.com/Tuominen04/l
 
 ## Status
 
-**0.22.0 tidies the screens.** Everything you can click now looks clickable; backing up,
+**0.23.0 finishes what M2 and M3 left for later.** A row splits before any of its lines; each
+work remembers which panes it was showing, and a long prose text can scroll pane by pane; the
+backup dialog opens where this library went last time; and a file changed in both places shows
+what differs before you choose.
+
+**0.22.0 tidied the screens.** Everything you can click now looks clickable; backing up,
 bringing back and switching library are in a menu at the top left; and a translation's language
 can be put right after it is added.
 
