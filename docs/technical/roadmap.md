@@ -2,7 +2,7 @@
 
 > **Audience:** People building Learning Corner
 > **Status:** In progress — M1, M2 and M3 implemented
-> **Last reviewed:** 2026-11-07
+> **Last reviewed:** 2026-11-10
 
 Milestones in order. Each is shippable on its own — a person could install it, use it, and get
 something out of it — and each has a definition of done that is checkable rather than a
@@ -114,8 +114,8 @@ it safe before making it bigger.
       drive brought back, then changed in the app and backed up over the drive.
 - [ ] **Seen running by a person**: a restore from the drive into an empty folder, and a file
       changed in both places answered each of the three ways.
-- [ ] Later: the last backup folder remembered per library; a line diff for a text file changed
-      in both places.
+- [x] Later: the last backup folder remembered per library; a line diff for a text file changed
+      in both places. *0.23.0*
 
 **Done when:** a library backs up to a drive, restores onto a different machine, and every row
 of the outcome table has been produced deliberately and resolved every possible way with
@@ -134,8 +134,8 @@ nothing unrecoverable.
 - [x] Pane hiding, for practice.
 - [x] The `parallel` fixture and the round-trip property test.
 - [ ] **Seen running by a person**, on Fedora: the Russian/Finnish example made in the app.
-- [ ] Later: remembering which panes were showing; splitting a row at any line, not only its
-      last; scrolling the panes of a long prose text independently.
+- [x] Later: remembering which panes were showing; splitting a row at any line, not only its
+      last; scrolling the panes of a long prose text independently. *0.23.0*
 
 Then *0.22.0*, from using it: what can be clicked looks clickable, the library's actions in a
 menu at the top left, the PDF marker in a column of its own, the extra source fields folding away
