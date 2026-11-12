@@ -6,7 +6,7 @@ import { LanguagePicker, WorkView } from "./WorkView";
 
 // Texts read beside their other versions: the list of works, a new one, and the one open.
 //
-// A work belongs to the library rather than to a topic, like a source, so this is a place you
+// A work belongs to the library rather than to a page, like a source, so this is a place you
 // go rather than something in the tree.
 
 export function Works({

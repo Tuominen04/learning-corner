@@ -1,125 +1,126 @@
 import { describe, expect, it } from "vitest";
 
-import type { Topic } from "./engine";
+import type { Page } from "./engine";
 import {
   canMove,
   destinations,
   findMoving,
+  parentOf,
   placeName,
-  placeOf,
+  spotNear,
+  spotOf,
+  stepped,
   whyNot,
   type Moving,
 } from "./moving";
 
-// Protein
-// ├── What protein is
-// └── In the body
-//     ├── How protein is used
-//     └── Organs
-// Vitamins
-const TREE: Topic[] = [
-  {
-    id: "protein",
-    name: "Protein",
-    documents: [{ id: "what", title: "What protein is" }],
-    children: [
-      {
-        id: "body",
-        name: "In the body",
-        documents: [{ id: "how", title: "How protein is used" }],
-        children: [{ id: "organs", name: "Organs", documents: [], children: [] }],
-      },
-    ],
-  },
-  { id: "vitamins", name: "Vitamins", documents: [], children: [] },
+const page = (id: string, title: string, children: Page[] = []): Page => ({ id, title, children });
+
+// Protein, with three pages under it, one of which has a page of its own; and Sleep.
+const tree: Page[] = [
+  page("protein", "Protein", [
+    page("what", "What protein is"),
+    page("types", "Types of protein"),
+    page("body", "In the body", [page("used", "How protein is used")]),
+  ]),
+  page("sleep", "Sleep"),
 ];
 
-const doc = (id: string, title = id): Moving => ({ kind: "document", id, title });
-const topic = (id: string, name = id): Moving => ({ kind: "topic", id, name });
+const moving = (id: string): Moving => findMoving(tree, id)!;
 
-describe("where something is", () => {
-  it("finds a document's topic, however deep", () => {
-    expect(placeOf(TREE, doc("what"))).toBe("protein");
-    expect(placeOf(TREE, doc("how"))).toBe("body");
+describe("where a page is", () => {
+  it("knows its parent, and the top level", () => {
+    expect(parentOf(tree, "used")).toBe("body");
+    expect(parentOf(tree, "protein")).toBeNull();
+    expect(parentOf(tree, "nowhere")).toBeUndefined();
   });
 
-  it("finds a topic's parent, and says when it is at the top", () => {
-    expect(placeOf(TREE, topic("organs"))).toBe("body");
-    expect(placeOf(TREE, topic("protein"))).toBeNull();
+  it("knows its place among its siblings", () => {
+    expect(spotOf(tree, "types")).toEqual({ parent: "protein", position: 1 });
+    expect(spotOf(tree, "sleep")).toEqual({ parent: null, position: 1 });
   });
 
-  it("says so when it is not in the tree", () => {
-    expect(placeOf(TREE, doc("gone"))).toBeUndefined();
-  });
-});
-
-describe("where something may go", () => {
-  it("a document goes into any other topic", () => {
-    expect(canMove(TREE, doc("what"), "vitamins")).toBe(true);
-    expect(canMove(TREE, doc("what"), "organs")).toBe(true);
-  });
-
-  it("but not where it already is, and not loose at the top", () => {
-    expect(whyNot(TREE, doc("what"), "protein")).toBe("where it is now");
-    expect(whyNot(TREE, doc("what"), null)).toBe("a document belongs in a topic");
-  });
-
-  it("a topic goes into another topic, or to the top", () => {
-    expect(canMove(TREE, topic("organs"), "vitamins")).toBe(true);
-    expect(canMove(TREE, topic("organs"), null)).toBe(true);
-    expect(canMove(TREE, topic("vitamins"), "body")).toBe(true);
-  });
-
-  it("but never into itself or anything inside it", () => {
-    expect(whyNot(TREE, topic("protein"), "protein")).toBe("the topic itself");
-    expect(whyNot(TREE, topic("protein"), "body")).toBe("inside the topic being moved");
-    expect(whyNot(TREE, topic("protein"), "organs")).toBe("inside the topic being moved");
-  });
-
-  it("and not to where it already is", () => {
-    expect(whyNot(TREE, topic("protein"), null)).toBe("where it is now");
-    expect(whyNot(TREE, topic("organs"), "body")).toBe("where it is now");
+  it("names a place with the pages it is under", () => {
+    expect(placeName(tree, "body")).toBe("Protein › In the body");
+    expect(placeName(tree, null)).toBe("the top level");
   });
 });
 
-describe("the places on offer", () => {
-  it("lists every topic in the sidebar's order, each saying whether it is open", () => {
-    expect(destinations(TREE, doc("how")).map((d) => [d.name, d.depth, d.reason])).toEqual([
-      ["Protein", 0, null],
-      ["In the body", 1, "where it is now"],
-      ["Organs", 2, null],
-      ["Vitamins", 0, null],
+describe("where a page may go", () => {
+  it("never under itself, or under a page under it", () => {
+    expect(whyNot(tree, moving("protein"), { parent: "protein", position: null })).toBe(
+      "the page itself",
+    );
+    expect(whyNot(tree, moving("protein"), { parent: "body", position: null })).toBe(
+      "under the page being moved",
+    );
+  });
+
+  it("not to where it already is", () => {
+    expect(whyNot(tree, moving("types"), { parent: "protein", position: 1 })).toBe(
+      "where it is now",
+    );
+    // Already the last there, so "at the end" is where it is.
+    expect(whyNot(tree, moving("body"), { parent: "protein", position: null })).toBe(
+      "where it is now",
+    );
+  });
+
+  it("anywhere else, including another place among its siblings", () => {
+    expect(canMove(tree, moving("types"), { parent: "protein", position: 0 })).toBe(true);
+    expect(canMove(tree, moving("what"), { parent: "protein", position: null })).toBe(true);
+    expect(canMove(tree, moving("used"), { parent: null, position: null })).toBe(true);
+    expect(canMove(tree, moving("sleep"), { parent: "used", position: null })).toBe(true);
+  });
+});
+
+describe("dropping beside or under a page", () => {
+  it("under it goes at the end of its pages", () => {
+    expect(spotNear(tree, moving("sleep"), "body", "under")).toEqual({
+      parent: "body",
+      position: null,
+    });
+  });
+
+  it("before or after it counts among the others, the moving page left out", () => {
+    // "What protein is" dropped after "Types of protein": the others are [Types, In the body],
+    // so after Types is position 1.
+    expect(spotNear(tree, moving("what"), "types", "after")).toEqual({
+      parent: "protein",
+      position: 1,
+    });
+    expect(spotNear(tree, moving("sleep"), "what", "before")).toEqual({
+      parent: "protein",
+      position: 0,
+    });
+  });
+});
+
+describe("one step up or down", () => {
+  it("moves among its siblings, and not past either end", () => {
+    expect(stepped(tree, moving("types"), -1)).toEqual({ parent: "protein", position: 0 });
+    expect(stepped(tree, moving("types"), 1)).toEqual({ parent: "protein", position: 2 });
+    expect(stepped(tree, moving("what"), -1)).toBeUndefined();
+    expect(stepped(tree, moving("body"), 1)).toBeUndefined();
+  });
+});
+
+describe("the move button's list", () => {
+  it("offers the top level and every page, in tree order, saying which are closed", () => {
+    const list = destinations(tree, moving("body"));
+    expect(list.map((d) => d.name)).toEqual([
+      "The top level",
+      "Protein",
+      "What protein is",
+      "Types of protein",
+      "In the body",
+      "How protein is used",
+      "Sleep",
     ]);
-  });
-
-  it("offers a topic the top level first", () => {
-    const places = destinations(TREE, topic("body"));
-    expect(places.map((d) => [d.place, d.reason])).toEqual([
-      [null, null],
-      ["protein", "where it is now"],
-      ["body", "the topic itself"],
-      ["organs", "inside the topic being moved"],
-      ["vitamins", null],
-    ]);
-  });
-});
-
-describe("saying where", () => {
-  it("names a topic with the topics it sits in", () => {
-    expect(placeName(TREE, "organs")).toBe("Protein › In the body › Organs");
-    expect(placeName(TREE, "vitamins")).toBe("Vitamins");
-    expect(placeName(TREE, null)).toBe("the top level");
-  });
-});
-
-describe("finding what to move", () => {
-  it("finds a topic or a document by its identifier, with its name", () => {
-    expect(findMoving(TREE, "topic", "organs")).toEqual(topic("organs", "Organs"));
-    expect(findMoving(TREE, "document", "how")).toEqual(doc("how", "How protein is used"));
-  });
-
-  it("and nothing for an identifier of the other kind, or none at all", () => {
-    expect(findMoving(TREE, "document", "organs")).toBeNull();
-    expect(findMoving(TREE, "topic", "gone")).toBeNull();
+    const closed = Object.fromEntries(list.map((d) => [d.name, d.reason]));
+    expect(closed["In the body"]).toBe("the page itself");
+    expect(closed["How protein is used"]).toBe("under the page being moved");
+    expect(closed["Protein"]).toBe("where it is now");
+    expect(closed["The top level"]).toBeNull();
   });
 });

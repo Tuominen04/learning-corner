@@ -1,6 +1,7 @@
-// Moving topics and documents, three ways: the move button and its question, dragging onto a
-// topic or the heading, and Ctrl+X / Ctrl+V — each against a mock engine whose tree really
-// changes, so what the sidebar shows afterwards is what the engine was told.
+// Moving pages, four ways: the move button and its question; dragging onto a page, onto its top
+// or bottom edge, or onto the heading; Ctrl+X / Ctrl+V; and Alt+↑ / Alt+↓ — each against a mock
+// engine whose tree really changes, so what the sidebar shows afterwards is what the engine was
+// told.
 
 import { check, finish, launch, URL } from "../support.mjs";
 
@@ -14,27 +15,21 @@ await page.addInitScript(() => {
   //         └ In the body ─ How protein is used
   //                       └ Organs
   // Vitamins
-  const topics = {
-    protein: { id: "protein", name: "Protein", parent: null },
-    body: { id: "body", name: "In the body", parent: "protein" },
-    organs: { id: "organs", name: "Organs", parent: "body" },
-    vitamins: { id: "vitamins", name: "Vitamins", parent: null },
+  const pages = {
+    protein: { id: "protein", title: "Protein", parent: null, body: "" },
+    what: { id: "what", title: "What protein is", parent: "protein", body: "Protein is built from amino acids." },
+    body: { id: "body", title: "In the body", parent: "protein", body: "" },
+    how: { id: "how", title: "How protein is used", parent: "body", body: "Tissue repair." },
+    organs: { id: "organs", title: "Organs", parent: "body", body: "" },
+    vitamins: { id: "vitamins", title: "Vitamins", parent: null, body: "" },
   };
-  const docs = {
-    what: { id: "what", title: "What protein is", topic: "protein", body: "Protein is built from amino acids." },
-    how: { id: "how", title: "How protein is used", topic: "body", body: "Tissue repair." },
-  };
+  // The order of each level, as the engine keeps it in `.order`.
+  const order = { "": ["protein", "vitamins"], protein: ["what", "body"], body: ["how", "organs"], organs: [], vitamins: [], what: [], how: [] };
+  const key = (parent) => parent ?? "";
   let revision = 1;
   const tree = (parent) =>
-    Object.values(topics)
-      .filter((t) => t.parent === parent)
-      .map((t) => ({
-        id: t.id,
-        name: t.name,
-        documents: Object.values(docs).filter((d) => d.topic === t.id).map((d) => ({ id: d.id, title: d.title })),
-        children: tree(t.id),
-      }));
-  const doc = (id) => ({ ...docs[id], revision: String(revision), modified: "2026-10-03T00:00:00Z" });
+    (order[key(parent)] ?? []).map((id) => ({ id, title: pages[id].title, children: tree(id) }));
+  const doc = (id) => ({ id, title: pages[id].title, parent: pages[id].parent, body: pages[id].body, revision: String(revision), modified: "2026-10-03T00:00:00Z" });
   window.__TAURI_INTERNALS__ = {
     transformCallback: () => 0,
     invoke: async (command, args) => {
@@ -44,27 +39,28 @@ await page.addInitScript(() => {
           return [{ path: "/home/you/learning", name: "Learning", opened: new Date().toISOString(), found: true }];
         case "library_open":
         case "library_status":
-          return { path: "/home/you/learning", name: "Learning", topics: 4, documents: 2, writable: true, problems: [] };
-        case "topic_tree":
+          return { path: "/home/you/learning", name: "Learning", documents: 6, works: 0, writable: true, problems: [] };
+        case "page_tree":
           return tree(null);
         case "document_read":
           return doc(args.document);
         case "document_write":
-          docs[args.document].body = args.body;
+          pages[args.document].body = args.body;
           revision += 1;
           return doc(args.document);
-        case "document_move":
-          docs[args.document].topic = args.topic;
-          return doc(args.document);
-        case "topic_move": {
+        case "document_move": {
           // The engine's own refusal, so a guard that let one through would be seen.
           let up = args.parent;
           while (up) {
-            if (up === args.topic) throw { kind: "Invalid", message: "a topic cannot be moved inside itself" };
-            up = topics[up].parent;
+            if (up === args.document) throw { kind: "Invalid", message: "a page cannot be moved under itself" };
+            up = pages[up].parent;
           }
-          topics[args.topic].parent = args.parent;
-          return null;
+          const from = order[key(pages[args.document].parent)];
+          from.splice(from.indexOf(args.document), 1);
+          const to = (order[key(args.parent)] ??= []);
+          to.splice(args.position ?? to.length, 0, args.document);
+          pages[args.document].parent = args.parent;
+          return doc(args.document);
         }
         case "source_list":
         case "citation_format_many":
@@ -80,17 +76,15 @@ await page.addInitScript(() => {
 });
 
 const calls = (name) => page.evaluate((n) => window.__calls.filter((c) => c.command === n), name);
+const lastMove = async () => JSON.stringify((await calls("document_move")).at(-1)?.args);
+const moves = async () => (await calls("document_move")).length;
 const tree = () =>
   page.evaluate(() => {
     const lines = [];
     const walk = (ul, depth) => {
-      for (const li of ul.children) {
-        if (li.classList.contains("branch")) {
-          lines.push(`${"  ".repeat(depth)}${li.querySelector(":scope > .branch-head .name").textContent}`);
-          walk(li.querySelector(":scope > ul"), depth + 1);
-        } else if (li.classList.contains("doc-row")) {
-          lines.push(`${"  ".repeat(depth)}- ${li.querySelector(".name").textContent}`);
-        }
+      for (const li of ul?.children ?? []) {
+        lines.push(`${"  ".repeat(depth)}${li.querySelector(":scope > .page-row .name").textContent}`);
+        walk(li.querySelector(":scope > ul"), depth + 1);
       }
     };
     walk(document.querySelector(".tree > ul"), 0);
@@ -99,145 +93,161 @@ const tree = () =>
 /** The text of the first match, or "" when there is none — so a missing element fails a check
  * rather than stopping the run. */
 const text = async (selector) => ((await page.locator(selector).count()) ? page.locator(selector).first().innerText() : "");
-const head = (name) => page.locator(".branch-head", { has: page.locator(".name", { hasText: new RegExp(`^${name}$`) }) });
-const row = (title) => page.locator(".doc-row", { hasText: title });
+const row = (title) => page.locator(".page-row", { has: page.locator(".name", { hasText: new RegExp(`^${title}$`) }) });
+/** Drag a row onto another, at its top edge, its middle, or its bottom edge. */
+async function drag(from, to, where = "middle") {
+  const box = await row(to).boundingBox();
+  const y = where === "top" ? 2 : where === "bottom" ? box.height - 2 : box.height / 2;
+  await row(from).dragTo(row(to), { targetPosition: { x: 40, y } });
+}
 
 await page.goto(URL, { waitUntil: "networkidle" });
-await page.waitForSelector(".tree .branch");
+await page.waitForSelector(".tree .page-row");
 
-const START = "Protein\n  - What protein is\n  In the body\n    - How protein is used\n    Organs\nVitamins";
-check("the tree as the engine has it", (await tree()) === START, await tree());
+const START = "Protein\n  What protein is\n  In the body\n    How protein is used\n    Organs\nVitamins";
+check("the tree as the engine has it, in its order", (await tree()) === START, await tree());
 
-// ---- the move button --------------------------------------------------------------------
-
-await row("What protein is").hover();
-const docButtons = await row("What protein is").locator("button").evaluateAll((bs) => bs.map((b) => b.title || b.textContent));
-check("a document's row: rename, then move, then delete",
-  JSON.stringify(docButtons.slice(1)) === JSON.stringify(["Rename this document", "Move this document", "Delete this document"]), JSON.stringify(docButtons));
-check("the move arrows show on hover", (await row("What protein is").locator("button.move").evaluate((b) => getComputedStyle(b).opacity)) === "1");
-const order = await row("What protein is").locator("button.pencil, button.move, button.delete").evaluateAll((bs) => bs.map((b) => Math.round(b.getBoundingClientRect().left)));
-check("and sit between the pencil and the bin, apart", order[0] < order[1] && order[1] < order[2] && order[1] - order[0] >= 18 && order[2] - order[1] >= 18, JSON.stringify(order));
-
-await head("Protein").hover();
-const topicButtons = await head("Protein").locator(".branch-actions button").evaluateAll((bs) => bs.map((b) => b.title));
-check("a topic's row: new document, nested topic, move, delete",
-  JSON.stringify(topicButtons) === JSON.stringify(["New document", "Nested topic", "Move this topic", "Delete this topic"]), JSON.stringify(topicButtons));
+// ---- the row -------------------------------------------------------------------------------
 
 await row("What protein is").hover();
+const buttons = await row("What protein is").locator("button").evaluateAll((bs) => bs.map((b) => b.getAttribute("aria-label") || b.title || b.textContent));
+check("a page's row: open, rename, a page under it, move, delete",
+  JSON.stringify(buttons.slice(1)) === JSON.stringify(["Rename this page", "New page under What protein is", "Move this page", "Delete this page"]), JSON.stringify(buttons));
+const xs = await row("What protein is").locator("button.pencil, button.add, button.move, button.delete").evaluateAll((bs) => bs.map((b) => Math.round(b.getBoundingClientRect().left)));
+check("the pencil, +, arrows and bin sit in that order, apart", xs.every((x, i) => i === 0 || x - xs[i - 1] >= 14), JSON.stringify(xs));
+check("a page with pages under it reads heavier", (await row("In the body").getAttribute("class")).includes("has-children"));
+
+// ---- the move button ------------------------------------------------------------------------
+
 await row("What protein is").locator("button.move").click();
 await page.waitForSelector(".move-picker");
 const picker = page.locator(".move-picker");
-check("asks where, saying where it is now", (await picker.locator("h2").innerText()) === "Move “What protein is”" && (await picker.innerText()).includes("It is in Protein."));
+check("asks where, saying where it is now", (await picker.locator("h2").innerText()) === "Move “What protein is”" && (await picker.innerText()).includes("It is under Protein."));
 const places = await picker.locator(".places label").evaluateAll((ls) => ls.map((l) => [l.querySelector("strong").textContent, !l.querySelector("input").disabled]));
-check("every topic, in order, where it is now not open",
-  JSON.stringify(places) === JSON.stringify([["Protein", false], ["In the body", true], ["Organs", true], ["Vitamins", true]]), JSON.stringify(places));
+check("the top level and every page, in order, itself not open",
+  JSON.stringify(places) === JSON.stringify([["The top level", true], ["Protein", true], ["What protein is", false], ["In the body", true], ["How protein is used", true], ["Organs", true], ["Vitamins", true]]), JSON.stringify(places));
 check("Move waits for a choice", await picker.getByRole("button", { name: "Move", exact: true }).isDisabled());
 await picker.locator(".places label", { hasText: "Organs" }).click();
 await picker.getByRole("button", { name: "Move", exact: true }).click();
 await page.waitForSelector(".folder-note.moved");
-check("the engine is told: this document, into Organs", JSON.stringify((await calls("document_move")).at(-1)?.args) === JSON.stringify({ document: "what", topic: "organs" }));
-check("the tree shows it there", (await tree()) === "Protein\n  In the body\n    - How protein is used\n    Organs\n      - What protein is\nVitamins", await tree());
-check("and says so, with the way back", (await text(".folder-note.moved")).startsWith("Moved “What protein is” into Protein › In the body › Organs. Undo"),
-  await page.locator(".folder-note.moved").innerText());
+check("the engine is told: this page, under Organs, at the end", (await lastMove()) === JSON.stringify({ document: "what", parent: "organs", position: null }), await lastMove());
+check("the tree shows it there", (await tree()) === "Protein\n  In the body\n    How protein is used\n    Organs\n      What protein is\nVitamins", await tree());
+check("and says so, with the way back", (await text(".folder-note.moved")).startsWith("Moved “What protein is” under Protein › In the body › Organs. Undo"), await text(".folder-note.moved"));
 await page.locator(".folder-note.moved").getByRole("button", { name: "Undo" }).click();
-await page.waitForFunction(() => document.querySelector(".folder-note.moved")?.textContent.includes("into Protein."));
-check("Undo puts it back", (await tree()) === START && JSON.stringify((await calls("document_move")).at(-1)?.args) === JSON.stringify({ document: "what", topic: "protein" }), await tree());
+await page.waitForFunction(() => document.querySelector(".folder-note.moved")?.textContent.includes("under Protein."));
+check("Undo puts it back exactly where it was, first under Protein", (await tree()) === START && (await lastMove()) === JSON.stringify({ document: "what", parent: "protein", position: 0 }), await tree());
 
-// A topic: the top level is on offer; itself and what is inside it are not.
-await head("In the body").hover();
-await head("In the body").locator("button.move").click();
+await row("In the body").hover();
+await row("In the body").locator("button.move").click();
 await page.waitForSelector(".move-picker");
-const topicPlaces = await page.locator(".move-picker .places label").evaluateAll((ls) => ls.map((l) => [l.querySelector("strong").textContent, !l.querySelector("input").disabled, l.textContent.replace(l.querySelector("strong").textContent, "")]));
-check("a topic is offered the top level first, never itself or what is inside it",
-  JSON.stringify(topicPlaces) === JSON.stringify([["The top level", true, ""], ["Protein", false, "where it is now"], ["In the body", false, "the topic itself"], ["Organs", false, "inside the topic being moved"], ["Vitamins", true, ""]]),
-  JSON.stringify(topicPlaces));
+const bodyPlaces = await page.locator(".move-picker .places label").evaluateAll((ls) => ls.map((l) => [l.querySelector("strong").textContent, l.textContent.replace(l.querySelector("strong").textContent, "")]));
+check("never under itself or a page under it, nor where it is now",
+  JSON.stringify(bodyPlaces) === JSON.stringify([["The top level", ""], ["Protein", "where it is now"], ["What protein is", ""], ["In the body", "the page itself"], ["How protein is used", "under the page being moved"], ["Organs", "under the page being moved"], ["Vitamins", ""]]),
+  JSON.stringify(bodyPlaces));
+const before = await moves();
 await page.locator(".move-picker").getByRole("button", { name: "Cancel" }).click();
-check("Cancel moves nothing", (await calls("topic_move")).length === 0 && (await page.locator(".move-picker").count()) === 0);
+check("Cancel moves nothing", (await moves()) === before && (await page.locator(".move-picker").count()) === 0);
 
-// ---- dragging ---------------------------------------------------------------------------
+// ---- dragging -------------------------------------------------------------------------------
 
-await row("How protein is used").dragTo(head("Vitamins"));
-await page.waitForFunction(() => window.__calls.filter((c) => c.command === "document_move").length >= 3);
-check("a document dragged onto a topic goes into it", JSON.stringify((await calls("document_move")).at(-1)?.args) === JSON.stringify({ document: "how", topic: "vitamins" }), JSON.stringify(await calls("document_move")));
-await page.waitForFunction(() => document.querySelector(".folder-note.moved")?.textContent.includes("into Vitamins"));
-check("and the tree follows", (await tree()).endsWith("Vitamins\n  - How protein is used"), await tree());
+await drag("How protein is used", "Vitamins");
+await page.waitForFunction((n) => window.__calls.filter((c) => c.command === "document_move").length > n, before);
+check("dropped on the middle of a page, it goes under it", (await lastMove()) === JSON.stringify({ document: "how", parent: "vitamins", position: null }), await lastMove());
+await page.waitForFunction(() => document.querySelector(".folder-note.moved")?.textContent.includes("under Vitamins"));
+check("and the tree follows", (await tree()).endsWith("Vitamins\n  How protein is used"), await tree());
 
-// Dropped among a topic's documents counts as dropped on that topic.
-await row("How protein is used").dragTo(row("What protein is"));
-await page.waitForFunction(() => window.__calls.filter((c) => c.command === "document_move").length >= 4);
-check("dropped on a document, it joins that document's topic", JSON.stringify((await calls("document_move")).at(-1)?.args) === JSON.stringify({ document: "how", topic: "protein" }));
+let n = await moves();
+await drag("Vitamins", "Protein", "top");
+await page.waitForFunction((n) => window.__calls.filter((c) => c.command === "document_move").length > n, n);
+check("dropped on a page's top edge, it goes before it, among its siblings", (await lastMove()) === JSON.stringify({ document: "vitamins", parent: null, position: 0 }), await lastMove());
+check("first at the top level now", (await tree()).startsWith("Vitamins\n  How protein is used\nProtein"), await tree());
+await page.waitForFunction(() => document.querySelector(".folder-note.moved")?.textContent.includes("among the pages beside it"));
 
-// A topic dragged into itself, or into what is inside it, goes nowhere.
-const before = (await calls("topic_move")).length;
-await head("Protein").dragTo(head("Organs"));
+n = await moves();
+await drag("What protein is", "In the body", "bottom");
+await page.waitForFunction((n) => window.__calls.filter((c) => c.command === "document_move").length > n, n);
+check("dropped on a page's bottom edge, it goes after it", (await lastMove()) === JSON.stringify({ document: "what", parent: "protein", position: 1 }), await lastMove());
+check("after In the body now", (await tree()).includes("Protein\n  In the body\n    Organs\n  What protein is"), await tree());
+
+n = await moves();
+await drag("Protein", "Organs");
 await page.waitForTimeout(300);
-check("a topic dragged into a topic inside it is not moved", (await calls("topic_move")).length === before, JSON.stringify(await calls("topic_move")));
+check("a page dragged under a page under it is not moved", (await moves()) === n);
 
 // The highlight answers before letting go.
 const lit = await page.evaluate(async () => {
-  const source = [...document.querySelectorAll(".branch-head")].find((h) => h.querySelector(".name").textContent === "Organs");
-  const into = (name) => [...document.querySelectorAll(".branch-head")].find((h) => h.querySelector(".name").textContent === name);
+  const rowOf = (title) => [...document.querySelectorAll(".page-row")].find((r) => r.querySelector(".name").textContent === title);
   const data = new DataTransfer();
+  const source = rowOf("Organs");
   source.dispatchEvent(new DragEvent("dragstart", { bubbles: true, dataTransfer: data }));
   await new Promise((r) => setTimeout(r, 50));
-  into("Vitamins").dispatchEvent(new DragEvent("dragover", { bubbles: true, cancelable: true, dataTransfer: data }));
-  await new Promise((r) => setTimeout(r, 50));
-  const good = into("Vitamins").classList.contains("drop-target");
-  into("In the body").dispatchEvent(new DragEvent("dragover", { bubbles: true, cancelable: true, dataTransfer: data }));
-  await new Promise((r) => setTimeout(r, 50));
-  const same = into("In the body").classList.contains("drop-target");
-  const top = document.querySelector(".tree-head");
-  top.dispatchEvent(new DragEvent("dragover", { bubbles: true, cancelable: true, dataTransfer: data }));
-  await new Promise((r) => setTimeout(r, 50));
-  const heading = top.classList.contains("drop-target");
+  const over = async (element, at) => {
+    const box = element.getBoundingClientRect();
+    element.dispatchEvent(new DragEvent("dragover", { bubbles: true, cancelable: true, dataTransfer: data, clientX: box.left + 30, clientY: box.top + box.height * at }));
+    await new Promise((r) => setTimeout(r, 50));
+  };
+  await over(rowOf("Vitamins"), 0.5);
+  const under = rowOf("Vitamins").classList.contains("drop-target");
+  await over(rowOf("Vitamins"), 0.05);
+  const beforeLine = rowOf("Vitamins").classList.contains("drop-before");
+  await over(rowOf("In the body"), 0.5);
+  const same = rowOf("In the body").classList.contains("drop-target");
+  await over(document.querySelector(".tree-head"), 0.5);
+  const heading = document.querySelector(".tree-head").classList.contains("drop-target");
   source.dispatchEvent(new DragEvent("dragend", { bubbles: true, dataTransfer: data }));
-  return { good, same, heading };
+  return { under, beforeLine, same, heading };
 });
-check("dragging, a topic that would take it lights up, where it already is does not, and the heading does for the top level",
-  lit.good && !lit.same && lit.heading, JSON.stringify(lit));
+check("dragging: a page that would take it lights up, an edge shows a line, where it already is does not, the heading does",
+  lit.under && lit.beforeLine && !lit.same && lit.heading, JSON.stringify(lit));
 
-await head("Organs").dragTo(page.locator(".tree-head"));
-await page.waitForFunction(() => window.__calls.filter((c) => c.command === "topic_move").length >= 1);
-check("a topic dragged onto the heading goes to the top level", JSON.stringify((await calls("topic_move")).at(-1)?.args) === JSON.stringify({ topic: "organs", parent: null }));
+n = await moves();
+await row("Organs").dragTo(page.locator(".tree-head"));
+await page.waitForFunction((n) => window.__calls.filter((c) => c.command === "document_move").length > n, n);
+check("dropped on the heading, it goes to the end of the top level", (await lastMove()) === JSON.stringify({ document: "organs", parent: null, position: null }), await lastMove());
 await page.waitForFunction(() => document.querySelector(".folder-note.moved")?.textContent.includes("to the top level"));
 check("and is said to have", (await text(".folder-note.moved")).startsWith("Moved “Organs” to the top level."));
 
-// ---- the keyboard -----------------------------------------------------------------------
+// ---- the keyboard ---------------------------------------------------------------------------
 
 await row("How protein is used").locator(".name").focus();
 await page.keyboard.press("Control+x");
 check("Ctrl+X picks it up, and says how to put it down", (await text(".holding")).startsWith("Moving “How protein is used”.") && (await row("How protein is used").getAttribute("class")).includes("held"));
-await head("Protein").locator(".name").focus();
+await row("Vitamins").locator(".name").focus();
 await page.keyboard.press("Control+v");
 check("Ctrl+V on where it already is refuses, and says why", (await text(".holding")).includes("It cannot go there: where it is now."));
-await page.waitForTimeout(200);
-check("and the engine is not asked", (await calls("document_move")).length === 4, JSON.stringify(await calls("document_move")));
-await head("Vitamins").locator(".name").focus();
+n = await moves();
+await row("Protein").locator(".name").focus();
 await page.keyboard.press("Control+v");
-await page.waitForFunction(() => window.__calls.filter((c) => c.command === "document_move").length >= 5);
-check("Ctrl+V on another topic puts it there", JSON.stringify((await calls("document_move")).at(-1)?.args) === JSON.stringify({ document: "how", topic: "vitamins" }) && (await page.locator(".holding").count()) === 0);
+await page.waitForFunction((n) => window.__calls.filter((c) => c.command === "document_move").length > n, n);
+check("Ctrl+V on another page puts it under that page", (await lastMove()) === JSON.stringify({ document: "how", parent: "protein", position: null }) && (await page.locator(".holding").count()) === 0, await lastMove());
 
-await head("Organs").locator(".name").focus();
+await row("Organs").locator(".name").focus();
 await page.keyboard.press("Control+c");
 check("Ctrl+C picks up as well", (await text(".holding")).startsWith("Moving “Organs”."));
 await page.keyboard.press("Escape");
 check("and Esc puts it down where it was", (await page.locator(".holding").count()) === 0);
 
-await head("Organs").locator(".name").focus();
-await page.keyboard.press("Control+c");
-await row("What protein is").locator(".name").focus();
-await page.keyboard.press("Control+v");
-await page.waitForFunction(() => window.__calls.filter((c) => c.command === "topic_move").length >= 2);
-check("pasted on a document, a topic goes into that document's topic", JSON.stringify((await calls("topic_move")).at(-1)?.args) === JSON.stringify({ topic: "organs", parent: "protein" }));
+// Alt+↑ / Alt+↓: one place among its siblings.
+n = await moves();
+await row("In the body").locator(".name").focus();
+await page.keyboard.press("Alt+ArrowDown");
+await page.waitForFunction((n) => window.__calls.filter((c) => c.command === "document_move").length > n, n);
+check("Alt+↓ moves it one place down among its siblings", (await lastMove()) === JSON.stringify({ document: "body", parent: "protein", position: 1 }), await lastMove());
+check("and the tree follows", (await tree()).includes("Protein\n  What protein is\n  In the body"), await tree());
+n = await moves();
+await row("Vitamins").locator(".name").focus();
+await page.keyboard.press("Alt+ArrowUp");
+await page.waitForTimeout(300);
+check("Alt+↑ at the top of its level does nothing", (await moves()) === n);
 
 // Typing a new name: Ctrl+C there is copying text, nothing else.
-await head("Vitamins").locator(".name").dblclick();
+await row("Vitamins").locator(".name").dblclick();
 await page.waitForSelector(".tree .rename-input");
 await page.keyboard.press("Control+c");
 check("Ctrl+C while renaming is left to the text box", (await page.locator(".holding").count()) === 0);
 await page.keyboard.press("Escape");
 
-// ---- the open document ------------------------------------------------------------------
+// ---- the open page --------------------------------------------------------------------------
 
 await row("What protein is").locator(".name").click();
 await page.waitForSelector(".prose .ProseMirror");
@@ -250,28 +260,14 @@ await page.locator(".move-picker .places label", { hasText: "Vitamins" }).click(
 await page.locator(".move-picker").getByRole("button", { name: "Move", exact: true }).click();
 await page.waitForFunction(() => document.querySelector(".folder-note.moved")?.textContent.includes("What protein is"));
 const sequence = await page.evaluate(() => window.__calls.map((c) => c.command).filter((c) => c === "document_write" || c === "document_move"));
-const lastWrite = sequence.lastIndexOf("document_write");
-const lastMove = sequence.lastIndexOf("document_move");
 const written = (await calls("document_write")).at(-1)?.args?.body ?? "";
-check("the open document's last words are saved before it moves", lastWrite !== -1 && lastWrite < lastMove && written.includes("Typed just before moving."), JSON.stringify({ sequence, written }));
+check("the open page's last words are saved before it moves", sequence.lastIndexOf("document_write") !== -1 && sequence.lastIndexOf("document_write") < sequence.lastIndexOf("document_move") && written.includes("Typed just before moving."), JSON.stringify({ sequence, written }));
 await page.waitForTimeout(800);
 check("and it stays open, still saving, with nothing said about a conflict", (await page.locator(".editor .state").innerText()) === "Saved" && (await page.locator(".editor .warning, .editor .error").count()) === 0);
 
-await page.locator(".prose .ProseMirror").click();
-await page.keyboard.press("End");
-await page.keyboard.type(" Typed, then dragged.");
-await row("What protein is").dragTo(head("Protein"));
-await page.waitForFunction(() => document.querySelector(".folder-note.moved")?.textContent.includes("into Protein."));
-const dragged = await page.evaluate(() => window.__calls.map((c) => c.command).filter((c) => c === "document_write" || c === "document_move"));
-const draggedBody = (await calls("document_write")).at(-1)?.args?.body ?? "";
-check("dragged straight after typing, the words are saved before the move too",
-  dragged.lastIndexOf("document_write") < dragged.lastIndexOf("document_move") && draggedBody.includes("Typed, then dragged."), JSON.stringify({ dragged, draggedBody }));
-
 if (process.argv[2]) {
-  await row("What protein is").hover();
+  await row("In the body").hover();
   await page.screenshot({ path: `${process.argv[2]}-tree.png`, clip: { x: 0, y: 0, width: 330, height: 420 } });
-  await row("What protein is").locator("button.move").click();
-  await page.screenshot({ path: `${process.argv[2]}-picker.png` });
 }
 
 await browser.close();

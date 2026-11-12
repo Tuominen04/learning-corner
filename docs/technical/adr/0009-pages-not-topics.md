@@ -1,7 +1,7 @@
 # ADR 0009 · Every page is a document, and any page can have pages under it
 
 > **Audience:** People building Learning Corner
-> **Status:** Proposed
+> **Status:** Accepted
 > **Last reviewed:** 2026-11-10
 
 ## Context
@@ -60,8 +60,7 @@ topics/
 - **Its sub-pages are in `<name>/`** beside it. Adding the first sub-page creates the folder;
   removing the last removes it. A folder with no page of its name beside it — made by hand, or
   left by a page deleted outside the app — is reported as a problem with the library, as an
-  unreadable file is today, and its pages are still listed, under a stand-in named after the
-  folder.
+  unreadable file is today, and its pages are still listed, where the folder is.
 - **`.order`** lists the pages at that level, one file name without `.md` per line, top to
   bottom. A page not on the list comes after the listed ones, by title; a name on the list with
   no page is ignored. So a hand-made page, or a hand-deleted one, never breaks the tree — the

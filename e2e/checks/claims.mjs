@@ -37,10 +37,9 @@ await page.addInitScript((ids) => {
           return [{ path: "/home/you/learning", name: "Learning", opened: new Date().toISOString(), found: true }];
         case "library_open":
         case "library_status":
-          return { path: "/home/you/learning", name: "Learning", topics: 1, documents: 2, writable: true, problems: [] };
-        case "topic_tree":
-          return [{ id: "01J8ZQ6A1M3P5R7T9V1X3Z5B70", name: "Protein", children: [],
-            documents: [{ id: ALPHA, title: "Alpha" }, { id: BETA, title: "Beta" }] }];
+          return { path: "/home/you/learning", name: "Learning", documents: 2, writable: true, problems: [] };
+        case "page_tree":
+          return [{ id: "01J8ZQ6A1M3P5R7T9V1X3Z5B70", title: "Protein", children: [{ id: ALPHA, title: "Alpha", children: [] }, { id: BETA, title: "Beta", children: [] }] }];
         case "document_read":
           return { id: args.document, title: args.document === ALPHA ? "Alpha" : "Beta",
             topic: "01J8ZQ6A1M3P5R7T9V1X3Z5B70", body: bodies[args.document], revision: "1",

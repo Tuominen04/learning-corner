@@ -12,10 +12,10 @@ reference list for you.
 
 ## What it does
 
-**Topics and documents.** You start with one question and end up with ten. Say you want to know
-what a protein is — soon you have separate documents for protein types, protein sources, human
-organs, and how protein behaves in the body, each citing its own sources and linked to the
-others.
+**Pages, with pages under them.** You start with one question and end up with ten. Say you want
+to know what a protein is — a *Protein* page says so in brief, and under it grow pages for its
+history, its types, its sources and how the body uses it, each citing its own sources and
+linked to the others, in the order you choose.
 
 **Sources and citations.** Save books, articles, web pages, PDFs and more as sources. Cite them
 as you write; the reference list and in-text citations are worked out for you. Search across
@@ -25,7 +25,7 @@ everything, and export to PDF, Word, OpenDocument, a web page or plain text.
 a translation beside it — Russian original, transliteration, Finnish and English, lined up row
 by row, and you choose which of those are on screen.
 
-**Mind maps** *(coming)*. See how your topics actually connect, built from the documents you
+**Mind maps** *(coming)*. See how your pages actually connect, built from the pages you
 already wrote rather than a second copy of them.
 
 **Backup to your own drive.** Back your library up to an external drive whenever it is plugged
@@ -95,7 +95,12 @@ writes your library — [learning-corner-engine](https://github.com/Tuominen04/l
 
 ## Status
 
-**0.23.0 finishes what M2 and M3 left for later.** A row splits before any of its lines; each
+**0.24.0 has pages instead of topics.** Every page can have pages under it, in the order you
+choose — a subject is one page that says what it is about, with the detail in the pages under
+it. A library made by an earlier version is converted when you open it, after a copy of it is
+kept beside it.
+
+**0.23.0 finished what M2 and M3 left for later.** A row splits before any of its lines; each
 work remembers which panes it was showing, and a long prose text can scroll pane by pane; the
 backup dialog opens where this library went last time; and a file changed in both places shows
 what differs before you choose.

@@ -8,7 +8,7 @@ import { createContext, useContext } from "react";
 // the title, so that is what this draws. Rename the target tomorrow and every link to it reads
 // correctly, with nothing rewritten in any file.
 //
-// The title comes from the topic tree the application already holds, not from an engine call.
+// The title comes from the tree of pages the application already holds, not from an engine call.
 // Every document in the library is in it, with its title, which makes drawing a link free.
 
 /** How a link finds its title, and what happens when somebody follows it. */

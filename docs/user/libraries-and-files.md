@@ -2,12 +2,12 @@
 
 > **Audience:** People using Learning Corner
 > **Status:** Implemented
-> **Last reviewed:** 2026-11-07
+> **Last reviewed:** 2026-11-10
 
 ## What a library is
 
 A **library** is one folder on your computer holding everything about one area of study:
-your topics, your documents and your sources — and, as they arrive in the app, your texts and
+your pages and your sources — and, as they arrive in the app, your texts and
 your mind maps.
 
 You choose the folder. The app does not hide your work in a location only it knows about,
@@ -71,14 +71,15 @@ tied to the computer it was created on and nothing is tied to the folder's old p
 
 ## Renaming things
 
-Rename topics and documents freely inside the app — double-click a name, or use the pencil
+Rename pages freely inside the app — double-click a name, or use the pencil
 that appears when you hover it — and correct a source's title or details in its form on the
-**Sources** screen. Links between your documents and citations to your sources keep working:
+**Sources** screen. Links between your pages and citations to your sources keep working:
 the app tracks them by an internal marker that does not change when a name does.
 
-**The file on disk is renamed too.** A document called *Protein, properly* is
-`protein-properly.md`, and a topic called *Protein* is a folder called `protein` — so going
-looking for something by the name you gave it works. If that name is already taken by a
+**The file on disk is renamed too.** A page called *Protein, properly* is
+`protein-properly.md`, and the pages under it are in a folder beside it called
+`protein-properly` — so going looking for something by the name you gave it works. The order
+you put pages in is kept in a small file in that folder. If that name is already taken by a
 neighbour, the new one gets a number on the end.
 
 Libraries made before this worked may still hold files named after what a document was first

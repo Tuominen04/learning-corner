@@ -17,8 +17,8 @@ await page.addInitScript(({ REQUIRED }) => {
           return [{ path: "/home/you/learning", name: "Learning", opened: new Date().toISOString(), found: true }];
         case "library_open":
         case "library_status":
-          return { path: "/home/you/learning", name: "Learning", topics: 0, documents: 0, writable: true, problems: [] };
-        case "topic_tree":
+          return { path: "/home/you/learning", name: "Learning", documents: 0, writable: true, problems: [] };
+        case "page_tree":
           return [];
         case "source_list":
           return [];

@@ -73,7 +73,7 @@ export function SplitPicker({
       </div>
 
       <small className="hint">
-        The new document goes in this same topic, and a link to it is left where the text was.
+        The new page goes under this one, and a link to it is left where the text was.
         Citations move with the words that carry them.
       </small>
     </div>

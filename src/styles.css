@@ -212,8 +212,6 @@ button.hit:hover { background: #23262f; }
   line-height: 1.4;
 }
 
-/* A topic has no view to open, so it is plainly not a button — see Search.tsx. */
-.topic-hit strong { font-weight: 600; color: #e6e4de; }
 .hit .kind { font-style: normal; color: var(--accent); font-size: 0.92em; }
 
 /* ---- tree ---- */
@@ -222,14 +220,10 @@ button.hit:hover { background: #23262f; }
 .tree h2 { font-size: 0.78em; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-soft); }
 .tree ul { list-style: none; margin: 0; padding-left: 0.7rem; }
 .tree > ul { padding-left: 0; }
-.branch-head { display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; }
-.branch-actions { display: flex; gap: 0.1rem; opacity: 0; }
-.branch-head:hover .branch-actions { opacity: 1; }
 
-/* A topic name is as wide as its words: it is a label, and the pencil belongs beside it. */
-.branch-head .name { font-weight: 600; font-size: 0.92em; font-family: inherit; color: inherit; }
-
-/* A document's name fills the row, so the whole row reads as the thing you click. */
+/* A page's name fills the row, so the whole row reads as the thing you click. A page with pages
+   under it is a little heavier, so the shape of the tree reads at a glance. */
+.page-row.has-children .name { font-weight: 600; color: #e6e4de; }
 .doc-row .renameable { width: 100%; }
 .doc-row .name {
   display: block;
@@ -257,7 +251,7 @@ button.hit:hover { background: #23262f; }
 .pencil {
   /* Positioned just past the name rather than placed in the row, so it takes no width even
      while hidden. In the flow it narrowed every name by its own size, which was enough to
-     wrap a two-word topic onto a second line whether or not anyone was hovering it. */
+     wrap a two-word name onto a second line whether or not anyone was hovering it. */
   position: absolute;
   left: 100%;
   top: 0;
@@ -275,15 +269,14 @@ button.hit:hover { background: #23262f; }
 
 /* Revealed by hovering the whole row, not only the name itself — the row is what the pointer
    is actually over, and it is what already reveals the row's other actions. */
-.branch-head:hover .pencil,
 .doc-row:hover .pencil,
 .renameable:hover .pencil,
 .renameable:focus-within .pencil { opacity: 1; }
 .pencil:hover { color: #e6e4de; background: #2b2e38; }
 
-/* A document's name already fills the row, so there is no "just past" it — its pencil
-   overlays the far end instead, short of the move arrows and the bin. */
-.doc-row .pencil { left: auto; right: 2.9rem; }
+/* A page's name already fills the row, so there is no "just past" it — its pencil overlays
+   the far end instead, short of the +, the move arrows and the bin. */
+.doc-row .pencil { left: auto; right: 4.1rem; }
 
 /* Sized by the row it replaces, so the name does not jump when it becomes editable. */
 .rename-input {
@@ -774,20 +767,34 @@ button.move:hover { color: var(--accent); background: #2b2e38; }
 }
 .doc-row:hover > button.move,
 .doc-row > button.move:focus-visible { opacity: 1; }
+/* A new page under this one: beside the move arrows, shown with them. */
+.doc-row > button.add {
+  position: absolute;
+  right: 2.85rem;
+  top: 0;
+  bottom: 0;
+  opacity: 0;
+  padding: 0 0.3rem;
+}
+.doc-row:hover > button.add,
+.doc-row > button.add:focus-visible { opacity: 1; }
 
 /* ---- moving ---- */
 
 /* What is on its way: dimmed while dragged, outlined while held for Ctrl+V. */
-.doc-row.dragging, .branch-head.dragging { opacity: 0.45; }
-.doc-row.held, .branch-head.held { outline: 1px dashed var(--accent); border-radius: 4px; }
+.doc-row.dragging { opacity: 0.45; }
+.doc-row.held { outline: 1px dashed var(--accent); border-radius: 4px; }
 
 /* Where a drop would land. Only a place that would take it lights up, so the light is the
    answer to "can it go here?" before letting go. */
-.branch-head.drop-target, .tree-head.drop-target {
+.doc-row.drop-target, .tree-head.drop-target {
   background: rgba(198, 138, 74, 0.18);
   outline: 1px solid var(--accent);
   border-radius: 4px;
 }
+/* Before or after a page, among its siblings: a line where it would land. */
+.doc-row.drop-before { box-shadow: inset 0 2px 0 var(--accent); }
+.doc-row.drop-after { box-shadow: inset 0 -2px 0 var(--accent); }
 
 .holding { font-size: 0.82em; color: var(--ink-soft); margin: 0 0 0.6rem; }
 kbd {
@@ -1087,3 +1094,9 @@ button.danger-text, .ghost.danger-text { color: var(--error); }
 .stacked-cell:not(.lead) .work-cell { color: #b9b7b0; font-size: 0.92em; padding-left: 1.2rem; }
 .stacked-cell.lead .work-cell { font-size: 1.05em; }
 .resegment-plan ul { margin: 0.5rem 0; }
+
+/* Asking before converting a format 1 library: a question, not a label like the start screen's
+   other headings. */
+.convert-library h2 { text-transform: none; letter-spacing: 0; font-size: 1.3rem; color: inherit; margin: 0 0 0.8rem; }
+.convert-library ul { padding-left: 1.2rem; }
+.convert-library li { margin-bottom: 0.3rem; }

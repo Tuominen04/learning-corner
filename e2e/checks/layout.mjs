@@ -49,10 +49,9 @@ async function open(width, height) {
             return [{ path: "/home/you/learning", name: "Learning1234", opened: new Date().toISOString(), found: true }];
           case "library_open":
           case "library_status":
-            return { path: "/home/you/learning", name: "Learning1234", topics: 1, documents: 3, writable: true, problems: [] };
-          case "topic_tree":
-            return [{ id: "01J8ZQ6A1M3P5R7T9V1X3Z5B70", name: "Testaus Topic", children: [],
-              documents: [{ id: THIRD, title: titles[THIRD] }, { id: OTHER, title: titles[OTHER] }, { id: MAIN, title: titles[MAIN] }] }];
+            return { path: "/home/you/learning", name: "Learning1234", documents: 3, writable: true, problems: [] };
+          case "page_tree":
+            return [{ id: "01J8ZQ6A1M3P5R7T9V1X3Z5B70", title: "Testaus Topic", children: [{ id: THIRD, title: titles[THIRD], children: [] }, { id: OTHER, title: titles[OTHER], children: [] }, { id: MAIN, title: titles[MAIN], children: [] }] }];
           case "document_read":
             return doc(args.document);
           case "document_write":

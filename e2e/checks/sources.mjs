@@ -46,7 +46,6 @@ await page.addInitScript(() => {
     invoke: async (command, args) => {
       const status = {
         name: "Learning",
-        topics: 1,
         documents: 2,
         writable: true,
         problems: [],
@@ -58,13 +57,12 @@ await page.addInitScript(() => {
         case "library_create":
         case "library_status":
           return status;
-        case "topic_tree":
+        case "page_tree":
           return [
             {
               id: "01J8ZQ6A1M3P5R7T9V1X3Z5B7D",
-              name: "Protein",
-              children: [],
-              documents: [{ id: "01J8ZQ7B2N4Q6S8W0W2Y4A6C8E", title: "What protein is" }],
+              title: "Protein",
+              children: [{ id: "01J8ZQ7B2N4Q6S8W0W2Y4A6C8E", title: "What protein is", children: [] }],
             },
           ];
         case "source_list":

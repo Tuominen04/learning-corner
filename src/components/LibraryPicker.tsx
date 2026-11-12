@@ -12,7 +12,20 @@ import { couldNotOpen, whenOpened } from "../lib/recent";
 import { BackupPanel } from "./BackupPanel";
 
 /** A library that has just opened, and the folder it was opened from. */
-export type Opened = { path: string; status: LibraryStatus };
+export type Opened = {
+  path: string;
+  status: LibraryStatus;
+  /** Where a format 1 library's copy went, when it was converted on the way in. */
+  converted?: string;
+};
+
+/** A library made by an earlier version, waiting for the person to say it may be converted. */
+export type ToConvert = { path: string; name: string };
+
+/** Whether opening failed because the library is in format 1, and has to be converted first. */
+export function needsConverting(thrown: unknown): boolean {
+  return thrown instanceof EngineFailure && thrown.kind === "MigrationRequired";
+}
 
 // Choosing where the library lives is the first thing that happens, and the app never picks
 // for the user. There is no default path and no hidden location.
@@ -22,12 +35,16 @@ export type Opened = { path: string; status: LibraryStatus };
 // each, and choosing a folder is for everything else.
 export function LibraryPicker({
   notice,
+  convert,
   onOpened,
 }: {
   /** Why the last library did not open again when the application started, if it did not. */
   notice: string | null;
+  /** The last library, when it did not open again because it has to be converted first. */
+  convert?: ToConvert | null;
   onOpened: (opened: Opened) => void;
 }) {
+  const [converting, setConverting] = useState<ToConvert | null>(convert ?? null);
   const [name, setName] = useState("Learning");
   const [recent, setRecent] = useState<RecentLibrary[] | null>(null);
   const [busy, setBusy] = useState(false);
@@ -56,6 +73,9 @@ export function LibraryPicker({
   async function choose(mode: "create" | "open") {
     setError(null);
     setBusy(true);
+    // The folder chosen, kept outside the try so a library that turns out to need converting
+    // can be asked about by where it is.
+    let chosen: string | null = null;
     try {
       // The folder dialog belongs inside the try. It can fail — a missing permission, no
       // desktop runtime — and a failure outside here escapes as an unhandled rejection, which
@@ -71,6 +91,7 @@ export function LibraryPicker({
             : "Choose the library's folder",
       });
       if (typeof picked !== "string") return; // dismissed the dialog
+      chosen = picked;
 
       // A new library gets a folder of its own inside the one chosen, so the status says where
       // it ended up rather than the chosen folder being it.
@@ -80,6 +101,10 @@ export function LibraryPicker({
           : await engine.library.open(picked);
       onOpened({ path: status.path, status });
     } catch (thrown) {
+      if (needsConverting(thrown) && chosen !== null) {
+        setConverting({ path: chosen, name: folderName(chosen) });
+        return;
+      }
       setError(
         thrown instanceof EngineFailure ? thrown.message : String(thrown),
       );
@@ -95,6 +120,11 @@ export function LibraryPicker({
       const status = await engine.library.open(library.path);
       onOpened({ path: status.path, status });
     } catch (thrown) {
+      if (needsConverting(thrown)) {
+        setConverting({ path: library.path, name: library.name });
+        setBusy(false);
+        return;
+      }
       // Asked again rather than trusted: the folder may have gone since the list was shown,
       // or come back, and what the list says should agree with what just happened.
       const now = await shell.recentLibraries().catch(() => recent ?? []);
@@ -115,6 +145,18 @@ export function LibraryPicker({
   }
 
   const today = new Date();
+
+  if (converting) {
+    return (
+      <main className="picker">
+        <ConvertLibrary
+          library={converting}
+          onConverted={(opened) => onOpened(opened)}
+          onCancel={() => setConverting(null)}
+        />
+      </main>
+    );
+  }
 
   if (restoring) {
     return (
@@ -211,5 +253,71 @@ export function LibraryPicker({
         is the decision this application leaves with you.
       </p>
     </main>
+  );
+}
+
+/** A folder's own name, for calling a library something before it has been opened. */
+function folderName(path: string): string {
+  return path.split(/[\\/]/).filter(Boolean).pop() ?? path;
+}
+
+/**
+ * Asking before converting a format 1 library: topics become pages (ADR 0009).
+ *
+ * Nothing changes until the person agrees, and the first thing the conversion does is copy the
+ * whole library to a folder beside it — so saying yes cannot lose anything, and saying no
+ * leaves the library exactly as it was, for an older version of the application to open.
+ */
+function ConvertLibrary({
+  library,
+  onConverted,
+  onCancel,
+}: {
+  library: ToConvert;
+  onConverted: (opened: Opened) => void;
+  onCancel: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function convert() {
+    setBusy(true);
+    setError(null);
+    try {
+      const done = await engine.library.migrate(library.path);
+      onConverted({ path: done.status.path, status: done.status, converted: done.copy });
+    } catch (thrown) {
+      setError(thrown instanceof EngineFailure ? thrown.message : String(thrown));
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className="confirm convert-library">
+      <h2>“{library.name}” needs converting first</h2>
+      <p>
+        It was made by an earlier version of Learning Corner, which had topics as well as
+        documents. This version has only pages: every page can have pages under it, and you
+        choose their order.
+      </p>
+      <ul>
+        <li>Each topic becomes a page with the same name, with the documents that were in it under it.</li>
+        <li>Nothing you wrote changes, and every link and citation keeps working.</li>
+        <li>
+          Before anything changes, the whole library is copied to a folder beside it, named
+          after it with <code>-format-1</code> on the end. Delete the copy once you are happy.
+        </li>
+      </ul>
+      <p className="hint">{library.path}</p>
+      {error && <p className="error">{error}</p>}
+      <div className="row">
+        <button onClick={() => void convert()} disabled={busy}>
+          {busy ? "Converting…" : "Convert and open"}
+        </button>
+        <button className="secondary" onClick={onCancel} disabled={busy}>
+          Not now
+        </button>
+      </div>
+    </section>
   );
 }

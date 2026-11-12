@@ -17,10 +17,10 @@ export function RenameableName({
   selected,
 }: {
   name: string;
-  /** What kind of thing this is, for the pencil's label: "Rename this topic". */
+  /** What kind of thing this is, for the pencil's label: "Rename this page". */
   label: string;
   onRename: (next: string) => void;
-  /** Given when a plain click means something — a document opens, a topic does not. */
+  /** Given when a plain click means something — a page opens, a library's name does not. */
   onSelect?: () => void;
   selected?: boolean;
 }) {
@@ -61,7 +61,7 @@ export function RenameableName({
           {name}
         </button>
       ) : (
-        // Not a button: a topic name does nothing when clicked, and a control that looks
+        // Not a button: a name that opens nothing does nothing when clicked, and a control that looks
         // pressable but is not is worse than plain text. `tabIndex` is here only so F2 can
         // reach it.
         <span className="name" tabIndex={0} onDoubleClick={start} onKeyDown={onKeyDown}>

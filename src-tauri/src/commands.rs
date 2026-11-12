@@ -19,8 +19,8 @@ use crate::closing::Closing;
 use crate::dto::{
     BackupAnswer, BackupApplied, BackupPlan, BackupTexts, CitationRequest, Document, DocumentRef,
     EngineError, ExportFormat, Field, Form, Keep, LibraryRemembered, LibraryStatus, Locator,
-    RecentLibrary, RenamedLibrary, SavedSource, SearchHit, Source, SourceType, Split, Topic,
-    TopicContents,
+    MigratedLibrary, Page, PageContents, RecentLibrary, RenamedLibrary, SavedSource, SearchHit,
+    Source, SourceType, Split,
 };
 use crate::dto::{
     EditionContents, NewEdition, RepeatSet, ResegmentPlan, Resegmented, Work, WorkContents,
@@ -80,6 +80,28 @@ pub fn library_open(
     remember(&recent, &path, &status.name);
     *state.0.lock().unwrap() = Some(engine);
     Ok(status)
+}
+
+/// Convert the format 1 library at `path` to the current format, after copying it whole to a
+/// folder beside it, and open it. Answers with the library, and where the copy went.
+///
+/// Only ever called when the person has agreed: opening a format 1 library answers
+/// `MigrationRequired`, and the interface asks.
+#[tauri::command]
+pub fn library_migrate(
+    state: State<'_, OpenLibrary>,
+    recent: State<'_, Recent>,
+    path: String,
+) -> Answer<MigratedLibrary> {
+    let copy = Engine::migrate(&path).map_err(EngineError::from)?;
+    let engine = Engine::open(&path).map_err(EngineError::from)?;
+    let status = LibraryStatus::of(&engine).map_err(EngineError::from)?;
+    remember(&recent, &path, &status.name);
+    *state.0.lock().unwrap() = Some(engine);
+    Ok(MigratedLibrary {
+        status,
+        copy: copy.to_string_lossy().into_owned(),
+    })
 }
 
 /// Give the open library another name — and its folder too, when the folder is its alone.
@@ -231,79 +253,28 @@ pub fn ready_to_close(closing: State<'_, Closing>) {
     closing.ready();
 }
 
-// ---- topics --------------------------------------------------------------------
+// ---- the tree of pages ---------------------------------------------------------
 
+/// Every page, as a tree, each level in its order.
 #[tauri::command]
-pub fn topic_tree(state: State<'_, OpenLibrary>) -> Answer<Vec<Topic>> {
+pub fn page_tree(state: State<'_, OpenLibrary>) -> Answer<Vec<Page>> {
     with(&state, |e| {
-        Ok(e.topic_tree()?.into_iter().map(Topic::from).collect())
+        Ok(e.page_tree()?.into_iter().map(Page::from).collect())
     })
-}
-
-#[tauri::command]
-pub fn topic_create(
-    state: State<'_, OpenLibrary>,
-    parent: Option<String>,
-    name: String,
-) -> Answer<String> {
-    with(&state, |e| {
-        let parent = parent.as_deref().map(id).transpose()?;
-        Ok(e.topic_create(parent, name)?.to_string())
-    })
-}
-
-#[tauri::command]
-pub fn topic_rename(state: State<'_, OpenLibrary>, topic: String, name: String) -> Answer<()> {
-    with(&state, |e| e.topic_rename(id(&topic)?, name))
-}
-
-/// Move a topic, and everything in it, into another topic — or, with no parent, to the top.
-///
-/// The folder moves on disk, its documents and pictures inside it. Nothing refers to a topic or
-/// a document by where it is, so no link or citation notices.
-#[tauri::command]
-pub fn topic_move(
-    state: State<'_, OpenLibrary>,
-    topic: String,
-    parent: Option<String>,
-) -> Answer<()> {
-    with(&state, |e| {
-        let parent = parent.as_deref().map(id).transpose()?;
-        e.topic_move(id(&topic)?, parent)
-    })
-}
-
-/// What deleting this topic would reach — every document anywhere below it, by name.
-///
-/// Asked before `topic_delete`, never after. The interface shows this and has to be told
-/// what to do with the contents before anything is removed.
-#[tauri::command]
-pub fn topic_delete_plan(state: State<'_, OpenLibrary>, topic: String) -> Answer<TopicContents> {
-    with(&state, |e| {
-        Ok(TopicContents::from(e.topic_delete_plan(id(&topic)?)?))
-    })
-}
-
-/// Delete a topic, having been told what becomes of what is inside it.
-#[tauri::command]
-pub fn topic_delete(
-    state: State<'_, OpenLibrary>,
-    topic: String,
-    contents: crate::dto::Contents,
-) -> Answer<()> {
-    with(&state, |e| e.topic_delete(id(&topic)?, contents.into()))
 }
 
 // ---- documents -----------------------------------------------------------------
 
+/// A new page under `parent`, or at the top of the tree with none, at the end of its level.
 #[tauri::command]
 pub fn document_create(
     state: State<'_, OpenLibrary>,
-    topic: String,
+    parent: Option<String>,
     title: String,
 ) -> Answer<String> {
     with(&state, |e| {
-        Ok(e.document_create(id(&topic)?, title)?.to_string())
+        let parent = parent.as_deref().map(id).transpose()?;
+        Ok(e.document_create(parent, title)?.to_string())
     })
 }
 
@@ -338,22 +309,47 @@ pub fn document_rename(
     })
 }
 
-/// Move a document into another topic, its pictures with it, and answer with it as it now is.
+/// Move a page, with every page under it and its pictures, to under `parent` — or the top
+/// with none — at `position` among the pages there, or the end; the same parent only
+/// reorders. Answers with the page as it now is.
 #[tauri::command]
 pub fn document_move(
     state: State<'_, OpenLibrary>,
     document: String,
-    topic: String,
+    parent: Option<String>,
+    position: Option<u32>,
 ) -> Answer<Document> {
     with(&state, |e| {
-        e.document_move(id(&document)?, id(&topic)?)
+        let parent = parent.as_deref().map(id).transpose()?;
+        e.document_move(id(&document)?, parent, position.map(|p| p as usize))
             .map(Document::from)
     })
 }
 
+/// What deleting this page would reach — every page anywhere under it, by name.
+///
+/// Asked before `document_delete`, never after: the interface shows this and has to be told
+/// what to do with the pages under it before anything is removed.
 #[tauri::command]
-pub fn document_delete(state: State<'_, OpenLibrary>, document: String) -> Answer<()> {
-    with(&state, |e| e.document_delete(id(&document)?))
+pub fn document_delete_plan(
+    state: State<'_, OpenLibrary>,
+    document: String,
+) -> Answer<PageContents> {
+    with(&state, |e| {
+        Ok(PageContents::from(e.document_delete_plan(id(&document)?)?))
+    })
+}
+
+/// Delete a page, having been told what becomes of the pages under it.
+#[tauri::command]
+pub fn document_delete(
+    state: State<'_, OpenLibrary>,
+    document: String,
+    contents: crate::dto::Contents,
+) -> Answer<()> {
+    with(&state, |e| {
+        e.document_delete(id(&document)?, contents.into())
+    })
 }
 
 /// Keep a picture with a document, and answer with the name to write into the body.
@@ -1273,8 +1269,10 @@ mod tests {
     fn an_export_lands_where_it_was_asked_to_and_replaces_what_was_there() {
         let dir = tempfile::tempdir().unwrap();
         let mut engine = Engine::create(dir.path().join("learning"), "Learning").unwrap();
-        let topic = engine.topic_create(None, "Protein").unwrap();
-        let doc = engine.document_create(topic, "What protein is").unwrap();
+        let topic = engine.document_create(None, "Protein").unwrap();
+        let doc = engine
+            .document_create(Some(topic), "What protein is")
+            .unwrap();
         let revision = engine.document_read(doc).unwrap().revision;
         engine
             .document_write(doc, "Protein is built from amino acids.", revision)
@@ -1465,8 +1463,10 @@ mod tests {
     ) {
         let dir = tempfile::tempdir().unwrap();
         let mut engine = Engine::create(dir.path().join("learning"), "Learning").unwrap();
-        let topic = engine.topic_create(None, "Protein").unwrap();
-        let doc = engine.document_create(topic, "What protein is").unwrap();
+        let topic = engine.document_create(None, "Protein").unwrap();
+        let doc = engine
+            .document_create(Some(topic), "What protein is")
+            .unwrap();
         let revision = engine.document_read(doc).unwrap().revision;
         engine
             .document_write(doc, "Protein is built from amino acids.", revision)
@@ -1491,14 +1491,25 @@ mod tests {
         let done = apply_backup(&open, Some(&plan), false).unwrap();
         assert!(!done.copied.is_empty());
 
-        // Changed on the drive, as on another computer.
-        let on_drive = std::fs::read_dir(drive.join("topics"))
-            .unwrap()
-            .flatten()
-            .flat_map(|t| std::fs::read_dir(t.path()).unwrap().flatten())
-            .find(|f| f.path().extension().is_some_and(|e| e == "md"))
-            .unwrap()
-            .path();
+        // Changed on the drive, as on another computer. Found by what it says rather than by
+        // where it is: `topics/` holds pages, their folders and `.order` files side by side, in
+        // whatever order the filesystem lists them.
+        fn page_saying(dir: &Path, words: &str) -> Option<std::path::PathBuf> {
+            for entry in std::fs::read_dir(dir).ok()?.flatten() {
+                let path = entry.path();
+                if path.is_dir() {
+                    if let Some(found) = page_saying(&path, words) {
+                        return Some(found);
+                    }
+                } else if path.extension().is_some_and(|e| e == "md")
+                    && std::fs::read_to_string(&path).is_ok_and(|t| t.contains(words))
+                {
+                    return Some(path);
+                }
+            }
+            None
+        }
+        let on_drive = page_saying(&drive.join("topics"), "amino acids").unwrap();
         let text = std::fs::read_to_string(&on_drive).unwrap();
         std::fs::write(
             &on_drive,
@@ -1535,7 +1546,10 @@ mod tests {
         assert_eq!(view.library_name, "Learning");
         assert_eq!(view.asks, 0);
         let done = apply_restore(&open, Some(&plan), BTreeMap::new()).unwrap();
-        assert_eq!(done.status.documents, 1);
+        assert_eq!(
+            done.status.documents, 2,
+            "the Protein page and the one under it"
+        );
 
         let guard = open.lock().unwrap();
         let engine = guard.as_ref().unwrap();

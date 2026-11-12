@@ -1,31 +1,31 @@
 import { useMemo, useState } from "react";
 
 import { linkable, type Linkable } from "../lib/links";
-import type { Topic } from "../lib/engine";
+import type { Page } from "../lib/engine";
 
 // Choosing which document to link to.
 //
-// The list comes from the topic tree the application already holds, so this costs nothing and
+// The list comes from the tree of pages the application already holds, so this costs nothing and
 // cannot be out of date with the sidebar beside it. Each document carries the path to it,
-// because two documents called "Notes" in different topics are two different things and a
+// because two pages called "Notes" under different pages are two different things and a
 // list that shows them as one line repeated twice is asking somebody to guess.
 //
 // The document being written is not in the list. A document linking to itself is not a
 // connection, and offering it is offering a mistake.
 
 export function LinkPicker({
-  topics,
+  pages,
   exclude,
   onChoose,
   onCancel,
 }: {
-  topics: Topic[];
+  pages: Page[];
   exclude: string;
   onChoose: (id: string) => void;
   onCancel: () => void;
 }) {
   const [query, setQuery] = useState("");
-  const all = useMemo(() => linkable(topics, exclude), [topics, exclude]);
+  const all = useMemo(() => linkable(pages, exclude), [pages, exclude]);
 
   // Matching on the title and on the path, so "protein notes" finds the one under Protein.
   const matches = useMemo(() => {
@@ -56,7 +56,7 @@ export function LinkPicker({
             className="cite-search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by title or topic"
+            placeholder="Search by title, or the page it is under"
             autoFocus
           />
 

@@ -27,7 +27,6 @@ async function start({ recent = [], shared = false } = {}) {
       const status = () => ({
         path: library.path,
         name: library.name,
-        topics: 1,
         documents: 1,
         writable: true,
         problems: [],
@@ -78,13 +77,12 @@ async function start({ recent = [], shared = false } = {}) {
               };
             case "document_backlinks":
               return [];
-            case "topic_tree":
+            case "page_tree":
               return [
                 {
                   id: "01J8ZQ6A1M3P5R7T9V1X3Z5B70",
-                  name: "Protein",
-                  children: [],
-                  documents: [{ id: "01J8ZQ7B2N4Q6S8W0W2Y4A6C80", title: "Alpha" }],
+                  title: "Protein",
+                  children: [{ id: "01J8ZQ7B2N4Q6S8W0W2Y4A6C80", title: "Alpha", children: [] }],
                 },
               ];
             default:

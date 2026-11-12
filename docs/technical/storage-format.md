@@ -2,7 +2,7 @@
 
 > **Audience:** People building Learning Corner
 > **Status:** In progress — M1 implemented
-> **Last reviewed:** 2026-11-07
+> **Last reviewed:** 2026-11-10
 
 The library on disk is the source of truth ([ADR 0003](adr/0003-files-as-source-of-truth.md)).
 This document specifies it. It is normative: the engine implements this, and the format is
@@ -23,14 +23,17 @@ versioned independently of the application.
 ```
 MyLibrary/
 ├── library.toml                  # library identity and format version
-├── topics/
-│   └── protein/
-│       ├── topic.toml
-│       ├── what-protein-is.md
-│       ├── types-of-protein.md
-│       └── in-the-body/          # nested topic
-│           ├── topic.toml
-│           └── how-protein-is-used.md
+├── topics/                       # the tree of pages (named for format 1, and kept)
+│   ├── .order                    # the order of this level: protein, sleep
+│   ├── protein.md                # a page, with its own writing
+│   ├── protein/                  # its sub-pages — only while it has some
+│   │   ├── .order
+│   │   ├── what-protein-is.md
+│   │   ├── types-of-protein.md
+│   │   ├── in-the-body.md
+│   │   └── in-the-body/
+│   │       └── how-protein-is-used.md
+│   └── sleep.md                  # a page with no sub-pages has no folder
 ├── sources/
 │   ├── nieminen-2021.toml
 │   ├── who-protein-intake-2019.toml
@@ -54,13 +57,15 @@ MyLibrary/
 └── .conflicts/                   # copies kept from conflict resolution
 ```
 
-Folders mirror the structure the user sees. A topic is a directory; a nested topic is a
-nested directory; a document is a file inside one. Opening the folder in a file manager shows
-the same shape as the sidebar — that is worth a lot on the day something goes wrong.
+Folders mirror the structure the user sees. Every page is a `.md` file, and the pages under it
+are in a folder named like its file, beside it (`protein.md` and `protein/`), which exists only
+while it has some ([ADR 0009](adr/0009-pages-not-topics.md)). Opening the folder in a file
+manager shows the same shape as the sidebar — that is worth a lot on the day something goes
+wrong. See [Pages](#pages) for the rules.
 
 ## Why TOML
 
-Structured metadata is TOML: `library.toml`, `topic.toml`, sources, works, maps, and the
+Structured metadata is TOML: `library.toml`, sources, works, maps, and the
 front matter block inside documents. One format throughout, so there is one parser, one set
 of rules, and one thing for a user to learn if they hand-edit.
 
@@ -80,8 +85,8 @@ lexicographically sortable by creation time, generated locally without coordinat
 
 - The ID lives **in the file**, never in the filename. Filenames are slugs and may be changed
   freely, by the application or by the user in a file manager.
-- A name **follows what it holds**: renaming a document renames its `.md`, and renaming a
-  topic renames its folder. Free to do precisely because the ID is not in the name — and worth
+- A name **follows what it holds**: renaming a page renames its `.md` and the folder of its
+  sub-pages together. Free to do precisely because the ID is not in the name — and worth
   doing, because a folder of `untitled-2.md` keeps the letter of files-as-source-of-truth
   while losing the point of it. See [ADR 0003](adr/0003-files-as-source-of-truth.md). The
   library's own folder follows its name as well, while it is the library's alone — see
@@ -103,14 +108,14 @@ open the library over it would turn a copied file into a lockout.
 ```toml
 id            = "01J8ZQ5X9K3M7P2R4T6V8W0Y1Z"
 name          = "Learning"
-format_version = 1
+format_version = 2
 created        = 2026-09-06T10:14:00Z
 ```
 
 `name` is what the application calls the library: the heading of the sidebar, and its entry
 on the start screen. The folder is named after it too. A new library is made in a folder of its
 own inside the one the user chose — "Nutrition" in `~/Documents` is `~/Documents/nutrition/`,
-by the same rule as a topic's folder, with a number on the end if the name is taken — and never
+by the same rule as a page's file, with a number on the end if the name is taken — and never
 anywhere inside another library, where backing up the outer one would copy the inner.
 
 Renaming the library renames its folder to match, but only while the folder holds nothing but
@@ -127,8 +132,49 @@ engine compares it against what it supports:
 | Situation | Behaviour |
 | --------- | --------- |
 | Same version | Open |
-| Library older | Offer to migrate. Migration writes a full copy of the library beside it first, and never edits in place |
+| Library older | Offer to migrate. Migration writes a full copy of the library beside it first, then converts it — see [From format 1](#from-format-1) |
 | Library newer | Refuse to open, read-only, with a clear message. **Never** open a future-format library for writing |
+
+The format is **2**: pages replaced topics. Format 1 libraries are converted on request.
+
+## Pages
+
+Every entry in the tree is a page: a [document](#documents), the same file whatever its place.
+
+- **A page is `<name>.md`**, named from its title (a slug), with `-2`, `-3` when the name is
+  taken at its level — a folder's name counts as taken too, since a page's folder shares its
+  name.
+- **Its sub-pages are in `<name>/`**, beside it. Adding the first sub-page makes the folder;
+  removing the last removes it, with its `.order`. A page is renamed with its folder, and moved
+  with its folder, its sub-pages and its pictures.
+- **`.order`** lists the pages at its level, one file name without `.md` per line, top to
+  bottom. A page not on the list comes after the listed ones, by title; a name with no page is
+  skipped; blank lines and repeats are nothing. So a stale list can misplace a page but never
+  lose one, and a person may edit it by hand. Absent, a level is in title order. The engine
+  writes it on every create, move, rename and delete at that level.
+- **A folder with no page of its name beside it** — made by hand, or left by a page deleted in a
+  file manager — is reported as a problem, and the pages in it are listed where the folder is.
+- **Pictures** stay beside the page that shows them. A picture's name always has an extension
+  and a sub-page folder's never does, so the two cannot collide.
+
+### From format 1
+
+Format 1 had **topics**: folders holding `topic.toml` (`id`, `name`, `created`) and documents,
+and no writing of their own. Converting, which happens only when the person agrees:
+
+1. Every `topic.toml` is read first; one that cannot be read refuses the conversion, untouched.
+2. The whole library is copied to a folder beside it, `<folder>-format-1`, numbered if taken,
+   its `.plc/` left out.
+3. Each topic, deepest first, becomes a page beside its folder, keeping the topic's `id`, its
+   `name` as the title and its `created` date, with an empty body; then its `topic.toml` goes.
+   A topic with nothing in it becomes a page with no folder. Where a document already holds the
+   name the page needs, the page and its folder take the next free one together.
+4. `.order` is written at every level in the order the sidebar showed: a topic's documents
+   first, then its nested topics, each by file name.
+5. `format_version` becomes 2 last, so an interrupted conversion leaves a library that still
+   says format 1 and is simply converted again, finishing where it stopped.
+
+Nothing is rewritten in any document, and no id changes, so no link or citation notices.
 
 ## Documents
 
@@ -183,8 +229,10 @@ Three rules follow from the file being the source of truth:
 `![x](../../elsewhere.png)` is not followed out of the folder. The reference is simply broken,
 which is visible and harmless.
 
-**A document takes its pictures with it.** Moving a document to another topic moves the files
-its body names, so the bare names keep working and the body needs no rewriting.
+**A page takes its pictures with it.** Moving a page moves the files its body names, so the
+bare names keep working and the body needs no rewriting. Splitting part of a page into a
+sub-page takes the pictures that part shows into the sub-page's folder, copying the ones the
+text left behind still shows.
 
 **A name is made unique when the picture is filed.** Two pictures both called `diagram.png` are
 two pictures; the second is stored under a name of its own rather than landing on the first.

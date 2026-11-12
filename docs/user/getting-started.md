@@ -2,7 +2,7 @@
 
 > **Audience:** People using Learning Corner
 > **Status:** Implemented
-> **Last reviewed:** 2026-11-07
+> **Last reviewed:** 2026-11-10
 
 This page takes you from nothing to a first document with a source behind it. Fifteen
 minutes, and you never need to be online.
@@ -53,17 +53,17 @@ folder follows — and move it later; see [Libraries and your files](libraries-a
 > this app is built to leave with you. Use [Backup and restore](backup-and-restore.md)
 > instead.
 
-## 3. Make your first topic
+## 3. Make your first page
 
-A **topic** is a subject you are learning about. It holds documents, and it can hold other
-topics once things get deeper.
+Everything you write is a **page**, and any page can have pages under it.
 
-1. Choose **New topic**.
+1. Choose the **+** beside **Pages** at the top of the sidebar.
 2. Name it after the question you actually have — *Protein*, *Russian verbs*, *Karelian folk
    songs*. You can rename it whenever you like.
+3. Write what it is about in brief. The detail can go in pages under it, later.
 
-Do not plan the whole structure now. Topics are meant to be split apart later, and the app
-makes that easy — see [Topics and documents](documents-and-topics.md).
+Do not plan the whole structure now. Pages are meant to be split apart later, and the app
+makes that easy — see [Pages](pages.md).
 
 ## 4. Save a source before you write
 
@@ -78,12 +78,11 @@ it.**
    citation actually needs.
 4. Save it.
 
-You now own that source. It sits in your library and can be cited from any document, in any
-topic, forever — including when the web page it came from goes offline.
+You now own that source. It sits in your library and can be cited from any page, forever — including when the web page it came from goes offline.
 
 ## 5. Write, and cite as you go
 
-1. Inside your topic, choose **New document** and give it a name.
+1. Hover your page, choose its **+** to make a page under it, and give it a name.
 2. Write.
 3. When you write something you learned from a source, select the sentence and choose
    **Cite**, then pick the source. The citation appears in the text in proper APA 7 form.
@@ -111,10 +110,10 @@ Do this before you have much to lose, not after. See
 | You want to…                                             | Read                                                    |
 | --------------------------------------------------------- | ------------------------------------------------------- |
 | Understand how your library is organised on disk           | [Libraries and your files](libraries-and-files.md)      |
-| Split a topic that has grown too big                       | [Topics and documents](documents-and-topics.md)         |
+| Split a page that has grown too big                        | [Pages](pages.md)                        |
 | Get citations exactly right                                | [Sources and citations](sources-and-citations.md)       |
 | Read a text with its translation beside it                 | [Parallel texts](parallel-texts.md)                     |
-| See how your topics connect                                | [Mind maps](mind-maps.md)                               |
+| See how your pages connect                                 | [Mind maps](mind-maps.md)                               |
 | Look up a word used in this guide                          | [Glossary](glossary.md)                                 |
 
 ---

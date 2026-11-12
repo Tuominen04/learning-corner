@@ -1,7 +1,7 @@
 # Roadmap
 
 > **Audience:** People building Learning Corner
-> **Status:** In progress — M1, M2 and M3 implemented
+> **Status:** In progress — M1, M2, M3 and pages implemented
 > **Last reviewed:** 2026-11-10
 
 Milestones in order. Each is shippable on its own — a person could install it, use it, and get
@@ -147,16 +147,18 @@ English, panes chosen freely, hand-edited alignment surviving a round trip throu
 
 ---
 
-## Pages instead of topics — *proposed*
+## Pages instead of topics ← *0.24.0*
 
 One kind of thing in the tree: every page is a document, and any page can have pages under it,
 in the order you put them ([ADR 0009](adr/0009-pages-not-topics.md)). Library format 2, with
 format 1 libraries converted on opening after a copy is written beside them. Before M4, because
 a map's nodes reference pages and there should be no topics left to reference.
 
-- [ ] Format 2 and the migration from `v1`, tested against the frozen fixture; `v2` frozen.
-- [ ] One **+** per page; moving to another parent and another place among siblings.
-- [ ] Deleting a page with sub-pages asks first; splitting makes a sub-page.
+- [x] Format 2 and the migration from `v1`, tested against the frozen fixture; `v2` frozen.
+- [x] One **+** per page; moving to another parent and another place among siblings — dragged
+      onto, above or below a page, Alt+↑/↓, Ctrl+X/V, or the move button.
+- [x] Deleting a page with sub-pages asks first; splitting makes a sub-page.
+- [x] Opening a format 1 library asks before converting it, and says where its copy went.
 - [ ] **Seen running by a person**, on Fedora: a real library converted, and the protein example
       rebuilt as *Protein* with *History*, *Current*, *Type 1* and *Type 2* under it.
 
@@ -171,10 +173,10 @@ topic was, and its copy beside it untouched.
 - Nodes referencing entities, never copying them.
 - Derived edges from links; user edges with labels; free nodes for open questions.
 - Automatic arrangement, then hand placement that is kept.
-- Filtering by topic and by distance from a node.
+- Filtering to the pages under a page, and by distance from a node.
 - Export as an image.
 
-**Done when:** a map of the protein topic opens beside a document, updates as it is written,
+**Done when:** a map of the Protein page opens beside it, updates as it is written,
 and can be deleted without touching a single document.
 
 ---

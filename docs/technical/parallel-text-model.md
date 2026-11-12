@@ -2,7 +2,7 @@
 
 > **Audience:** People building Learning Corner
 > **Status:** Implemented
-> **Last reviewed:** 2026-10-29
+> **Last reviewed:** 2026-11-10
 
 A text read in a language the reader is still learning, with its other versions lined up
 beside it: the original, how it is said, and what it means. This page is the rules — what the
@@ -23,7 +23,7 @@ A **work** is the text as an abstract thing. An **edition** is one rendering of 
 is the unit editions line up by — one row across every pane. (Earlier versions of this page
 called a row a *segment*; the operations still say segment where it reads better.)
 
-A work belongs to the library, not to a topic, like a source: a poem studied for a Russian
+A work belongs to the library, not to a page, like a source: a poem studied for a Russian
 course and cited in a history document is one text. Works are listed in their own view in the
 sidebar, **Works**, beside Documents and Sources.
 

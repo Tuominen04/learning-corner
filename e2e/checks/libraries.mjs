@@ -36,11 +36,10 @@ async function start(recent, { failOpen = null } = {}) {
           tree: [
             {
               id: "01J8ZQ6A1M3P5R7T9V1X3Z5B70",
-              name: "Protein",
-              children: [],
-              documents: [
-                { id: ALPHA, title: "Alpha" },
-                { id: BETA, title: "Beta" },
+              title: "Protein",
+              children: [
+                { id: ALPHA, title: "Alpha", children: [] },
+                { id: BETA, title: "Beta", children: [] },
               ],
             },
           ],
@@ -50,9 +49,8 @@ async function start(recent, { failOpen = null } = {}) {
           tree: [
             {
               id: "01J8ZQ6A1M3P5R7T9V1X3Z5B71",
-              name: "Verbs",
-              children: [],
-              documents: [{ id: VERBS, title: "Verbs of motion" }],
+              title: "Verbs",
+              children: [{ id: VERBS, title: "Verbs of motion", children: [] }],
             },
           ],
         },
@@ -64,8 +62,7 @@ async function start(recent, { failOpen = null } = {}) {
       const status = (path) => ({
         path,
         name: libraries[path].name,
-        topics: 1,
-        documents: libraries[path].tree[0].documents.length,
+        documents: libraries[path].tree[0].children.length + 1,
         writable: true,
         problems: [],
       });
@@ -98,7 +95,7 @@ async function start(recent, { failOpen = null } = {}) {
             case "library_status":
               if (!open) throw { kind: "LibraryNotOpen", message: "no library is open" };
               return status(open);
-            case "topic_tree":
+            case "page_tree":
               if (!open) throw { kind: "LibraryNotOpen", message: "no library is open" };
               return libraries[open].tree;
             case "document_read":

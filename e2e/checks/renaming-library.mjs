@@ -15,7 +15,7 @@ await page.addInitScript((LEARNING) => {
   let name = "Learning";
   let list = [{ path: LEARNING, name, opened: new Date().toISOString(), found: true }];
   let open = false;
-  const status = () => ({ path: LEARNING, name, topics: 1, documents: 1, writable: true, problems: [] });
+  const status = () => ({ path: LEARNING, name, documents: 1, writable: true, problems: [] });
 
   window.__TAURI_INTERNALS__ = {
     invoke: async (command, args) => {
@@ -41,13 +41,12 @@ await page.addInitScript((LEARNING) => {
           list = list.map((r) => (r.path === LEARNING ? { ...r, name } : r));
           // The folder already has a name the library's would give it, so it stays put.
           return { status: status(), folder: "follows" };
-        case "topic_tree":
+        case "page_tree":
           return [
             {
               id: "01J8ZQ6A1M3P5R7T9V1X3Z5B70",
-              name: "Protein",
-              children: [],
-              documents: [{ id: "01J8ZQ7B2N4Q6S8W0W2Y4A6C80", title: "Alpha" }],
+              title: "Protein",
+              children: [{ id: "01J8ZQ7B2N4Q6S8W0W2Y4A6C80", title: "Alpha", children: [] }],
             },
           ];
         default:
@@ -112,8 +111,8 @@ check(
 // ---- the same name, asked for again --------------------------------------------------
 
 check(
-  "one of each is counted in the singular",
-  (await page.locator(".library .counts").innerText()) === "1 topic · 1 document",
+  "one page is counted in the singular",
+  (await page.locator(".library .counts").innerText()) === "1 page",
   await page.locator(".library .counts").innerText(),
 );
 

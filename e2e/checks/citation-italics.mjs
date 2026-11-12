@@ -28,9 +28,9 @@ await page.addInitScript((ids) => {
           return [{ path: "/home/you/learning", name: "Learning", opened: new Date().toISOString(), found: true }];
         case "library_open":
         case "library_status":
-          return { path: "/home/you/learning", name: "Learning", topics: 1, documents: 1, writable: true, problems: [] };
-        case "topic_tree":
-          return [{ id: "01J8ZQ6A1M3P5R7T9V1X3Z5B70", name: "Kalevala", children: [], documents: [{ id: DOC, title: "The epic" }] }];
+          return { path: "/home/you/learning", name: "Learning", documents: 1, writable: true, problems: [] };
+        case "page_tree":
+          return [{ id: "01J8ZQ6A1M3P5R7T9V1X3Z5B70", title: "Kalevala", children: [{ id: DOC, title: "The epic", children: [] }] }];
         case "document_read":
           return { id: DOC, title: "The epic", topic: "01J8ZQ6A1M3P5R7T9V1X3Z5B70", body, revision: "1", modified: "2026-09-01T00:00:00Z" };
         case "source_list":

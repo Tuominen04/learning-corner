@@ -4,9 +4,9 @@ import { engine, EngineFailure, type SearchHit } from "../lib/engine";
 
 // Finding something you half-remember.
 //
-// One index holds topics, documents and sources, which is deliberate — you should not have to
-// decide what kind of thing you are looking for before you can look for it. This screen shows
-// the writing half: topics and documents. Sources have their own screen, where they can be
+// One index holds pages, works and sources, which is deliberate — you should not have to decide
+// what kind of thing you are looking for before you can look for it. This screen shows the
+// writing half: pages and works. Sources have their own screen, where they can be
 // shown with their authors and their papers, and a bare title in a list here would be the
 // least useful way to present one.
 
@@ -76,7 +76,7 @@ export function Search({
                   <strong>{hit.title}</strong>
                   {hit.excerpt && <span className="excerpt">{hit.excerpt}</span>}
                 </button>
-              ) : hit.kind === "work" ? (
+              ) : (
                 <button className="hit" onClick={() => onOpenWork(hit.id)}>
                   <strong>{hit.title}</strong>
                   <span className="excerpt">
@@ -84,18 +84,6 @@ export function Search({
                     {hit.excerpt && ` · ${hit.excerpt}`}
                   </span>
                 </button>
-              ) : (
-                // A topic is not a place you can open — there is no topic view, only the tree.
-                // Shown rather than hidden because knowing a topic matched is worth something,
-                // and a row that quietly did nothing when clicked would be worse than one that
-                // plainly is not a button.
-                <div className="hit topic-hit">
-                  <strong>{hit.title}</strong>
-                  <span className="excerpt">
-                    <em className="kind">Topic</em>
-                    {hit.excerpt && ` · ${hit.excerpt}`}
-                  </span>
-                </div>
               )}
             </li>
           ))}

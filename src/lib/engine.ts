@@ -38,8 +38,9 @@ import type { Source } from "./bindings/Source";
 import type { Split } from "./bindings/Split";
 import type { SourceDate } from "./bindings/SourceDate";
 import type { SourceType } from "./bindings/SourceType";
-import type { Topic } from "./bindings/Topic";
-import type { TopicContents } from "./bindings/TopicContents";
+import type { Page } from "./bindings/Page";
+import type { PageContents } from "./bindings/PageContents";
+import type { MigratedLibrary } from "./bindings/MigratedLibrary";
 import type { Contents } from "./bindings/Contents";
 import type { EditionContents } from "./bindings/EditionContents";
 import type { EditionKind } from "./bindings/EditionKind";
@@ -85,8 +86,9 @@ export type {
   SourceDate,
   SourceType,
   Split,
-  Topic,
-  TopicContents,
+  Page,
+  PageContents,
+  MigratedLibrary,
   Contents,
   EditionContents,
   EditionKind,
@@ -162,6 +164,12 @@ export const engine = {
     create: (location: string, name: string) =>
       call<LibraryStatus>("library_create", { location, name }),
     open: (path: string) => call<LibraryStatus>("library_open", { path }),
+    /**
+     * Convert a format 1 library to this one, after copying it whole to a folder beside it,
+     * and open it. Only ever on the person's say-so: `open` answers `MigrationRequired` and
+     * the interface asks first.
+     */
+    migrate: (path: string) => call<MigratedLibrary>("library_migrate", { path }),
     close: () => call<void>("library_close"),
     status: () => call<LibraryStatus>("library_status"),
     rebuildIndex: () => call<LibraryStatus>("library_rebuild_index"),
@@ -171,41 +179,39 @@ export const engine = {
      */
     rename: (name: string) => call<RenamedLibrary>("library_rename", { name }),
   },
-  topic: {
-    tree: () => call<Topic[]>("topic_tree"),
-    create: (parent: string | null, name: string) =>
-      call<string>("topic_create", { parent, name }),
-    rename: (topic: string, name: string) =>
-      call<void>("topic_rename", { topic, name }),
-    /** Move a topic and everything in it into another topic, or to the top level with `null`. */
-    move: (topic: string, parent: string | null) => call<void>("topic_move", { topic, parent }),
-    /**
-     * What deleting this topic would reach: every document anywhere below it, by name.
-     *
-     * Always asked before `delete`, never after — the person is shown this first.
-     */
-    deletePlan: (topic: string) => call<TopicContents>("topic_delete_plan", { topic }),
-    /**
-     * Delete a topic, having been told what becomes of what is inside.
-     *
-     * There is no default for `contents`. The contract has said since M0 that deleting a
-     * topic never deletes documents implicitly, and a default would be exactly that.
-     */
-    delete: (topic: string, contents: Contents) =>
-      call<void>("topic_delete", { topic, contents }),
+  page: {
+    /** Every page, as a tree, each level in the person's order. */
+    tree: () => call<Page[]>("page_tree"),
   },
   document: {
-    create: (topic: string, title: string) =>
-      call<string>("document_create", { topic, title }),
+    /** A new page under `parent`, or at the top with `null`, at the end of its level. */
+    create: (parent: string | null, title: string) =>
+      call<string>("document_create", { parent, title }),
     read: (document: string) => call<Document>("document_read", { document }),
     write: (document: string, body: string, revision: Revision) =>
       call<Document>("document_write", { document, body, revision }),
     rename: (document: string, title: string) =>
       call<Document>("document_rename", { document, title }),
-    /** Move a document, its pictures with it, into a topic; answers with it as it now is. */
-    move: (document: string, topic: string) =>
-      call<Document>("document_move", { document, topic }),
-    delete: (document: string) => call<void>("document_delete", { document }),
+    /**
+     * Move a page, with every page under it and its pictures, to under `parent` (the top with
+     * `null`) at `position` among the pages there — from 0 — or the end with `null`. The same
+     * parent only reorders. Answers with the page as it now is.
+     */
+    move: (document: string, parent: string | null, position: number | null = null) =>
+      call<Document>("document_move", { document, parent, position }),
+    /**
+     * What deleting this page would reach: every page anywhere under it, by name.
+     *
+     * Always asked before `delete`, never after — the person is shown this first.
+     */
+    deletePlan: (document: string) =>
+      call<PageContents>("document_delete_plan", { document }),
+    /**
+     * Delete a page, having been told what becomes of the pages under it. There is no
+     * default for `contents`: deleting a page never deletes the pages under it implicitly.
+     */
+    delete: (document: string, contents: Contents) =>
+      call<void>("document_delete", { document, contents }),
     /**
      * Keep a picture with this document, and get back the name to write into the body.
      *
