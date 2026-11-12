@@ -1491,14 +1491,25 @@ mod tests {
         let done = apply_backup(&open, Some(&plan), false).unwrap();
         assert!(!done.copied.is_empty());
 
-        // Changed on the drive, as on another computer.
-        let on_drive = std::fs::read_dir(drive.join("topics"))
-            .unwrap()
-            .flatten()
-            .flat_map(|t| std::fs::read_dir(t.path()).unwrap().flatten())
-            .find(|f| f.path().extension().is_some_and(|e| e == "md"))
-            .unwrap()
-            .path();
+        // Changed on the drive, as on another computer. Found by what it says rather than by
+        // where it is: `topics/` holds pages, their folders and `.order` files side by side, in
+        // whatever order the filesystem lists them.
+        fn page_saying(dir: &Path, words: &str) -> Option<std::path::PathBuf> {
+            for entry in std::fs::read_dir(dir).ok()?.flatten() {
+                let path = entry.path();
+                if path.is_dir() {
+                    if let Some(found) = page_saying(&path, words) {
+                        return Some(found);
+                    }
+                } else if path.extension().is_some_and(|e| e == "md")
+                    && std::fs::read_to_string(&path).is_ok_and(|t| t.contains(words))
+                {
+                    return Some(path);
+                }
+            }
+            None
+        }
+        let on_drive = page_saying(&drive.join("topics"), "amino acids").unwrap();
         let text = std::fs::read_to_string(&on_drive).unwrap();
         std::fs::write(
             &on_drive,
