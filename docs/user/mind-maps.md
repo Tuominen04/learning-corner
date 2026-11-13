@@ -26,7 +26,7 @@ the document you are writing, and keep it there while you work. It updates as yo
 
 - **Nodes** — your pages.
 - **Lines** — the links between them, drawn from the links already in your documents. Write
-  `[[Protein sources]]` in a document and the line appears.
+  `[[Type 2]]` in a document and the line appears.
 - **Your own lines** — drag from one node to another to connect two documents that ought to
   be related but are not yet, and label the line: *contradicts*, *depends on*, *the same
   thing seen differently*.

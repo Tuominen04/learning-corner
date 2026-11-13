@@ -10,29 +10,29 @@ messy, split things apart as they grow, and never lose the connections.
 
 ## How it grows: a worked example
 
-You want to know what a protein is. So you make a page called **Protein** and write what you
-find there: a paragraph saying what protein is, in brief.
+You start learning about a subject. So you make a page named after it and write what you
+find there: a paragraph saying what it is, in brief.
 
-Reading, you find there are many kinds of protein, and that gets long. You select the
-section about kinds and click **Split**. Now **Types of protein** is a page of its own,
-under *Protein*, and *Protein* links to it where the section used to be.
+Reading, you find it comes in more than one kind, and the part about the kinds gets long. You
+select that section and click **Split**. Now **Type 1** is a page of its own, under the
+subject's page, which links to it where the section used to be.
 
-Then you get interested in the history, and in how the body actually uses it, and what the
-organs involved are doing. Now you have:
+Then you get interested in the history, and in where things stand now, and the second kind
+turns out to need pages of its own. Now you have:
 
 ```
-Protein                    ← what protein is, in brief
+Subject                    ← what it is, in brief
 ├── History
-├── Types of protein
-├── Protein sources
-└── In the body
-    ├── How protein is used
-    └── The organs involved
+├── Current
+├── Type 1
+└── Type 2
+    ├── Detail 1
+    └── Detail 2
 ```
 
-*Protein* still opens with its overview, and the pages under it go into the detail, in the
-order you put them. *Protein sources* and *Types of protein* keep pointing at each other,
-because you compared them. Every claim on every page still points at the source it came from.
+*Subject* still opens with its overview, and the pages under it go into the detail, in the
+order you put them. *Type 1* and *Type 2* keep pointing at each other, because you compared
+them. Every claim on every page still points at the source it came from.
 Nothing had to be reorganised by hand, and nothing was retyped.
 
 That is the whole idea. **Structure is something you discover, not something you commit to
@@ -54,8 +54,7 @@ little heavier, so the shape of the tree reads at a glance.
 | Delete it | Hover it and click the bin. The app shows you every page under it, however deep, and asks what should happen to them |
 
 A good habit: put what a subject is about, in brief, at the top of its page, and the detail in
-the pages under it. *Protein* says what protein is; *History* and *Types of protein* go
-further.
+the pages under it. *Subject* says what it is; *History* and *Type 1* go further.
 
 ## Writing a page
 
@@ -159,7 +158,7 @@ is where **Cite** puts it. Two sources behind one sentence still make one claim.
 This is not a scolding feature and there is nothing wrong with an uncited sentence — your
 own thinking, a question to come back to, and a summary in your own words all belong in a
 page. The point is that **six months later, you can tell them apart.** Without the mark,
-"protein is used for tissue repair" and "I think protein is why I sleep badly" look exactly
+"it was first described in 1850" and "I think this is why it caught on" look exactly
 the same on the page, and the whole reason you were careful is lost.
 
 A page also shows a short summary at the top: how many claims it makes, how many sources
