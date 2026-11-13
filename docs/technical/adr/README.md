@@ -25,6 +25,7 @@ reason it was made are the useful part of the history.
 | [0007](0007-bindings-with-ts-rs.md) | TypeScript bindings generated with ts-rs | Accepted |
 | [0008](0008-narrow-editor-schema.md) | A narrow editor schema until Markdown serialisation exists | Accepted |
 | [0009](0009-pages-not-topics.md) | Every page is a document, and any page can have pages under it | Accepted |
+| [0010](0010-mind-maps.md) | A map is a scope and the positions you chose, in a window of its own | Proposed |
 
 ## Template
 

@@ -169,6 +169,8 @@ topic was, and its copy beside it untouched.
 
 ## M4 · Mind maps
 
+Designed in [ADR 0010](adr/0010-mind-maps.md), proposed.
+
 - A map in a second window, updating live.
 - Nodes referencing entities, never copying them.
 - Derived edges from links; user edges with labels; free nodes for open questions.
