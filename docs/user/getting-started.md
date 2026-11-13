@@ -58,8 +58,8 @@ folder follows — and move it later; see [Libraries and your files](libraries-a
 Everything you write is a **page**, and any page can have pages under it.
 
 1. Choose the **+** beside **Pages** at the top of the sidebar.
-2. Name it after the question you actually have — *Protein*, *Russian verbs*, *Karelian folk
-   songs*. You can rename it whenever you like.
+2. Name it after the question you actually have — *Russian verbs*, *Karelian folk
+   songs*, *How tides work*. You can rename it whenever you like.
 3. Write what it is about in brief. The detail can go in pages under it, later.
 
 Do not plan the whole structure now. Pages are meant to be split apart later, and the app

@@ -12,10 +12,10 @@ reference list for you.
 
 ## What it does
 
-**Pages, with pages under them.** You start with one question and end up with ten. Say you want
-to know what a protein is — a *Protein* page says so in brief, and under it grow pages for its
-history, its types, its sources and how the body uses it, each citing its own sources and
-linked to the others, in the order you choose.
+**Pages, with pages under them.** You start with one question and end up with ten. A page for
+a subject says what it is in brief, and under it grow pages for its history, where it stands
+now and each of its kinds — each citing its own sources and linked to the others, in the order
+you choose.
 
 **Sources and citations.** Save books, articles, web pages, PDFs and more as sources. Cite them
 as you write; the reference list and in-text citations are worked out for you. Search across

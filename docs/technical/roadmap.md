@@ -90,8 +90,8 @@ document, an eighth kind of source; the writing tools staying in reach down a lo
 with the page centred on a wide window; moving topics and documents, by dragging, from the
 keyboard, or with the move button.
 
-**Done when:** the protein example from the README can be worked end to end — one topic
-becoming six documents, sources saved and cited, a correct reference list on every one, and a
+**Done when:** the worked example in the user guide's *Pages* can be worked end to end — one
+topic becoming six documents, sources saved and cited, a correct reference list on every one, and a
 source corrected once being correct everywhere.
 
 ---
@@ -159,8 +159,8 @@ a map's nodes reference pages and there should be no topics left to reference.
       onto, above or below a page, Alt+↑/↓, Ctrl+X/V, or the move button.
 - [x] Deleting a page with sub-pages asks first; splitting makes a sub-page.
 - [x] Opening a format 1 library asks before converting it, and says where its copy went.
-- [ ] **Seen running by a person**, on Fedora: a real library converted, and the protein example
-      rebuilt as *Protein* with *History*, *Current*, *Type 1* and *Type 2* under it.
+- [ ] **Seen running by a person**, on Fedora: a real library converted, and a subject's
+      page rebuilt with *History*, *Current*, *Type 1* and *Type 2* under it.
 
 **Done when:** a format 1 library opens as format 2 looking the same, with a page where each
 topic was, and its copy beside it untouched.
