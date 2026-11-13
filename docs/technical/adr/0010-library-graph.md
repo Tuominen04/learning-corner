@@ -1,7 +1,7 @@
 # ADR 0010 · The library graph: computed whole, stored nowhere, a screen of its own
 
 > **Audience:** People building Learning Corner
-> **Status:** Proposed
+> **Status:** Accepted
 > **Last reviewed:** 2026-11-13
 
 ## Context

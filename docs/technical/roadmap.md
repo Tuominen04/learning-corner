@@ -169,7 +169,7 @@ topic was, and its copy beside it untouched.
 
 ## M4a · The library graph
 
-Designed in [ADR 0010](adr/0010-library-graph.md), proposed.
+Designed in [ADR 0010](adr/0010-library-graph.md), accepted.
 
 - A screen beside *Pages*, *Sources* and *Works*: every page, and sources if wanted, with the
   lines between them — links, the tree, citations — computed each time, stored nowhere.
@@ -186,7 +186,7 @@ has changed.
 
 ## M4b · Diagrams
 
-Designed in [ADR 0011](adr/0011-diagrams.md), proposed.
+Designed in [ADR 0011](adr/0011-diagrams.md), accepted.
 
 - Diagrams you make: layered (a family tree, a hierarchy), a timeline (a historical path), or
   free (a network map), each a file of its own.

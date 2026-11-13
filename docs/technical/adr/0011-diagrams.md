@@ -1,7 +1,7 @@
 # ADR 0011 · Diagrams are files of their own, shown in a page by reference
 
 > **Audience:** People building Learning Corner
-> **Status:** Proposed
+> **Status:** Accepted
 > **Last reviewed:** 2026-11-13
 
 ## Context
