@@ -167,19 +167,35 @@ topic was, and its copy beside it untouched.
 
 ---
 
-## M4 · Mind maps
+## M4a · The library graph
 
-Designed in [ADR 0010](adr/0010-mind-maps.md), proposed.
+Designed in [ADR 0010](adr/0010-library-graph.md), proposed.
 
-- A map in a second window, updating live.
-- Nodes referencing entities, never copying them.
-- Derived edges from links; user edges with labels; free nodes for open questions.
-- Automatic arrangement, then hand placement that is kept.
-- Filtering to the pages under a page, and by distance from a node.
+- A screen beside *Pages*, *Sources* and *Works*: every page, and sources if wanted, with the
+  lines between them — links, the tree, citations — computed each time, stored nowhere.
+- Nodes sized by how connected they are and coloured by the subject they are under.
+- Hover to highlight neighbours; open a node to go to its page; find a node by title.
+- Focus on a page and what is within one, two or three steps of it, or on the pages under it.
 - Export as an image.
 
-**Done when:** a map of a page opens beside it, updates as it is written,
-and can be deleted without touching a single document.
+**Done when:** a library of a few hundred pages pans and zooms smoothly, a page written on the
+*Pages* screen is on the graph when you come back to it, and nothing in the library's folder
+has changed.
+
+---
+
+## M4b · Diagrams
+
+Designed in [ADR 0011](adr/0011-diagrams.md), proposed.
+
+- Diagrams you make: layered (a family tree, a hierarchy), a timeline (a historical path), or
+  free (a network map), each a file of its own.
+- Nodes that can point at a page, and open it; nodes that are only a label.
+- A diagram shown inside a page, and edited on a screen of its own.
+- Export as an image.
+
+**Done when:** a family tree, a timeline and a network map can each be made, shown in a page,
+followed from a node to its page, and deleted — leaving every page's own writing untouched.
 
 ---
 
