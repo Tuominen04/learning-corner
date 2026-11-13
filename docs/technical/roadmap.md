@@ -178,7 +178,7 @@ Designed in [ADR 0010](adr/0010-mind-maps.md), proposed.
 - Filtering to the pages under a page, and by distance from a node.
 - Export as an image.
 
-**Done when:** a map of the Protein page opens beside it, updates as it is written,
+**Done when:** a map of a page opens beside it, updates as it is written,
 and can be deleted without touching a single document.
 
 ---

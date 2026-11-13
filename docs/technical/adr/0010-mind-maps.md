@@ -22,9 +22,9 @@ Much of their shape was settled before any of it was built, and is not reopened 
 Four questions are still open, and each is expensive to change once maps exist in people's
 libraries:
 
-1. **Which pages are on a map?** The test M4 must pass is a map of the Protein page that "updates
-   as it is written". A page added under *Protein* has to appear on the map without anyone
-   putting it there. If a map were only a list of nodes added by hand, it would be stale the
+1. **Which pages are on a map?** The test M4 must pass is a map of a page that "updates as it
+   is written". A page added under that page has to appear on the map without anyone putting it
+   there. If a map were only a list of nodes added by hand, it would be stale the
    moment a page was added.
 2. **What is stored for positions?** Storing every node's position would freeze the automatic
    layout the first time a map was saved. A page added later would then land somewhere arbitrary
@@ -48,9 +48,9 @@ interface. The engine stores and checks what a map says, and never draws it.
 ### What a map file holds
 
 ```toml
-# maps/protein.toml
+# maps/<name>.toml
 id = "01JC…"
-name = "Protein"
+name = "An overview"
 created = "2026-11-13T10:00:00Z"
 
 [scope]
@@ -66,7 +66,7 @@ ref = "01JA…"
 
 [[node]]                # a free node: a question or a reminder, not a page
 id = "01JB…"
-text = "Is whey different from casein, or only faster?"
+text = "An open question, not yet a page"
 x = 300.0
 y = 80.0
 
@@ -153,8 +153,8 @@ person's work even though it is not writing.
 ## Alternatives considered
 
 **A map is only the nodes added to it by hand.** It is the simplest file: a list of ids and
-positions. Rejected because it fails M4's own test. A page written under *Protein* would not
-appear on the Protein map until someone remembered to add it, which makes the map a second copy
+positions. Rejected because it fails M4's own test. A page written under the map's page would not
+appear on the map until someone remembered to add it, which makes the map a second copy
 of the tree that drifts, the very thing the user guide promises a map is not.
 
 **Store every node's position, including the layout's.** Every node then has the same shape, and
