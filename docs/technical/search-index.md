@@ -53,7 +53,7 @@ Full-text search uses SQLite's FTS5 with the `unicode61` tokeniser and diacritic
 non-negotiable for an application whose users search Finnish and Russian text.
 
 **A user's words are quoted before they reach FTS5.** Its match syntax treats bare punctuation
-and bare `AND` as operators, so a search for `protein (2021)` is a syntax error rather than a
+and bare `AND` as operators, so a search for `nieminen (2021)` is a syntax error rather than a
 search. Every term is wrapped in quotes and embedded quotes doubled, so what a person types is
 always treated as words to find.
 
