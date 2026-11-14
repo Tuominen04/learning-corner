@@ -1,8 +1,8 @@
 # Roadmap
 
 > **Audience:** People building Learning Corner
-> **Status:** In progress — M1, M2, M3 and pages implemented
-> **Last reviewed:** 2026-11-10
+> **Status:** In progress — M1, M2, M3, pages and the library graph implemented
+> **Last reviewed:** 2026-11-14
 
 Milestones in order. Each is shippable on its own — a person could install it, use it, and get
 something out of it — and each has a definition of done that is checkable rather than a
@@ -167,16 +167,21 @@ topic was, and its copy beside it untouched.
 
 ---
 
-## M4a · The library graph
+## M4a · The library graph ← *0.25.0*
 
-Designed in [ADR 0010](adr/0010-library-graph.md), proposed.
+Designed in [ADR 0010](adr/0010-library-graph.md), accepted.
 
-- A screen beside *Pages*, *Sources* and *Works*: every page, and sources if wanted, with the
-  lines between them — links, the tree, citations — computed each time, stored nowhere.
-- Nodes sized by how connected they are and coloured by the subject they are under.
-- Hover to highlight neighbours; open a node to go to its page; find a node by title.
-- Focus on a page and what is within one, two or three steps of it, or on the pages under it.
-- Export as an image.
+- [x] A screen beside *Documents*, *Sources* and *Works*: every page, and sources if wanted,
+      with the lines between them — links, the tree, citations — computed each time, stored
+      nowhere.
+- [x] Nodes sized by how connected they are and coloured by the subject they are under.
+- [x] Hover to highlight neighbours; open a node to go to its page; find a node by title;
+      arrow keys along its lines.
+- [x] Focus on a page and what is within one, two or three steps of it, or on the pages under
+      it. What was showing is remembered per library, on this computer.
+- [x] Export as SVG or PNG.
+- [ ] **Seen running by a person**, on Fedora: a real library's graph explored, a page opened
+      from it, and a picture saved.
 
 **Done when:** a library of a few hundred pages pans and zooms smoothly, a page written on the
 *Pages* screen is on the graph when you come back to it, and nothing in the library's folder
@@ -186,7 +191,7 @@ has changed.
 
 ## M4b · Diagrams
 
-Designed in [ADR 0011](adr/0011-diagrams.md), proposed.
+Designed in [ADR 0011](adr/0011-diagrams.md), accepted.
 
 - Diagrams you make: layered (a family tree, a hierarchy), a timeline (a historical path), or
   free (a network map), each a file of its own.

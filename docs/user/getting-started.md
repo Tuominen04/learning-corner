@@ -113,7 +113,7 @@ Do this before you have much to lose, not after. See
 | Split a page that has grown too big                        | [Pages](pages.md)                        |
 | Get citations exactly right                                | [Sources and citations](sources-and-citations.md)       |
 | Read a text with its translation beside it                 | [Parallel texts](parallel-texts.md)                     |
-| See how your pages connect                                 | [Mind maps](mind-maps.md)                               |
+| See how your pages connect                                 | [The library graph](library-graph.md)                   |
 | Look up a word used in this guide                          | [Glossary](glossary.md)                                 |
 
 ---

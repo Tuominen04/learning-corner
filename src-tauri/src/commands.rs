@@ -26,6 +26,7 @@ use crate::dto::{
     EditionContents, NewEdition, RepeatSet, ResegmentPlan, Resegmented, Work, WorkContents,
     WorkSummary, WorkUnit,
 };
+use crate::dto::{Graph, GraphView};
 use crate::recent::Recent;
 
 /// The open library, or none. The interface holds no durable state of its own.
@@ -201,6 +202,7 @@ pub fn library_remembered(
                 .filter(|p| p.is_dir())
                 .map(|p| p.to_string_lossy().into_owned()),
             hidden_panes: kept.hidden_panes,
+            graph: kept.graph,
         })
     })
 }
@@ -239,6 +241,21 @@ pub fn remember_hidden_panes(
     })
 }
 
+/// In the open library, the graph screen was left showing `view`.
+#[tauri::command]
+pub fn remember_graph_view(
+    state: State<'_, OpenLibrary>,
+    recent: State<'_, Recent>,
+    view: GraphView,
+) -> Answer<()> {
+    with(&state, |e| {
+        if let Err(err) = recent.graph_viewed(e.root(), view) {
+            eprintln!("how the graph was showing was not remembered: {err}");
+        }
+        Ok(())
+    })
+}
+
 /// Take a library off the start screen's list. The library itself is not touched.
 #[tauri::command]
 pub fn forget_library(recent: State<'_, Recent>, path: String) -> Answer<()> {
@@ -261,6 +278,29 @@ pub fn page_tree(state: State<'_, OpenLibrary>) -> Answer<Vec<Page>> {
     with(&state, |e| {
         Ok(e.page_tree()?.into_iter().map(Page::from).collect())
     })
+}
+
+// ---- the library graph ---------------------------------------------------------
+
+/// Every page, and with `sources` every source, with the lines between them (ADR 0010).
+#[tauri::command]
+pub fn library_graph(state: State<'_, OpenLibrary>, sources: bool) -> Answer<Graph> {
+    with(&state, |e| Ok(Graph::from(e.library_graph(sources)?)))
+}
+
+/// Save a picture of the graph wherever the save dialog put it. The interface draws it —
+/// `data` is the file's bytes in base64 — and this writes it through the same
+/// temp-fsync-rename as every export, so a failure leaves no half-written picture.
+#[tauri::command]
+pub fn graph_export(path: String, data: String) -> Answer<()> {
+    save_picture(Path::new(&path), &data).map_err(EngineError::from)
+}
+
+fn save_picture(path: &Path, data: &str) -> Result<(), Error> {
+    let bytes = base64::engine::general_purpose::STANDARD
+        .decode(data)
+        .map_err(|_| Error::invalid("data", "the picture did not arrive whole"))?;
+    lc_engine::atomic::write_bytes(path, &bytes)
 }
 
 // ---- documents -----------------------------------------------------------------
@@ -1482,6 +1522,35 @@ mod tests {
             .unwrap()
             .backup_plan(drive)
             .unwrap()
+    }
+
+    #[test]
+    fn a_picture_of_the_graph_is_saved_whole_or_not_at_all() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("graph.svg");
+
+        save_picture(&path, "PHN2Zy8+").unwrap();
+        assert_eq!(std::fs::read_to_string(&path).unwrap(), "<svg/>");
+
+        // What is not base64 did not arrive whole: refused, and the file there is kept.
+        let refused = save_picture(&path, "not base64!").unwrap_err();
+        assert!(matches!(refused, Error::Invalid { .. }), "{refused:?}");
+        assert_eq!(std::fs::read_to_string(&path).unwrap(), "<svg/>");
+    }
+
+    #[test]
+    fn the_graph_crosses_the_wire_with_the_kinds_the_interface_names() {
+        let (_dir, open, doc, _drive) = library_and_drive();
+        let guard = open.lock().unwrap();
+        let graph = Graph::from(guard.as_ref().unwrap().library_graph(true).unwrap());
+
+        let json = serde_json::to_value(&graph).unwrap();
+        assert_eq!(json["nodes"].as_array().unwrap().len(), 2);
+        assert_eq!(json["nodes"][0]["kind"], "page");
+        assert_eq!(json["nodes"][1]["id"], doc.to_string());
+        assert_eq!(json["nodes"][1]["top"], json["nodes"][0]["id"]);
+        assert_eq!(json["lines"][0]["kind"], "under");
+        assert_eq!(json["lines"][0]["from"], doc.to_string());
     }
 
     #[test]

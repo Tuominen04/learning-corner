@@ -496,9 +496,11 @@ no format version, and `v1` stays the fixture it is.
 
 ## Maps
 
-A map stores only its arrangement: which entities are on it, where the user put them, and the
-edges the user drew by hand. Edges derived from `[[…]]` links are not stored — they are
-recomputed, so a map cannot go stale.
+`maps/` is where diagrams will live (M4b): one file each, holding the diagram's own nodes and
+lines, specified in [ADR 0011](adr/0011-diagrams.md). Nothing reads or writes it yet.
+
+The library graph ([ADR 0010](adr/0010-library-graph.md)) stores nothing, here or anywhere: it
+is computed from the pages and sources each time it is shown.
 
 ## Writing files
 

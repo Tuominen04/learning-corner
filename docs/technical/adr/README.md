@@ -25,8 +25,8 @@ reason it was made are the useful part of the history.
 | [0007](0007-bindings-with-ts-rs.md) | TypeScript bindings generated with ts-rs | Accepted |
 | [0008](0008-narrow-editor-schema.md) | A narrow editor schema until Markdown serialisation exists | Accepted |
 | [0009](0009-pages-not-topics.md) | Every page is a document, and any page can have pages under it | Accepted |
-| [0010](0010-library-graph.md) | The library graph: computed whole, stored nowhere, a screen of its own | Proposed |
-| [0011](0011-diagrams.md) | Diagrams are files of their own, shown in a page by reference | Proposed |
+| [0010](0010-library-graph.md) | The library graph: computed whole, stored nowhere, a screen of its own | Accepted |
+| [0011](0011-diagrams.md) | Diagrams are files of their own, shown in a page by reference | Accepted |
 
 ## Template
 

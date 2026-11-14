@@ -1,8 +1,8 @@
 # Engine contract
 
 > **Audience:** People building Learning Corner
-> **Status:** In progress — M1 and M2 implemented
-> **Last reviewed:** 2026-11-10
+> **Status:** In progress — M1, M2, M3, pages and the library graph implemented
+> **Last reviewed:** 2026-11-14
 
 Every operation the interface may ask of the engine. This document is normative for both
 repositories and is the specification the engine is built against — see
@@ -206,18 +206,29 @@ A source cited by a work — by the work as a whole, or as an edition's `source`
 what `source.citingDocuments` returns and of `source.delete`'s plan, whose apply removes the
 reference from the work.
 
-## Maps
+## The library graph
 
 | Operation | Takes | Returns |
 | --------- | ----- | ------- |
-| `map.create` / `map.delete` | … | map |
-| `map.read` | id | nodes with positions, user edges, plus edges derived from document links |
-| `map.setNodePosition` | map id, node id, position | — |
-| `map.addEdge` / `map.removeEdge` | map id, from, to, label | — |
-| `map.addNode` / `map.removeNode` | map id, entity id or free node | — |
+| `library.graph` | whether to include sources | every node (id, kind, title, its top-level page) and every line (from, to, kind) |
 
-Derived edges are computed on read, never stored. See
-[Storage format](storage-format.md#maps).
+Everything is computed from the index on each call and nothing is written
+([ADR 0010](adr/0010-library-graph.md)).
+
+- **Nodes** are pages, in the order of the tree with each page before the pages under it, then
+  sources by title. A page's `top` is the page at the top of the tree it is under — itself, at
+  the top; a source has none.
+- **Lines** are `links-to` (`[[id]]` in a page), `under` (a page to the page it is directly
+  under) and `cites` (a page to a source, once however often it is cited).
+- **Every line joins two nodes that were returned.** A link to an id that names no page, a
+  page linking to itself, and a work's citations draw no line.
+- **No positions.** Where a node is drawn, how big and what colour are the interface's, and
+  are kept nowhere.
+
+## Diagrams
+
+Not built yet (M4b). The operations — `diagram.list`, `create`, `read`, `write`, `shownIn`,
+`deletePlan` and `delete` — are specified in [ADR 0011](adr/0011-diagrams.md).
 
 ## Search
 
@@ -289,7 +300,9 @@ apply step carries their answers. Rules in [Backup and synchronisation](backup-a
 | Operation | Takes | Returns |
 | --------- | ----- | ------- |
 | `export.document` | id, format | the exported bytes, reference list included |
-| `export.map` | id, format | an image |
+
+A picture of the library graph is not the engine's to make: the interface draws it, and the
+shell writes the bytes it is handed the same way ([ADR 0010](adr/0010-library-graph.md)).
 
 The engine writes nothing for an export: it returns the bytes, and the shell writes them
 wherever the save dialog put them, through the engine's own temp-fsync-rename — so an export

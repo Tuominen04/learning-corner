@@ -53,6 +53,10 @@ import type { WorkContents } from "./bindings/WorkContents";
 import type { WorkEdition } from "./bindings/WorkEdition";
 import type { WorkSummary } from "./bindings/WorkSummary";
 import type { WorkUnit } from "./bindings/WorkUnit";
+import type { Graph } from "./bindings/Graph";
+import type { GraphLine } from "./bindings/GraphLine";
+import type { GraphNode } from "./bindings/GraphNode";
+import type { GraphView } from "./bindings/GraphView";
 
 export type {
   Appraisal,
@@ -101,6 +105,10 @@ export type {
   WorkEdition,
   WorkSummary,
   WorkUnit,
+  Graph,
+  GraphLine,
+  GraphNode,
+  GraphView,
 };
 
 /** The opaque token carried between reading a work and changing it. Never inspected. */
@@ -178,6 +186,11 @@ export const engine = {
      * library's alone. The answer says which, and carries the folder's new path if it moved.
      */
     rename: (name: string) => call<RenamedLibrary>("library_rename", { name }),
+    /**
+     * Every page, and with `sources` every source, with the lines between them: the links,
+     * the tree and the citations. Computed on every call; nothing about it is kept.
+     */
+    graph: (sources: boolean) => call<Graph>("library_graph", { sources }),
   },
   page: {
     /** Every page, as a tree, each level in the person's order. */
@@ -419,6 +432,10 @@ export const shell = {
   /** In the open library, `work` now hides `editions` — none, to show every pane. */
   rememberHiddenPanes: (work: string, editions: string[]) =>
     call<void>("remember_hidden_panes", { work, editions }),
+  /** In the open library, the graph screen was left showing `view`. */
+  rememberGraphView: (view: GraphView) => call<void>("remember_graph_view", { view }),
+  /** Save a picture the interface drew — its bytes, in base64 — where the save dialog put it. */
+  saveGraphPicture: (path: string, data: string) => call<void>("graph_export", { path, data }),
   /**
    * Run `save` when the window is about to close, then let it close.
    *

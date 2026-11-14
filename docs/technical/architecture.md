@@ -88,7 +88,9 @@ The boundary is the thing most likely to erode, so state it plainly:
 | Comparing library against backup, detecting conflicts | ✅ | ❌ |
 | Search | ✅ | ❌ |
 | Which panes are visible, pane order, layout | ❌ | ✅ |
-| Map node positions | ✅ (persisted) | ✅ (dragging) |
+| What is connected to what, for the graph | ✅ (computed) | ❌ |
+| Where the graph is drawn: layout, zoom, focus | ❌ | ✅ |
+| Diagram node positions | ✅ (persisted) | ✅ (dragging) |
 | Undo/redo | ✅ | ❌ |
 | Window management, dialogs, menus | ❌ | ✅ (shell) |
 | Which libraries this computer has opened | ❌ | ✅ (shell) |

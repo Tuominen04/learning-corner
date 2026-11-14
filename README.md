@@ -25,8 +25,10 @@ everything, and export to PDF, Word, OpenDocument, a web page or plain text.
 a translation beside it — Russian original, transliteration, Finnish and English, lined up row
 by row, and you choose which of those are on screen.
 
-**Mind maps** *(coming)*. See how your pages actually connect, built from the pages you
-already wrote rather than a second copy of them.
+**The library graph.** See how your pages actually connect: every page, the links between
+them and the tree they sit in, drawn from the pages you already wrote rather than a second
+copy of them. Diagrams you build yourself — family trees, timelines, network maps — are
+coming.
 
 **Backup to your own drive.** Back your library up to an external drive whenever it is plugged
 in, and bring back what you changed on it somewhere else. If a file changed in both places, the
@@ -121,8 +123,8 @@ on the way kept, so nothing is lost.
 APA 7 citations and reference lists worked out for you; claims marked against what they cite;
 search; and export to PDF, Word, OpenDocument, a web page and plain text.
 
-Mind maps come next, in the order the
-[roadmap](docs/technical/roadmap.md) gives. Every documentation page is marked `Planned`,
+**0.25.0 adds the library graph**, a picture of every page and how they link. Diagrams come
+next, in the order the [roadmap](docs/technical/roadmap.md) gives. Every documentation page is marked `Planned`,
 `In progress`, or `Implemented`, so it is always clear which parts exist.
 
 ## Get involved
