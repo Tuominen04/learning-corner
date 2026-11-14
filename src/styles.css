@@ -1143,12 +1143,16 @@ button.danger-text, .ghost.danger-text { color: var(--error); }
 .graph-panel .quiet { color: #9a9dab; font-size: 0.92em; }
 .graph-toggle { display: block; margin: 0.5rem 0; cursor: pointer; }
 .graph-toggle input { margin-right: 0.4rem; }
-.graph-focus {
-  margin: 0.8rem 0;
-  padding: 0.5rem 0.7rem;
-  border: 1px solid var(--accent);
-  border-radius: 6px;
+.graph-focus { margin: 0 0 0.9rem; }
+.graph-focus p { margin: 0.4rem 0 0; color: #9a9dab; }
+button.graph-back {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  border-color: var(--accent);
 }
+button.graph-back svg { flex: 0 0 auto; }
 .graph-found, .graph-joined ul { list-style: none; margin: 0.2rem 0 0.6rem; padding: 0; }
 .graph-chosen { margin-top: 1rem; border-top: 1px solid var(--line); padding-top: 0.8rem; }
 .graph-chosen h3 { margin: 0; font-size: 1.1em; overflow-wrap: anywhere; }

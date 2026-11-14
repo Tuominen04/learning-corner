@@ -313,6 +313,33 @@ export function GraphScreen({ onOpenDocument }: { onOpenDocument: (id: string) =
       <div className="graph-panel">
         {error && <p className="error">{error}</p>}
 
+        {/* First in the panel, above everything else: while the picture is narrowed, the way
+            back to the whole of it is the thing to find. */}
+        {focused && showing && (
+          <div className="graph-focus">
+            <button className="graph-back" onClick={() => show({ focus: null })}>
+              <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                <path
+                  d="M7 3 2 8l5 5M2.5 8H14"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              Back to the whole library
+            </button>
+            <p role="status">
+              Showing only “{focused.title}” and{" "}
+              {showing.reach === "under"
+                ? "the pages under it"
+                : `what is within ${REACHES.find((r) => r.value === showing.reach)!.label} of it`}
+              .
+            </p>
+          </div>
+        )}
+
         <div className="find">
           <input
             className="find-input"
@@ -365,19 +392,6 @@ export function GraphScreen({ onOpenDocument }: { onOpenDocument: (id: string) =
           Show sources
           <span className="quiet"> — and which pages cite them</span>
         </label>
-
-        {focused && showing && (
-          <p className="graph-focus" role="status">
-            Showing only “{focused.title}” and{" "}
-            {showing.reach === "under"
-              ? "the pages under it"
-              : `what is within ${REACHES.find((r) => r.value === showing.reach)!.label} of it`}
-            .{" "}
-            <button className="ghost" onClick={() => show({ focus: null })}>
-              Show everything
-            </button>
-          </p>
-        )}
 
         {chosen && joined ? (
           <div className="graph-chosen">

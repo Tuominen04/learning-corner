@@ -54,8 +54,8 @@ Choose a page, then one of **Show only this and**:
 - **1 step**, **2 steps** or **3 steps** — the page and everything within that many lines of it.
 - **Pages under it** — the page and every page under it, however deep.
 
-**Show everything** brings the rest back. Nothing moves when you narrow the picture or widen
-it again, so a page is where you last saw it.
+**Back to the whole library**, at the top beside the picture, brings the rest back. Nothing
+moves when you narrow the picture or widen it again, so a page is where you last saw it.
 
 The app remembers how you left the graph — what was switched on, and what it was narrowed to —
 for each library on this computer.

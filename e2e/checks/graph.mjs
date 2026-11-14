@@ -172,8 +172,11 @@ const kept = await page.evaluate(() => window.__remembered.graph);
 check("how the graph was left is remembered", kept?.sources === true && kept?.tree === true && kept?.focus === SUBJECT && kept?.reach === "under", JSON.stringify(kept));
 
 if (shot) await page.screenshot({ path: shot.replace(/\.png$/, "-focus.png") });
-await page.getByRole("button", { name: "Show everything" }).click();
-check("Show everything is everything", (await on()).nodes === 8);
+const first = await page.locator(".graph-panel > *").first().evaluate((e) => e.className);
+check("while it is narrowed, the way back is the first thing in the panel, above Find", first === "graph-focus", first);
+await page.getByRole("button", { name: "Back to the whole library" }).click();
+check("Back to the whole library is everything", (await on()).nodes === 8);
+check("and the way back is gone once there is nowhere to go back to", (await page.locator(".graph-back").count()) === 0);
 if (shot) {
   await find("Type 2");
   await page.screenshot({ path: shot });
