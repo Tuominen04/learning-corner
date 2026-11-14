@@ -15,6 +15,7 @@ import {
   LINE_STYLE,
   neighbours,
   nodeAt,
+  pictureName,
   radius,
   SHOW_EVERYTHING,
   showingFrom,
@@ -44,7 +45,14 @@ const REACHES: { value: Reach; label: string }[] = [
  * canvas says nothing to a keyboard or a screen reader, so everything it can do is also in
  * the panel beside it: finding a node, what it is joined to, opening it.
  */
-export function GraphScreen({ onOpenDocument }: { onOpenDocument: (id: string) => void }) {
+export function GraphScreen({
+  library,
+  onOpenDocument,
+}: {
+  /** The library's name: what a saved picture of all of it is called. */
+  library: string;
+  onOpenDocument: (id: string) => void;
+}) {
   const [graph, setGraph] = useState<Graph | null>(null);
   const [showing, setShowing] = useState<Showing | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
@@ -215,7 +223,8 @@ export function GraphScreen({ onOpenDocument }: { onOpenDocument: (id: string) =
     setSaved(null);
     try {
       const path = await save({
-        defaultPath: `graph.${kind}`,
+        // Named after what is on screen: the page it is narrowed to, or the library.
+        defaultPath: pictureName(library, focused?.title ?? null, kind),
         filters: [{ name: kind === "svg" ? "SVG picture" : "PNG picture", extensions: [kind] }],
       });
       if (path === null) return;

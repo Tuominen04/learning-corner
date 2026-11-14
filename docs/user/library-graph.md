@@ -62,7 +62,9 @@ for each library on this computer.
 
 ## Saving it as a picture
 
-**Save as a picture** saves what is on screen, as it is on screen. **SVG** stays sharp at any
+**Save as a picture** saves what is on screen, as it is on screen. The file is named after
+what it shows — the library, or the page the picture is narrowed to — unless you type another
+name. **SVG** stays sharp at any
 size and its titles can be searched; **PNG** opens anywhere.
 
 ## What it is not

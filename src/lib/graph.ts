@@ -7,6 +7,7 @@
 import { forceCenter, forceCollide, forceLink, forceManyBody, forceSimulation, forceX, forceY } from "d3-force";
 
 import type { Graph, GraphLine, GraphNode, GraphView } from "./engine";
+import { fileBase } from "./export";
 
 export type Reach = "1" | "2" | "3" | "under";
 
@@ -375,6 +376,15 @@ export function toSvg(
 
 function round(n: number): number {
   return Math.round(n * 10) / 10;
+}
+
+/**
+ * What a saved picture is called, unless the person says otherwise: after what it is a picture
+ * of — the page the graph is narrowed to, or the library when it shows all of it.
+ */
+export function pictureName(library: string, narrowedTo: string | null, kind: "svg" | "png"): string {
+  const of = fileBase(narrowedTo ?? "") || fileBase(library) || "Library";
+  return `${of}_graph.${kind}`;
 }
 
 /** A string's bytes in base64, as the shell takes a picture to save. */

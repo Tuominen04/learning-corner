@@ -188,14 +188,21 @@ await page.getByRole("button", { name: "SVG…" }).click();
 await page.locator(".graph-panel .folder-note").waitFor();
 const svg = (await calls("graph_export")).at(-1);
 const text = Buffer.from(svg.args.data, "base64").toString("utf8");
-check("the SVG goes where the dialog said", svg.args.path === "/home/you/graph.svg", svg.args.path);
+check("the SVG goes where the dialog said, named after the library when all of it is shown", svg.args.path === "/home/you/Learning_graph.svg", svg.args.path);
 check("and is the picture: a shape for every node, a line for every line", (text.match(/<circle/g) ?? []).length === 7 && (text.match(/<rect x=/g) ?? []).length === 1 && (text.match(/<line/g) ?? []).length === 8, text.slice(0, 300));
 check("with titles in it as text", text.includes("<title>Type 2</title>") && text.includes("A survey of the field"));
 
 await page.getByRole("button", { name: "PNG…" }).click();
 await page.waitForFunction(() => window.__calls.filter((c) => c.command === "graph_export").length === 2);
 const png = (await calls("graph_export")).at(-1);
-check("the PNG is a PNG", Buffer.from(png.args.data, "base64").subarray(1, 4).toString() === "PNG" && png.args.path.endsWith("graph.png"));
+check("the PNG is a PNG", Buffer.from(png.args.data, "base64").subarray(1, 4).toString() === "PNG" && png.args.path.endsWith("Learning_graph.png"));
+
+await find("Type 2");
+await page.getByRole("button", { name: "2 steps", exact: true }).click();
+await page.getByRole("button", { name: "SVG…" }).click();
+await page.waitForFunction(() => window.__calls.filter((c) => c.command === "graph_export").length === 3);
+check("narrowed to a page, the picture is named after the page", (await calls("graph_export")).at(-1).args.path === "/home/you/Type 2_graph.svg", (await calls("graph_export")).at(-1).args.path);
+await page.getByRole("button", { name: "Back to the whole library" }).click();
 
 // ---- opening, and coming back -------------------------------------------------------------
 

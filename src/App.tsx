@@ -603,7 +603,7 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
         ) : view === "graph" ? (
           // Made afresh each time the screen is shown, which is what reads the graph again:
           // whatever was written since is on it.
-          <GraphScreen onOpenDocument={openDocument} />
+          <GraphScreen library={library.name} onOpenDocument={openDocument} />
         ) : view === "sources" ? (
           <Sources onOpenDocument={openDocument} />
         ) : view === "works" ? (

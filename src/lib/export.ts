@@ -67,7 +67,12 @@ const DROPPED = '?*"<>|';
  * subtitle reads; a slash becomes a dash; a question mark or quotation marks are left out.
  */
 export function exportName(title: string, format: ExportFormat): string {
-  const base = Array.from(title.replace(/\s*:\s*/gu, " - "))
+  return `${fileBase(title) || "Document"}.${formatOf(format).extension}`;
+}
+
+/** A title as the start of a file name, by the rule above; empty when nothing of it is left. */
+export function fileBase(title: string): string {
+  return Array.from(title.replace(/\s*:\s*/gu, " - "))
     .map((c) => {
       if (DROPPED.includes(c)) return "";
       if (c === "/" || c === "\\" || (c.codePointAt(0) ?? 0) < 0x20) return "-";
@@ -78,5 +83,4 @@ export function exportName(title: string, format: ExportFormat): string {
     .trim()
     .replace(/^\.+/u, "")
     .trim();
-  return `${base || "Document"}.${formatOf(format).extension}`;
 }

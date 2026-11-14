@@ -11,6 +11,7 @@ import {
   layout,
   neighbours,
   nodeAt,
+  pictureName,
   radius,
   SHOW_EVERYTHING,
   showingFrom,
@@ -267,6 +268,15 @@ describe("the picture", () => {
     expect(svg).not.toContain("<b>");
     expect(svg).toContain('cx="100" cy="100"');
     expect(svg).toContain('x2="200" y2="100"');
+  });
+
+  it("is named after what it is a picture of: the page it is narrowed to, or the library", () => {
+    expect(pictureName("Learning", null, "svg")).toBe("Learning_graph.svg");
+    expect(pictureName("Learning", "Type 2", "png")).toBe("Type 2_graph.png");
+    // By the rule every export is named by: what a file name cannot hold is changed or left out.
+    expect(pictureName("Learning", "Why? A/B: notes", "svg")).toBe("Why A-B - notes_graph.svg");
+    expect(pictureName("Мой архив", null, "png")).toBe("Мой архив_graph.png");
+    expect(pictureName("???", null, "svg")).toBe("Library_graph.svg");
   });
 
   it("is handed to the shell as base64, whatever alphabet its titles are in", () => {
