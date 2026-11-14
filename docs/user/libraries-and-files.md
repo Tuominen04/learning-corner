@@ -8,7 +8,7 @@
 
 A **library** is one folder on your computer holding everything about one area of study:
 your pages and your sources — and, as they arrive in the app, your texts and
-your mind maps.
+your diagrams.
 
 You choose the folder. The app does not hide your work in a location only it knows about,
 and it does not put your work in more than one place.

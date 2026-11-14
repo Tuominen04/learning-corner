@@ -1100,3 +1100,87 @@ button.danger-text, .ghost.danger-text { color: var(--error); }
 .convert-library h2 { text-transform: none; letter-spacing: 0; font-size: 1.3rem; color: inherit; margin: 0 0 0.8rem; }
 .convert-library ul { padding-left: 1.2rem; }
 .convert-library li { margin-bottom: 0.3rem; }
+
+/* ---- the library graph ---- */
+
+/* The picture takes what the working area has, and the panel beside it scrolls on its own: a
+   page joined to forty others must not push the picture off the screen. */
+.graph {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 18rem;
+  gap: 1.2rem;
+  height: calc(100vh - 3rem);
+  min-height: 20rem;
+}
+.graph-area {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--ground);
+}
+.graph-canvas { display: block; cursor: grab; }
+.graph-canvas:active { cursor: grabbing; }
+.graph-canvas.over-node { cursor: pointer; }
+.graph-canvas:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.graph-empty { position: absolute; inset: 40% 2rem auto; text-align: center; margin: 0 auto; }
+.graph-zoom {
+  position: absolute;
+  right: 0.5rem;
+  bottom: 0.5rem;
+  display: flex;
+  gap: 0.2rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.1rem 0.3rem;
+}
+.graph-zoom button { padding: 0.2rem 0.5rem; }
+
+.graph-panel { overflow-y: auto; min-width: 0; font-size: 0.9em; }
+.graph-panel .find { margin-top: 0; }
+.graph-panel .quiet { color: #9a9dab; font-size: 0.92em; }
+.graph-toggle { display: block; margin: 0.5rem 0; cursor: pointer; }
+.graph-toggle input { margin-right: 0.4rem; }
+.graph-focus { margin: 0 0 0.9rem; }
+.graph-focus p { margin: 0.4rem 0 0; color: #9a9dab; }
+button.graph-back {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  border-color: var(--accent);
+}
+button.graph-back svg { flex: 0 0 auto; }
+.graph-found, .graph-joined ul { list-style: none; margin: 0.2rem 0 0.6rem; padding: 0; }
+.graph-chosen { margin-top: 1rem; border-top: 1px solid var(--line); padding-top: 0.8rem; }
+.graph-chosen h3 { margin: 0; font-size: 1.1em; overflow-wrap: anywhere; }
+.graph-chosen > p { margin: 0.1rem 0 0.6rem; }
+.graph-joined h4 { margin: 0.8rem 0 0; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.04em; color: #9a9dab; }
+.graph-reach { display: flex; flex-wrap: wrap; gap: 0.3rem; align-items: center; margin: 0.8rem 0 0.2rem; }
+.graph-reach .quiet { flex-basis: 100%; }
+.graph-reach button.view { flex: 0 0 auto; }
+button.graph-node {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.15rem 0.2rem;
+  overflow-wrap: anywhere;
+}
+button.graph-node:hover { color: var(--accent); }
+.graph-dot {
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 0.65em;
+  height: 0.65em;
+  border-radius: 50%;
+  margin-right: 0.4rem;
+}
+button.graph-node .graph-dot { margin-right: 0; }
+.graph-dot.square { border-radius: 1px; }
+.graph-hint { margin-top: 1rem; }
+.graph-save { display: flex; align-items: center; gap: 0.4rem; margin-top: 1.2rem; border-top: 1px solid var(--line); padding-top: 0.8rem; }
+.graph-save button { padding: 0.25rem 0.6rem; }

@@ -192,8 +192,8 @@ turns out to be wrong, *"What do I now need to go back and fix?"*
 ## When you want the whole picture
 
 Once you have more than a handful of pages, the sidebar stops showing you how things actually
-relate. That is what [Mind maps](mind-maps.md) are for — the same pages, drawn as a picture, in
-their own window.
+relate. That is what [the library graph](library-graph.md) is for — the same pages, drawn as a
+picture.
 
 ## Libraries from an earlier version
 

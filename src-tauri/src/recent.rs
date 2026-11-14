@@ -18,6 +18,8 @@ use std::sync::Mutex;
 use lc_engine::{Error, Result, Timestamp};
 use serde::{Deserialize, Serialize};
 
+use crate::dto::GraphView;
+
 /// The file's name, inside the application's settings folder.
 pub const FILE: &str = "recent-libraries.toml";
 
@@ -47,6 +49,9 @@ pub struct Entry {
     /// The editions hidden in each work, by work id. A work showing every pane is not listed.
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub hidden_panes: BTreeMap<String, Vec<String>>,
+    /// How the graph screen was last left. Absent until it has been changed.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub graph: Option<GraphView>,
 }
 
 /// What this computer remembers about one library, beyond where it is.
@@ -54,6 +59,7 @@ pub struct Entry {
 pub struct Remembered {
     pub backup: Option<PathBuf>,
     pub hidden_panes: BTreeMap<String, Vec<String>>,
+    pub graph: Option<GraphView>,
 }
 
 #[derive(Debug, Default, Serialize, Deserialize)]
@@ -101,9 +107,9 @@ impl Recent {
         let mut libraries = read(file);
         // What was remembered about it stays with it: opening is not forgetting.
         let before = libraries.iter().position(|entry| entry.path == path);
-        let (backup, hidden_panes) = before
+        let (backup, hidden_panes, graph) = before
             .map(|at| libraries.remove(at))
-            .map(|e| (e.backup, e.hidden_panes))
+            .map(|e| (e.backup, e.hidden_panes, e.graph))
             .unwrap_or_default();
         libraries.insert(
             0,
@@ -113,6 +119,7 @@ impl Recent {
                 opened: Timestamp::now(),
                 backup,
                 hidden_panes,
+                graph,
             },
         );
         libraries.truncate(KEEP);
@@ -159,6 +166,7 @@ impl Recent {
             .map(|e| Remembered {
                 backup: e.backup,
                 hidden_panes: e.hidden_panes,
+                graph: e.graph,
             })
             .unwrap_or_default()
     }
@@ -178,6 +186,11 @@ impl Recent {
                 entry.hidden_panes.insert(work.to_string(), editions);
             }
         })
+    }
+
+    /// In the library at `path`, the graph screen was left showing `view`.
+    pub fn graph_viewed(&self, path: &Path, view: GraphView) -> Result<()> {
+        self.change(path, |entry| entry.graph = Some(view))
     }
 
     /// Change the entry for the library at `path`, in place. One not on the list is not put
@@ -419,6 +432,27 @@ mod tests {
         recent.opened(dir.path(), "Learning").unwrap();
         recent.forget(dir.path()).unwrap();
         assert!(recent.list().is_empty());
+    }
+
+    #[test]
+    fn how_the_graph_was_left_is_remembered_per_library_and_survives_reopening() {
+        let (_dir, recent, [learning, russian, _]) = setup();
+        recent.opened(&learning, "Learning").unwrap();
+        recent.opened(&russian, "Russian").unwrap();
+        let view = GraphView {
+            sources: true,
+            tree: false,
+            focus: Some("PAGE".into()),
+            reach: "2".into(),
+        };
+
+        recent.graph_viewed(&russian, view.clone()).unwrap();
+        assert_eq!(recent.remembered(&russian).graph, Some(view.clone()));
+        assert_eq!(recent.remembered(&learning).graph, None);
+
+        // Opening it again moves it up the list and forgets nothing.
+        recent.opened(&russian, "Russian").unwrap();
+        assert_eq!(recent.remembered(&russian).graph, Some(view));
     }
 
     #[test]

@@ -1,8 +1,8 @@
 # ADR 0010 · The library graph: computed whole, stored nowhere, a screen of its own
 
 > **Audience:** People building Learning Corner
-> **Status:** Proposed
-> **Last reviewed:** 2026-11-13
+> **Status:** Accepted
+> **Last reviewed:** 2026-11-14
 
 ## Context
 
@@ -74,16 +74,21 @@ done in the interface on what was returned, and needs no second call.
 
 ### Layout and drawing
 
-- **The layout is a force simulation (`d3-force`) in the interface.** It is seeded from the
-  library's id, so the same library looks the same each time the screen opens. While the screen
-  is open, nodes already placed keep their places when the graph is read again, so a new page
-  appears without the picture rearranging itself around it.
+- **The layout is a force simulation (`d3-force`) in the interface**, run to rest before
+  anything is drawn. It starts from the same arrangement and the same random numbers every
+  time, so the same library looks the same each time the screen opens. It is laid out on the
+  whole graph, so narrowing the view hides nodes and never moves them. While the screen is
+  open, nodes already placed keep their places when the graph is read again — when sources are
+  switched on, say — so the picture is added to rather than rearranged.
 - **It is drawn on a canvas, not as page elements.** A library of a few thousand pages has to
-  pan and zoom smoothly, and one element per node does not manage that. The drawing library is
-  chosen when this is built, from canvas renderers built on `d3-force`
-  (`react-force-graph-2d` is the obvious candidate). React Flow, named in
-  [Stack](../stack.md) for the map, is for the diagrams of ADR 0011, where nodes are few and
-  are edited one by one.
+  pan and zoom smoothly, and one element per node does not manage that. The drawing is the
+  application's own, about a hundred lines on the canvas, rather than a graph-drawing library:
+  it needs circles, lines and titles, and owning it keeps every node reachable from the panel
+  beside the picture, which a canvas alone is not. React Flow, named in [Stack](../stack.md)
+  for the map, is for the diagrams of ADR 0011, where nodes are few and are edited one by one.
+- **Everything the picture can do is also beside it, as ordinary controls**: finding a node,
+  what it is joined to, opening it, narrowing to it. A canvas says nothing to a keyboard or a
+  screen reader, so the picture is never the only way to anything.
 
 ### Updating
 
