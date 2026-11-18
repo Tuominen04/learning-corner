@@ -647,6 +647,10 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
             }}
             onRename={renameDocument}
             onOpenDocument={openDocument}
+            onOpenDiagram={(id) => {
+              setOpenDiagram(id);
+              setView("diagrams");
+            }}
             showClaims={showClaims}
             onShowClaims={setShowClaims}
           />

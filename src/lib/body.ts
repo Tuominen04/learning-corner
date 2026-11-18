@@ -322,7 +322,9 @@ export function collectImages(doc: JSONContent): string[] {
   walk(doc, (node) => {
     if (node.type !== IMAGE) return;
     const name = String(node.attrs?.["name"] ?? "");
-    if (name !== "") found.add(name);
+    // `diagram:<id>` is a picture line too, but it names a diagram and not a file beside the
+    // page: there is nothing for the engine to fetch.
+    if (name !== "" && !name.startsWith("diagram:")) found.add(name);
   });
   return [...found];
 }

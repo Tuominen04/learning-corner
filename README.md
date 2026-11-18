@@ -31,7 +31,7 @@ copy of them.
 
 **Diagrams.** Build a family tree, a timeline of events or a map of a network yourself, as
 boxes and lines. A box can point at one of your pages and open it; if the page is later deleted,
-the box stays. Save any of them as a picture. Showing one inside a page comes next.
+the box stays. Show one inside a page, and save any of them as a picture.
 
 **Backup to your own drive.** Back your library up to an external drive whenever it is plugged
 in, and bring back what you changed on it somewhere else. If a file changed in both places, the
@@ -127,8 +127,8 @@ APA 7 citations and reference lists worked out for you; claims marked against wh
 search; and export to PDF, Word, OpenDocument, a web page and plain text.
 
 **0.26.0 adds diagrams**: family trees, timelines and network maps you build yourself, with
-boxes that can point at your pages. **0.25.0** added the library graph, a picture of every page
-and how they link. Showing a diagram inside a page comes next, in the order the
+boxes that can point at your pages, and can be shown inside a page. **0.25.0** added the library
+graph, a picture of every page and how they link. What comes next is in the order the
 [roadmap](docs/technical/roadmap.md) gives. Every documentation page is marked `Planned`,
 `In progress`, or `Implemented`, so it is always clear which parts exist.
 

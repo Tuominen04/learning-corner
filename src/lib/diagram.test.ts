@@ -36,6 +36,7 @@ import {
   yearOf,
 } from "./diagram";
 import { isId } from "./ids";
+import { ADDRESS, diagramOf } from "./diagram";
 
 const page = (id: string, title: string, children: Page[] = []): Page => ({ id, title, children });
 const titles = pageTitles([page("subject", "Subject", [page("history", "History")]), page("other", "Other")]);
@@ -397,6 +398,18 @@ describe("the drawing", () => {
     const cut = fitted("A very long title indeed for such a box", 120);
     expect(cut.endsWith("…")).toBe(true);
     expect(cut.length).toBeLessThan(20);
+  });
+});
+
+describe("a picture line's address", () => {
+  it("names a diagram when it is diagram: and an identifier, and nothing otherwise", () => {
+    const id = "01J8ZQ7B2N4Q6S8W0W2Y4A6C8E";
+    expect(ADDRESS).toBe("diagram:");
+    expect(diagramOf(`diagram:${id}`)).toBe(id);
+    expect(diagramOf("diagram:nonsense")).toBeNull();
+    expect(diagramOf("diagram:")).toBeNull();
+    expect(diagramOf("photo.png")).toBeNull();
+    expect(diagramOf(id)).toBeNull();
   });
 });
 
