@@ -1,7 +1,7 @@
 # Diagrams
 
 > **Audience:** People using Learning Corner
-> **Status:** In progress — making and changing diagrams works; showing one inside a page comes next
+> **Status:** Implemented
 > **Last reviewed:** 2026-11-18
 
 [The library graph](library-graph.md) draws itself from what you wrote. A **diagram** is the
@@ -60,6 +60,23 @@ Everything the picture can do is also beside it, as ordinary controls: every box
 list, and choosing one there lets you change its words, its page and its place in order from the
 keyboard alone.
 
+## In a page
+
+A diagram can be shown inside a page, where the writing is about it. In the writing tools, choose
+**Diagram** and pick one: the page then shows it, drawn at the page's width, under its name. Click
+a box for a page and you are at that page; **Edit** goes to the diagram itself.
+
+The page does not hold a copy. All it holds is one line naming the diagram, so a diagram you
+correct once is right on every page that shows it, and one diagram can be shown on as many pages as
+you like. Its words in the page — the name shown beside it — are the page's own: renaming the
+diagram does not change them.
+
+If a page names a diagram that is not there any more — you deleted it, or the line was typed by
+hand — the page says so in its place, and the rest of what you wrote is untouched.
+
+A page also lists, at the foot, **On diagrams**: every diagram with a box for this page, so from a
+page you can find the pictures it appears in.
+
 ## Saving it as a picture
 
 **Save as a picture** saves the diagram as **SVG**, which stays sharp at any size, or **PNG**,
@@ -74,11 +91,6 @@ line that shows it — and you are told which pages those are first.
 ## Finding one
 
 Search finds a diagram by its name and by what its boxes say.
-
-## Coming next
-
-Showing a diagram **inside a page**, where the writing is about it, with each box opening its
-page — and putting one there from the writing tools.
 
 ---
 

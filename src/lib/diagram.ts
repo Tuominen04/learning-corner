@@ -21,9 +21,19 @@ import type {
   Page,
 } from "./engine";
 import { fileBase } from "./export";
-import { newId } from "./ids";
+import { isId, newId } from "./ids";
 
 export type Box = DiagramNodeEdit;
+
+/** What a page's picture line has for an address when it shows a diagram: `diagram:<id>`. */
+export const ADDRESS = "diagram:";
+
+/** The diagram a picture's address names, or none when it is a file beside the page. */
+export function diagramOf(address: string): string | null {
+  if (!address.startsWith(ADDRESS)) return null;
+  const id = address.slice(ADDRESS.length);
+  return isId(id) ? id : null;
+}
 
 /** What every page is called now, by id. A page that is not here is gone. */
 export type Titles = Map<string, string>;
@@ -421,12 +431,21 @@ export function draw(d: DiagramEdit, titles: Titles): Drawing {
   return { width: round(right - left + MARGIN * 2), height: round(bottom - top + MARGIN * 2), boxes, lines };
 }
 
-const INK = "#e6e4de";
-const GROUND = "#14151a";
-const BOX = "#23262f";
-const BOX_LINE = "#4a4e5e";
-const LINE = "#9aa0b4";
-const GONE_LINE = "#c97a5a";
+/** The colours of a drawn diagram, the same in a saved picture and in a page. */
+export const PALETTE = {
+  ink: "#e6e4de",
+  ground: "#14151a",
+  box: "#23262f",
+  boxLine: "#4a4e5e",
+  line: "#9aa0b4",
+  gone: "#c97a5a",
+} as const;
+const INK = PALETTE.ink;
+const GROUND = PALETTE.ground;
+const BOX = PALETTE.box;
+const BOX_LINE = PALETTE.boxLine;
+const LINE = PALETTE.line;
+const GONE_LINE = PALETTE.gone;
 
 function escape(text: string): string {
   return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
