@@ -1,6 +1,6 @@
 {
   "name": "learning-corner",
-  "version": "0.24.0",
+  "version": "0.25.0",
   "private": true,
   "type": "module",
   "license": "MIT OR Apache-2.0",
@@ -30,12 +30,14 @@
     "@tiptap/extension-text": "^3",
     "@tiptap/pm": "^3",
     "@tiptap/react": "^3",
+    "d3-force": "^3.0.1",
     "react": "^19",
     "react-dom": "^19"
   },
   "devDependencies": {
     "@eslint/js": "^10",
     "@tauri-apps/cli": "^2",
+    "@types/d3-force": "^3.0.10",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^6",

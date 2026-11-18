@@ -8,7 +8,7 @@
 
 A **library** is one folder on your computer holding everything about one area of study:
 your pages and your sources — and, as they arrive in the app, your texts and
-your mind maps.
+your diagrams.
 
 You choose the folder. The app does not hide your work in a location only it knows about,
 and it does not put your work in more than one place.
@@ -76,9 +76,9 @@ that appears when you hover it — and correct a source's title or details in it
 **Sources** screen. Links between your pages and citations to your sources keep working:
 the app tracks them by an internal marker that does not change when a name does.
 
-**The file on disk is renamed too.** A page called *Protein, properly* is
-`protein-properly.md`, and the pages under it are in a folder beside it called
-`protein-properly` — so going looking for something by the name you gave it works. The order
+**The file on disk is renamed too.** A page called *History, revised* is
+`history-revised.md`, and the pages under it are in a folder beside it called
+`history-revised` — so going looking for something by the name you gave it works. The order
 you put pages in is kept in a small file in that folder. If that name is already taken by a
 neighbour, the new one gets a number on the end.
 

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { BackupPanel, type BackupMode } from "./components/BackupPanel";
 import { DeleteConfirm, type Deleting } from "./components/DeleteConfirm";
 import { Editor } from "./components/Editor";
+import { GraphScreen } from "./components/GraphScreen";
 import {
   LibraryPicker,
   needsConverting,
@@ -193,7 +194,7 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
 
   // Sources are library-wide rather than living under a page, so they are a place you go
   // rather than something you select in the tree.
-  const [view, setView] = useState<"documents" | "sources" | "works">("documents");
+  const [view, setView] = useState<"documents" | "sources" | "works" | "graph">("documents");
 
   // The work showing in the Works view, if one is. Here rather than in that view, so a search
   // result can open one.
@@ -490,6 +491,13 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
           >
             Works
           </button>
+          <button
+            className={view === "graph" ? "view selected" : "view"}
+            onClick={() => setView("graph")}
+            title="Every page, and how they link"
+          >
+            Graph
+          </button>
         </nav>
 
         <div className="find">
@@ -592,6 +600,10 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
             onMove={(to) => void move(moving, { parent: to, position: null })}
             onCancel={() => setMoving(null)}
           />
+        ) : view === "graph" ? (
+          // Made afresh each time the screen is shown, which is what reads the graph again:
+          // whatever was written since is on it.
+          <GraphScreen library={library.name} onOpenDocument={openDocument} />
         ) : view === "sources" ? (
           <Sources onOpenDocument={openDocument} />
         ) : view === "works" ? (

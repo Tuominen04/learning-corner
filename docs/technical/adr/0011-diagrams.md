@@ -2,7 +2,7 @@
 
 > **Audience:** People building Learning Corner
 > **Status:** Accepted
-> **Last reviewed:** 2026-11-13
+> **Last reviewed:** 2026-11-14
 
 ## Context
 

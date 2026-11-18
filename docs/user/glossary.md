@@ -21,7 +21,8 @@ will not meet a second name for the same idea anywhere else.
 | **Edition** | One version of a work: the original, a pronunciation guide, or a translation into one language. A work has as many editions as you make. |
 | **Row** | The unit editions line up by — a line, a sentence, or a paragraph, depending on the text. One row across all panes. |
 | **Pane** | One column or row on screen showing one edition. You choose which editions get a pane. |
-| **Map** | A picture of how your pages connect, drawn from what you already wrote. Opens in its own window. See [Mind maps](mind-maps.md). |
+| **Graph** | A picture of the whole library: every page, and the links between them, drawn from what you already wrote. See [The library graph](library-graph.md). |
+| **Diagram** | A picture you build yourself — a family tree, a timeline, a map of a network — whose boxes can point at pages. See [Diagrams](diagrams.md). |
 | **Node** | One thing on a map — usually a page. A node points at your work; it is not a second copy of it. |
 | **Backup** | A copy of your library on a drive you chose, in ordinary folders and files. See [Backup and restore](backup-and-restore.md). |
 | **Bring back** | Copying what was changed on a backup — on another computer, say — into your library. You are asked only about a file changed in both places. |

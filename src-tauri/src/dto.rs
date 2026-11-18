@@ -150,6 +150,108 @@ pub struct BackupTexts {
 pub struct LibraryRemembered {
     pub backup: Option<String>,
     pub hidden_panes: std::collections::BTreeMap<String, Vec<String>>,
+    /// How the graph screen was last left; none until it has been changed.
+    pub graph: Option<GraphView>,
+}
+
+/// How the graph screen was last left, for one library on this computer (ADR 0010). A
+/// convenience: nothing here is in the library, and losing it costs a few clicks.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub struct GraphView {
+    /// Whether sources, and the citations of them, are shown.
+    pub sources: bool,
+    /// Whether the lines from each page to the page it is under are shown.
+    pub tree: bool,
+    /// The node the graph is narrowed to, or none for the whole library.
+    pub focus: Option<String>,
+    /// How far from `focus`: `"1"`, `"2"` or `"3"` steps, or `"under"` for the pages under it.
+    /// The interface's to interpret; anything else is treated as one step.
+    pub reach: String,
+}
+
+/// The whole library as nodes and lines, for the graph screen (ADR 0010). Computed by the
+/// engine on every call; where anything is drawn is the interface's.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub struct Graph {
+    /// Pages in the order of the tree, each before the pages under it, then sources by title.
+    pub nodes: Vec<GraphNode>,
+    /// Every line joins two nodes that are in `nodes`.
+    pub lines: Vec<GraphLine>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub struct GraphNode {
+    pub id: Id,
+    pub kind: GraphNodeKind,
+    pub title: String,
+    /// The page at the top of the tree this page is under — itself, at the top. What to
+    /// colour by. None for a source.
+    pub top: Option<Id>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "kebab-case")]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub enum GraphNodeKind {
+    Page,
+    Source,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub struct GraphLine {
+    pub from: Id,
+    pub to: Id,
+    pub kind: GraphLineKind,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "kebab-case")]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub enum GraphLineKind {
+    /// `[[to]]` written in the page `from`.
+    LinksTo,
+    /// The page `from` is directly under the page `to`.
+    Under,
+    /// The page `from` cites the source `to`.
+    Cites,
+}
+
+impl From<lc_engine::api::LibraryGraph> for Graph {
+    fn from(graph: lc_engine::api::LibraryGraph) -> Self {
+        use lc_engine::api::{LineKind, NodeKind};
+        Graph {
+            nodes: graph
+                .nodes
+                .into_iter()
+                .map(|n| GraphNode {
+                    id: n.id.to_string(),
+                    kind: match n.kind {
+                        NodeKind::Page => GraphNodeKind::Page,
+                        NodeKind::Source => GraphNodeKind::Source,
+                    },
+                    title: n.title,
+                    top: n.top.map(|t| t.to_string()),
+                })
+                .collect(),
+            lines: graph
+                .lines
+                .into_iter()
+                .map(|l| GraphLine {
+                    from: l.from.to_string(),
+                    to: l.to.to_string(),
+                    kind: match l.kind {
+                        LineKind::LinksTo => GraphLineKind::LinksTo,
+                        LineKind::Under => GraphLineKind::Under,
+                        LineKind::Cites => GraphLineKind::Cites,
+                    },
+                })
+                .collect(),
+        }
+    }
 }
 
 /// A library just converted to the current format, and the folder its copy went to.

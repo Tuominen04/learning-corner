@@ -29,7 +29,8 @@ Start at **[Getting started](user/getting-started.md)**.
 | [Pages](user/pages.md)                    | Writing, putting pages under pages as a subject grows, linking pages   |
 | [Sources and citations](user/sources-and-citations.md)   | Saving sources, citing them, the automatic APA 7 reference list        |
 | [Parallel texts](user/parallel-texts.md)                 | Original, pronunciation, and translation side by side                  |
-| [Mind maps](user/mind-maps.md)                           | Seeing how your pages connect, in its own window                       |
+| [The library graph](user/library-graph.md)               | Seeing how your pages connect                                          |
+| [Diagrams](user/diagrams.md)                             | Family trees, timelines and network maps you build yourself            |
 | [Backup and restore](user/backup-and-restore.md)         | Copying to a drive, restoring, and deciding which copy is right        |
 | [FAQ](user/faq.md)                                       | Short answers to the common questions                                  |
 | [Glossary](user/glossary.md)                             | What the words mean                                                    |

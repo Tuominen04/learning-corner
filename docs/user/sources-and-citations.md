@@ -60,7 +60,7 @@ documents.
 ### Writing the details down
 
 - **Titles in sentence case.** A capital letter to start, after a colon, and on names:
-  *Protein in the Finnish diet: A review*. That is how APA prints titles, and the app prints
+  *Folk songs of Karelia: A review*. That is how APA prints titles, and the app prints
   yours exactly as you type it. It never changes the case for you, because it cannot tell
   which of your words are names.
 - **A podcast's host goes in as Host.** APA puts the host where an author would go, and so

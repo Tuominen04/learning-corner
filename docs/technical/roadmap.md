@@ -1,8 +1,8 @@
 # Roadmap
 
 > **Audience:** People building Learning Corner
-> **Status:** In progress — M1, M2, M3 and pages implemented
-> **Last reviewed:** 2026-11-10
+> **Status:** In progress — M1, M2, M3, pages and the library graph implemented
+> **Last reviewed:** 2026-11-14
 
 Milestones in order. Each is shippable on its own — a person could install it, use it, and get
 something out of it — and each has a definition of done that is checkable rather than a
@@ -90,8 +90,8 @@ document, an eighth kind of source; the writing tools staying in reach down a lo
 with the page centred on a wide window; moving topics and documents, by dragging, from the
 keyboard, or with the move button.
 
-**Done when:** the protein example from the README can be worked end to end — one topic
-becoming six documents, sources saved and cited, a correct reference list on every one, and a
+**Done when:** the worked example in the user guide's *Pages* can be worked end to end — one
+topic becoming six documents, sources saved and cited, a correct reference list on every one, and a
 source corrected once being correct everywhere.
 
 ---
@@ -159,24 +159,29 @@ a map's nodes reference pages and there should be no topics left to reference.
       onto, above or below a page, Alt+↑/↓, Ctrl+X/V, or the move button.
 - [x] Deleting a page with sub-pages asks first; splitting makes a sub-page.
 - [x] Opening a format 1 library asks before converting it, and says where its copy went.
-- [ ] **Seen running by a person**, on Fedora: a real library converted, and the protein example
-      rebuilt as *Protein* with *History*, *Current*, *Type 1* and *Type 2* under it.
+- [ ] **Seen running by a person**, on Fedora: a real library converted, and a subject's
+      page rebuilt with *History*, *Current*, *Type 1* and *Type 2* under it.
 
 **Done when:** a format 1 library opens as format 2 looking the same, with a page where each
 topic was, and its copy beside it untouched.
 
 ---
 
-## M4a · The library graph
+## M4a · The library graph ← *0.25.0*
 
 Designed in [ADR 0010](adr/0010-library-graph.md), accepted.
 
-- A screen beside *Pages*, *Sources* and *Works*: every page, and sources if wanted, with the
-  lines between them — links, the tree, citations — computed each time, stored nowhere.
-- Nodes sized by how connected they are and coloured by the subject they are under.
-- Hover to highlight neighbours; open a node to go to its page; find a node by title.
-- Focus on a page and what is within one, two or three steps of it, or on the pages under it.
-- Export as an image.
+- [x] A screen beside *Documents*, *Sources* and *Works*: every page, and sources if wanted,
+      with the lines between them — links, the tree, citations — computed each time, stored
+      nowhere.
+- [x] Nodes sized by how connected they are and coloured by the subject they are under.
+- [x] Hover to highlight neighbours; open a node to go to its page; find a node by title;
+      arrow keys along its lines.
+- [x] Focus on a page and what is within one, two or three steps of it, or on the pages under
+      it. What was showing is remembered per library, on this computer.
+- [x] Export as SVG or PNG.
+- [ ] **Seen running by a person**, on Fedora: a real library's graph explored, a page opened
+      from it, and a picture saved.
 
 **Done when:** a library of a few hundred pages pans and zooms smoothly, a page written on the
 *Pages* screen is on the graph when you come back to it, and nothing in the library's folder
