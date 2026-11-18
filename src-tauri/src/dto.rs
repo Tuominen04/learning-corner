@@ -170,6 +170,207 @@ pub struct GraphView {
     pub reach: String,
 }
 
+/// A diagram in the list of diagrams (ADR 0011).
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub struct DiagramSummary {
+    pub id: Id,
+    pub title: String,
+    pub layout: DiagramLayout,
+}
+
+/// How a diagram's boxes come to be where they are.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "kebab-case")]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub enum DiagramLayout {
+    /// A family tree or hierarchy, laid out in layers along its lines.
+    Layered,
+    /// A historical path: boxes in order of their `when`.
+    Timeline,
+    /// A map arranged by hand: boxes keep the positions they were dragged to.
+    Free,
+}
+
+/// Which way a layered diagram runs.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "kebab-case")]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub enum DiagramDirection {
+    Down,
+    Right,
+}
+
+/// A diagram as the interface draws it, and the revision to save it with.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub struct DiagramView {
+    pub id: Id,
+    pub title: String,
+    pub layout: DiagramLayout,
+    pub direction: DiagramDirection,
+    pub nodes: Vec<DiagramNodeView>,
+    pub lines: Vec<DiagramLine>,
+    #[ts(type = "string & { readonly __opaque: \"DiagramRevision\" }")]
+    pub revision: Revision,
+}
+
+/// One box. A `page` says which page it points at, and what that page is called now.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub struct DiagramNodeView {
+    pub id: Id,
+    pub page: Option<DiagramPage>,
+    pub label: Option<String>,
+    pub when: Option<String>,
+    pub x: Option<f64>,
+    pub y: Option<f64>,
+}
+
+/// The page a box points at. A `title` of none means the page is gone.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub struct DiagramPage {
+    pub id: Id,
+    pub title: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub struct DiagramLine {
+    pub from: Id,
+    pub to: Id,
+    pub label: Option<String>,
+}
+
+/// A diagram as it is saved: the whole of it. Pages are by id alone — what they are called is
+/// the engine's to say, never the caller's.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub struct DiagramEdit {
+    pub title: String,
+    pub layout: DiagramLayout,
+    pub direction: DiagramDirection,
+    pub nodes: Vec<DiagramNodeEdit>,
+    pub lines: Vec<DiagramLine>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub struct DiagramNodeEdit {
+    pub id: Id,
+    pub page: Option<Id>,
+    pub label: Option<String>,
+    pub when: Option<String>,
+    pub x: Option<f64>,
+    pub y: Option<f64>,
+}
+
+/// The diagrams that have to do with a page.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/lib/bindings/")]
+pub struct PageDiagrams {
+    /// Diagrams the page shows.
+    pub shown: Vec<DiagramSummary>,
+    /// Diagrams with a box that points at the page.
+    pub pointing_here: Vec<DiagramSummary>,
+}
+
+impl From<lc_engine::model::diagram::Layout> for DiagramLayout {
+    fn from(layout: lc_engine::model::diagram::Layout) -> Self {
+        use lc_engine::model::diagram::Layout;
+        match layout {
+            Layout::Layered => DiagramLayout::Layered,
+            Layout::Timeline => DiagramLayout::Timeline,
+            Layout::Free => DiagramLayout::Free,
+        }
+    }
+}
+
+impl From<DiagramLayout> for lc_engine::model::diagram::Layout {
+    fn from(layout: DiagramLayout) -> Self {
+        match layout {
+            DiagramLayout::Layered => Self::Layered,
+            DiagramLayout::Timeline => Self::Timeline,
+            DiagramLayout::Free => Self::Free,
+        }
+    }
+}
+
+impl From<lc_engine::model::diagram::Direction> for DiagramDirection {
+    fn from(direction: lc_engine::model::diagram::Direction) -> Self {
+        use lc_engine::model::diagram::Direction;
+        match direction {
+            Direction::Down => DiagramDirection::Down,
+            Direction::Right => DiagramDirection::Right,
+        }
+    }
+}
+
+impl From<DiagramDirection> for lc_engine::model::diagram::Direction {
+    fn from(direction: DiagramDirection) -> Self {
+        match direction {
+            DiagramDirection::Down => Self::Down,
+            DiagramDirection::Right => Self::Right,
+        }
+    }
+}
+
+impl From<lc_engine::api::DiagramSummary> for DiagramSummary {
+    fn from(d: lc_engine::api::DiagramSummary) -> Self {
+        DiagramSummary {
+            id: d.id.to_string(),
+            title: d.title,
+            layout: d.layout.into(),
+        }
+    }
+}
+
+impl From<lc_engine::api::DiagramView> for DiagramView {
+    fn from(d: lc_engine::api::DiagramView) -> Self {
+        DiagramView {
+            id: d.id.to_string(),
+            title: d.title,
+            layout: d.layout.into(),
+            direction: d.direction.into(),
+            nodes: d
+                .nodes
+                .into_iter()
+                .map(|n| DiagramNodeView {
+                    id: n.id.to_string(),
+                    page: n.page.map(|p| DiagramPage {
+                        id: p.id.to_string(),
+                        title: p.title,
+                    }),
+                    label: n.label,
+                    when: n.when,
+                    x: n.x,
+                    y: n.y,
+                })
+                .collect(),
+            lines: d
+                .lines
+                .into_iter()
+                .map(|l| DiagramLine {
+                    from: l.from.to_string(),
+                    to: l.to.to_string(),
+                    label: l.label,
+                })
+                .collect(),
+            revision: d.revision,
+        }
+    }
+}
+
+impl From<lc_engine::api::PageDiagrams> for PageDiagrams {
+    fn from(d: lc_engine::api::PageDiagrams) -> Self {
+        PageDiagrams {
+            shown: d.shown.into_iter().map(Into::into).collect(),
+            pointing_here: d.pointing_here.into_iter().map(Into::into).collect(),
+        }
+    }
+}
+
 /// The whole library as nodes and lines, for the graph screen (ADR 0010). Computed by the
 /// engine on every call; where anything is drawn is the interface's.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
@@ -333,6 +534,7 @@ pub enum HitKind {
     Document,
     Source,
     Work,
+    Diagram,
 }
 
 impl From<lc_engine::index::Kind> for HitKind {
@@ -341,6 +543,7 @@ impl From<lc_engine::index::Kind> for HitKind {
             lc_engine::index::Kind::Document => HitKind::Document,
             lc_engine::index::Kind::Source => HitKind::Source,
             lc_engine::index::Kind::Work => HitKind::Work,
+            lc_engine::index::Kind::Diagram => HitKind::Diagram,
         }
     }
 }

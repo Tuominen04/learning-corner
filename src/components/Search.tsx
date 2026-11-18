@@ -4,9 +4,9 @@ import { engine, EngineFailure, type SearchHit } from "../lib/engine";
 
 // Finding something you half-remember.
 //
-// One index holds pages, works and sources, which is deliberate — you should not have to decide
+// One index holds pages, works, diagrams and sources, which is deliberate — you should not have to decide
 // what kind of thing you are looking for before you can look for it. This screen shows the
-// writing half: pages and works. Sources have their own screen, where they can be
+// writing half: pages, works and diagrams. Sources have their own screen, where they can be
 // shown with their authors and their papers, and a bare title in a list here would be the
 // least useful way to present one.
 
@@ -17,6 +17,7 @@ export function Search({
   query,
   onOpenDocument,
   onOpenWork,
+  onOpenDiagram,
 }: {
   /**
    * What to look for. Never blank: an empty box means the tree is shown instead, so App
@@ -25,6 +26,7 @@ export function Search({
   query: string;
   onOpenDocument: (id: string) => void;
   onOpenWork: (id: string) => void;
+  onOpenDiagram: (id: string) => void;
 }) {
   // `null` until the first answer comes back, and deliberately *not* cleared while a new
   // query is in flight — the previous results stay on screen for the moment it takes, rather
@@ -77,10 +79,13 @@ export function Search({
                   {hit.excerpt && <span className="excerpt">{hit.excerpt}</span>}
                 </button>
               ) : (
-                <button className="hit" onClick={() => onOpenWork(hit.id)}>
+                <button
+                  className="hit"
+                  onClick={() => (hit.kind === "diagram" ? onOpenDiagram(hit.id) : onOpenWork(hit.id))}
+                >
                   <strong>{hit.title}</strong>
                   <span className="excerpt">
-                    <em className="kind">Work</em>
+                    <em className="kind">{hit.kind === "diagram" ? "Diagram" : "Work"}</em>
                     {hit.excerpt && ` · ${hit.excerpt}`}
                   </span>
                 </button>

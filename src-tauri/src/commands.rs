@@ -23,10 +23,12 @@ use crate::dto::{
     Source, SourceType, Split,
 };
 use crate::dto::{
+    DiagramEdit, DiagramLayout, DiagramSummary, DiagramView, Graph, GraphView, PageDiagrams,
+};
+use crate::dto::{
     EditionContents, NewEdition, RepeatSet, ResegmentPlan, Resegmented, Work, WorkContents,
     WorkSummary, WorkUnit,
 };
-use crate::dto::{Graph, GraphView};
 use crate::recent::Recent;
 
 /// The open library, or none. The interface holds no durable state of its own.
@@ -288,11 +290,11 @@ pub fn library_graph(state: State<'_, OpenLibrary>, sources: bool) -> Answer<Gra
     with(&state, |e| Ok(Graph::from(e.library_graph(sources)?)))
 }
 
-/// Save a picture of the graph wherever the save dialog put it. The interface draws it —
-/// `data` is the file's bytes in base64 — and this writes it through the same
+/// Save a picture the interface drew — a graph, a diagram — wherever the save dialog put it.
+/// `data` is the file's bytes in base64, and this writes it through the same
 /// temp-fsync-rename as every export, so a failure leaves no half-written picture.
 #[tauri::command]
-pub fn graph_export(path: String, data: String) -> Answer<()> {
+pub fn export_picture(path: String, data: String) -> Answer<()> {
     save_picture(Path::new(&path), &data).map_err(EngineError::from)
 }
 
@@ -301,6 +303,136 @@ fn save_picture(path: &Path, data: &str) -> Result<(), Error> {
         .decode(data)
         .map_err(|_| Error::invalid("data", "the picture did not arrive whole"))?;
     lc_engine::atomic::write_bytes(path, &bytes)
+}
+
+// ---- diagrams ------------------------------------------------------------------
+
+/// Every diagram, by title.
+#[tauri::command]
+pub fn diagram_list(state: State<'_, OpenLibrary>) -> Answer<Vec<DiagramSummary>> {
+    with(&state, |e| {
+        Ok(e.diagram_list()?.into_iter().map(Into::into).collect())
+    })
+}
+
+/// A new, empty diagram.
+#[tauri::command]
+pub fn diagram_create(
+    state: State<'_, OpenLibrary>,
+    title: String,
+    layout: DiagramLayout,
+) -> Answer<DiagramView> {
+    with(&state, |e| {
+        e.diagram_create(title, layout.into())
+            .map(DiagramView::from)
+    })
+}
+
+#[tauri::command]
+pub fn diagram_read(state: State<'_, OpenLibrary>, diagram: String) -> Answer<DiagramView> {
+    with(&state, |e| {
+        e.diagram_read(id(&diagram)?).map(DiagramView::from)
+    })
+}
+
+/// Save a diagram, whole, with the revision from the last read.
+#[tauri::command]
+pub fn diagram_write(
+    state: State<'_, OpenLibrary>,
+    diagram: String,
+    edit: DiagramEdit,
+    revision: Revision,
+) -> Answer<DiagramView> {
+    with(&state, |e| {
+        let diagram_id = id(&diagram)?;
+        let created = e.diagram_read(diagram_id)?.created;
+        let diagram = engine_diagram(diagram_id, created, edit)?;
+        e.diagram_write(diagram_id, diagram, revision)
+            .map(DiagramView::from)
+    })
+}
+
+/// A diagram as the interface sends it, as the engine keeps it. Every identifier is checked
+/// here, so one that is not an identifier is refused by name and never reaches a file.
+fn engine_diagram(
+    diagram: Id,
+    created: lc_engine::Timestamp,
+    edit: DiagramEdit,
+) -> Result<lc_engine::model::diagram::Diagram, Error> {
+    use lc_engine::model::diagram::{Diagram, Line, Node};
+    Ok(Diagram {
+        id: diagram,
+        title: edit.title,
+        layout: edit.layout.into(),
+        direction: edit.direction.into(),
+        created,
+        nodes: edit
+            .nodes
+            .into_iter()
+            .map(|n| {
+                Ok(Node {
+                    id: id(&n.id)?,
+                    page: n.page.as_deref().map(id).transpose()?,
+                    label: n.label,
+                    when: n.when,
+                    x: n.x,
+                    y: n.y,
+                })
+            })
+            .collect::<Result<_, Error>>()?,
+        lines: edit
+            .lines
+            .into_iter()
+            .map(|l| {
+                Ok(Line {
+                    from: id(&l.from)?,
+                    to: id(&l.to)?,
+                    label: l.label,
+                })
+            })
+            .collect::<Result<_, Error>>()?,
+    })
+}
+
+/// The pages that show a diagram.
+#[tauri::command]
+pub fn diagram_shown_in(
+    state: State<'_, OpenLibrary>,
+    diagram: String,
+) -> Answer<Vec<DocumentRef>> {
+    with(&state, |e| {
+        Ok(e.diagram_shown_in(id(&diagram)?)?
+            .into_iter()
+            .map(Into::into)
+            .collect())
+    })
+}
+
+/// The pages whose line for a diagram would go with it. Ask before deleting, never after.
+#[tauri::command]
+pub fn diagram_delete_plan(
+    state: State<'_, OpenLibrary>,
+    diagram: String,
+) -> Answer<Vec<DocumentRef>> {
+    with(&state, |e| {
+        Ok(e.diagram_delete_plan(id(&diagram)?)?
+            .into_iter()
+            .map(Into::into)
+            .collect())
+    })
+}
+
+#[tauri::command]
+pub fn diagram_delete(state: State<'_, OpenLibrary>, diagram: String) -> Answer<()> {
+    with(&state, |e| e.diagram_delete(id(&diagram)?))
+}
+
+/// The diagrams a page shows, and the diagrams with a box that points at it.
+#[tauri::command]
+pub fn document_diagrams(state: State<'_, OpenLibrary>, document: String) -> Answer<PageDiagrams> {
+    with(&state, |e| {
+        e.document_diagrams(id(&document)?).map(PageDiagrams::from)
+    })
 }
 
 // ---- documents -----------------------------------------------------------------
@@ -1522,6 +1654,79 @@ mod tests {
             .unwrap()
             .backup_plan(drive)
             .unwrap()
+    }
+
+    #[test]
+    fn a_diagram_sent_by_the_interface_is_the_engine_s_diagram_or_refused_by_name() {
+        let diagram = Id::new();
+        let (a, b, page) = (Id::new(), Id::new(), Id::new());
+        let wire = serde_json::json!({
+            "title": "Family tree",
+            "layout": "layered",
+            "direction": "right",
+            "nodes": [
+                { "id": a.to_string(), "page": page.to_string(), "label": null, "when": null, "x": null, "y": null },
+                { "id": b.to_string(), "page": null, "label": "Mother", "when": "c. 1200", "x": 1.5, "y": -2.0 }
+            ],
+            "lines": [{ "from": a.to_string(), "to": b.to_string(), "label": "child of" }]
+        });
+        let edit: DiagramEdit = serde_json::from_value(wire.clone()).unwrap();
+        let made = engine_diagram(diagram, lc_engine::Timestamp::now(), edit).unwrap();
+        assert_eq!(made.id, diagram);
+        assert_eq!(made.layout, lc_engine::model::diagram::Layout::Layered);
+        assert_eq!(made.direction, lc_engine::model::diagram::Direction::Right);
+        assert_eq!(made.nodes[0].page, Some(page));
+        assert_eq!(made.nodes[1].when.as_deref(), Some("c. 1200"));
+        assert_eq!((made.nodes[1].x, made.nodes[1].y), (Some(1.5), Some(-2.0)));
+        assert_eq!(made.lines[0].label.as_deref(), Some("child of"));
+
+        let mut broken = wire;
+        broken["nodes"][0]["id"] = "not an id".into();
+        let edit: DiagramEdit = serde_json::from_value(broken).unwrap();
+        assert!(matches!(
+            engine_diagram(diagram, lc_engine::Timestamp::now(), edit),
+            Err(Error::Invalid { .. })
+        ));
+    }
+
+    #[test]
+    fn a_diagram_crosses_the_wire_with_the_names_the_interface_uses() {
+        let (_dir, open, doc, _drive) = library_and_drive();
+        let mut guard = open.lock().unwrap();
+        let engine = guard.as_mut().unwrap();
+        let view = engine
+            .diagram_create("Timeline", lc_engine::model::diagram::Layout::Timeline)
+            .unwrap();
+        let mut diagram = lc_engine::model::diagram::Diagram {
+            id: view.id,
+            title: view.title.clone(),
+            layout: view.layout,
+            direction: view.direction,
+            created: view.created,
+            nodes: vec![lc_engine::model::diagram::Node::page(doc)],
+            lines: vec![],
+        };
+        diagram.nodes[0].when = Some("1850".into());
+        let written = engine
+            .diagram_write(view.id, diagram, view.revision)
+            .unwrap();
+
+        let json = serde_json::to_value(DiagramView::from(written)).unwrap();
+        assert_eq!(json["layout"], "timeline");
+        assert_eq!(json["direction"], "down");
+        assert_eq!(json["nodes"][0]["page"]["id"], doc.to_string());
+        assert_eq!(json["nodes"][0]["page"]["title"], "What protein is");
+        assert_eq!(json["nodes"][0]["when"], "1850");
+        assert!(
+            json["revision"].is_string(),
+            "a revision crosses as a string, never a number"
+        );
+        assert_eq!(json["lines"], serde_json::json!([]));
+
+        let on = serde_json::to_value(PageDiagrams::from(engine.document_diagrams(doc).unwrap()))
+            .unwrap();
+        assert_eq!(on["pointing_here"][0]["title"], "Timeline");
+        assert_eq!(on["shown"], serde_json::json!([]));
     }
 
     #[test]

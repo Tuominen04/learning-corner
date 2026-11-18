@@ -114,6 +114,7 @@ Do this before you have much to lose, not after. See
 | Get citations exactly right                                | [Sources and citations](sources-and-citations.md)       |
 | Read a text with its translation beside it                 | [Parallel texts](parallel-texts.md)                     |
 | See how your pages connect                                 | [The library graph](library-graph.md)                   |
+| Draw a family tree, a timeline or a map of a network       | [Diagrams](diagrams.md)                                 |
 | Look up a word used in this guide                          | [Glossary](glossary.md)                                 |
 
 ---

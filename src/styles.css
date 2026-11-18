@@ -597,9 +597,9 @@ button.doc-link-open:hover { text-decoration: underline; }
 
 /* ---- sources ------------------------------------------------------------- */
 
-.views { display: flex; gap: 0.3rem; margin-bottom: 1rem; }
+.views { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-bottom: 1rem; }
 button.view {
-  flex: 1;
+  flex: 1 1 auto;
   background: transparent;
   border: 1px solid var(--line);
   font-size: 0.85em;
@@ -1184,3 +1184,88 @@ button.graph-node .graph-dot { margin-right: 0; }
 .graph-hint { margin-top: 1rem; }
 .graph-save { display: flex; align-items: center; gap: 0.4rem; margin-top: 1.2rem; border-top: 1px solid var(--line); padding-top: 0.8rem; }
 .graph-save button { padding: 0.25rem 0.6rem; }
+
+/* ---- diagrams ---- */
+
+.diagrams { max-width: 46rem; }
+.diagrams h2 { margin-top: 0; }
+.diagram-new { margin: 1.4rem 0; padding: 1rem 1.2rem; border: 1px solid var(--line); border-radius: 8px; }
+.diagram-new h3 { margin: 0 0 0.6rem; }
+.diagram-field { display: block; margin: 0.5rem 0; }
+.diagram-field > span { display: block; font-size: 0.85em; color: var(--ink-soft); margin-bottom: 0.15rem; }
+.diagram-field input {
+  width: 100%;
+  font: inherit;
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--ground);
+  color: inherit;
+}
+.diagram-new .choice strong { display: block; }
+.diagram-list-screen { list-style: none; margin: 1.2rem 0; padding: 0; }
+.diagram-list-screen li { display: flex; align-items: center; gap: 0.6rem; border-bottom: 1px solid var(--line); }
+.diagram-list-screen .hit { flex: 1; border: none; }
+
+/* The canvas takes what the working area has; the panel beside it scrolls on its own. */
+.diagram-editor { display: flex; flex-direction: column; height: calc(100vh - 3rem); min-height: 24rem; }
+.diagram-bar { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.diagram-bar h2 { margin: 0; font-size: 1.25em; }
+.diagram-status { margin-left: auto; font-size: 0.85em; color: var(--ink-soft); }
+.diagram-status.unsaved, .diagram-status.saving { color: var(--warning); }
+.diagram-status.conflict { color: var(--error); }
+.diagram-conflict { border: 1px solid var(--error); border-radius: 8px; padding: 0.4rem 1rem; margin: 0.6rem 0; }
+.diagram-tools { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin: 0.7rem 0; }
+.diagram-layouts { display: inline-flex; gap: 0.3rem; }
+.diagram-layouts button.view { flex: 0 0 auto; }
+.diagram-sep { width: 1px; align-self: stretch; background: var(--line); margin: 0 0.2rem; }
+.diagram-body { display: grid; grid-template-columns: minmax(0, 1fr) 19rem; gap: 1.2rem; flex: 1; min-height: 0; }
+.diagram-canvas {
+  position: relative;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--ground);
+  overflow: hidden;
+}
+.diagram-empty { position: absolute; inset: 40% 2rem auto; text-align: center; margin: 0 auto; pointer-events: none; }
+.diagram-panel { overflow-y: auto; min-width: 0; font-size: 0.9em; }
+.diagram-panel .cite-picker { margin: 0 0 1rem; max-width: none; }
+.diagram-inspector { border: 1px solid var(--line); border-radius: 8px; padding: 0.2rem 0.9rem 0.6rem; margin-bottom: 1rem; }
+.diagram-inspector h3, .diagram-list h3 { margin: 0.6rem 0 0.3rem; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.04em; color: #9a9dab; }
+.diagram-page { margin: 0.5rem 0; }
+.diagram-page .actions { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.4rem; }
+.diagram-inspector .actions, .diagram-panel > .actions { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.5rem 0; }
+.diagram-list ul { list-style: none; margin: 0 0 0.6rem; padding: 0; }
+.diagram-list button { display: block; width: 100%; text-align: left; padding: 0.15rem 0.3rem; overflow-wrap: anywhere; }
+.diagram-list button.chosen { color: var(--accent); }
+
+/* A box. Handles show on the edge under the pointer, where a line can be drawn from. */
+.diagram-box {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1rem;
+  padding: 0.2rem 0.5rem;
+  border: 1.5px solid #4a4e5e;
+  border-radius: 6px;
+  background: #23262f;
+  color: var(--action);
+  font-size: 13px;
+  line-height: 1.25;
+  text-align: center;
+  /* Not overflow: hidden. The handles sit half outside the border, and a clipped half is a
+     half that cannot be grabbed; the words are cut by their own element below. */
+}
+.diagram-box .text { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.diagram-box .when { font-size: 11px; color: #9a9dab; }
+.diagram-box.selected { border-color: var(--accent); }
+.diagram-box.gone { border-style: dashed; border-color: #c97a5a; color: #e0b8a8; }
+.diagram-box .page-mark { position: absolute; top: 1px; right: 4px; font-size: 10px; color: #9a9dab; }
+.diagram-canvas .react-flow__handle { width: 8px; height: 8px; background: var(--accent); border: none; opacity: 0; }
+.diagram-canvas .react-flow__node:hover .react-flow__handle,
+.diagram-canvas .react-flow__node.selected .react-flow__handle { opacity: 1; }
+.diagram-canvas .react-flow__edge-text { fill: var(--action); font-size: 11px; }
+.diagram-canvas .react-flow__edge-textbg { fill: var(--ground); }

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { BackupPanel, type BackupMode } from "./components/BackupPanel";
 import { DeleteConfirm, type Deleting } from "./components/DeleteConfirm";
 import { Editor } from "./components/Editor";
+import { DiagramsScreen } from "./components/DiagramsScreen";
 import { GraphScreen } from "./components/GraphScreen";
 import {
   LibraryPicker,
@@ -194,11 +195,14 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
 
   // Sources are library-wide rather than living under a page, so they are a place you go
   // rather than something you select in the tree.
-  const [view, setView] = useState<"documents" | "sources" | "works" | "graph">("documents");
+  const [view, setView] = useState<"documents" | "sources" | "works" | "graph" | "diagrams">("documents");
 
   // The work showing in the Works view, if one is. Here rather than in that view, so a search
   // result can open one.
   const [openWork, setOpenWork] = useState<string | null>(null);
+
+  // The diagram being edited in the Diagrams view, if one is. Here for the same reason.
+  const [openDiagram, setOpenDiagram] = useState<string | null>(null);
 
   // Searching is navigating, so it lives in the sidebar with the tree rather than being a
   // place you go. While there is a query the results stand in for the tree; clear it and the
@@ -498,6 +502,13 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
           >
             Graph
           </button>
+          <button
+            className={view === "diagrams" ? "view selected" : "view"}
+            onClick={() => setView("diagrams")}
+            title="Family trees, timelines and maps you build yourself"
+          >
+            Diagrams
+          </button>
         </nav>
 
         <div className="find">
@@ -522,6 +533,10 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
             onOpenWork={(id) => {
               setOpenWork(id);
               setView("works");
+            }}
+            onOpenDiagram={(id) => {
+              setOpenDiagram(id);
+              setView("diagrams");
             }}
           />
         ) : (
@@ -599,6 +614,13 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
             pages={pages}
             onMove={(to) => void move(moving, { parent: to, position: null })}
             onCancel={() => setMoving(null)}
+          />
+        ) : view === "diagrams" ? (
+          <DiagramsScreen
+            pages={pages}
+            open={openDiagram}
+            onOpen={setOpenDiagram}
+            onOpenDocument={openDocument}
           />
         ) : view === "graph" ? (
           // Made afresh each time the screen is shown, which is what reads the graph again:

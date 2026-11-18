@@ -495,10 +495,74 @@ first written, and no engine before M3 reads or writes it — an older engine op
 with works in it leaves them alone, and a backup copies them like any other files. So M3 adds
 no format version, and `v1` stays the fixture it is.
 
-## Maps
+## Diagrams
 
-`maps/` is where diagrams will live (M4b): one file each, holding the diagram's own nodes and
-lines, specified in [ADR 0011](adr/0011-diagrams.md). Nothing reads or writes it yet.
+`maps/` holds diagrams, one TOML file each, directly in the folder
+([ADR 0011](adr/0011-diagrams.md)). The folder has been in the layout since format 1 and keeps
+its name, so no format version changes: an older engine leaves it alone, and a backup copies it
+like any other folder. The name of a file comes from the diagram's title, as a page's does, and
+follows it when it changes.
+
+```toml
+# maps/family-tree.toml
+id        = "01JC…"
+title     = "Family tree"
+layout    = "layered"      # layered | timeline | free
+direction = "down"         # down | right: which way a layered diagram runs
+created   = 2026-11-18T10:00:00Z
+
+[[node]]                   # a box that is only a label
+id    = "01JD…"
+label = "Mother"
+
+[[node]]                   # a box that points at a page
+id   = "01JE…"
+page = "01J9…"
+
+[[node]]                   # on a timeline: what puts it in order, in words
+id    = "01JF…"
+label = "Founded"
+when  = "c. 1200"
+
+[[node]]                   # on a free diagram: where it was dragged to
+id    = "01JG…"
+label = "Hub"
+x     = 120.5
+y     = -40.0
+
+[[line]]
+from  = "01JD…"
+to    = "01JE…"
+label = "parent of"        # optional
+```
+
+- **A box has its own `id`**, inside this diagram, so the same page can be on a diagram twice
+  and a box keeps its place in the structure when its page changes.
+- **`page` is the page's identifier and nothing else.** What the page is called is read from the
+  page, each time. A `label` wins over the page's title when there is one. A box with neither
+  is not valid. A `page` that names nothing — the page was deleted — is kept, and read as a box
+  whose page is gone.
+- **`when` is text**, kept whatever the layout. A timeline orders boxes by the year it can read
+  from it (the first run of three to five digits, so `3 May 1850` is 1850; `BC` makes it
+  negative), then those it can read none from, in the order the file holds them.
+- **`x` and `y` come together or not at all.** Only a *free* diagram has them in use; they are
+  dropped when the layout changes to another, because another layout decides where boxes go.
+- **The order of the `[[node]]` blocks is a box's order in a layer** of a layered diagram.
+- **Lines have a direction**, and two may join the same boxes. A line to a box that is not there,
+  or to itself, makes the file invalid.
+- **A file that is not valid** — hand-edited into nonsense — is a problem with the library, named,
+  and the rest of the library opens.
+
+A page shows a diagram with an ordinary Markdown picture whose address is the diagram's
+identifier, alone on a line or in a sentence:
+
+```markdown
+![Family tree](diagram:01JC…)
+```
+
+To everything that only knows pages, that is text. It is not an image file, so it is not moved or
+copied with a page; it goes with a section that is split out; a document exports it as
+`[Picture: Family tree]`; the search index keeps the words in the brackets and not the address.
 
 The library graph ([ADR 0010](adr/0010-library-graph.md)) stores nothing, here or anywhere: it
 is computed from the pages and sources each time it is shown.
