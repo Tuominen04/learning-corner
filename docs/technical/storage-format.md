@@ -24,19 +24,20 @@ versioned independently of the application.
 MyLibrary/
 ├── library.toml                  # library identity and format version
 ├── topics/                       # the tree of pages (named for format 1, and kept)
-│   ├── .order                    # the order of this level: protein, sleep
-│   ├── protein.md                # a page, with its own writing
-│   ├── protein/                  # its sub-pages — only while it has some
+│   ├── .order                    # the order of this level: subject, another-subject
+│   ├── subject.md                # a page, with its own writing
+│   ├── subject/                  # its sub-pages — only while it has some
 │   │   ├── .order
-│   │   ├── what-protein-is.md
-│   │   ├── types-of-protein.md
-│   │   ├── in-the-body.md
-│   │   └── in-the-body/
-│   │       └── how-protein-is-used.md
-│   └── sleep.md                  # a page with no sub-pages has no folder
+│   │   ├── history.md
+│   │   ├── current.md
+│   │   ├── type-1.md
+│   │   ├── type-2.md
+│   │   └── type-2/
+│   │       └── detail-1.md
+│   └── another-subject.md        # a page with no sub-pages has no folder
 ├── sources/
 │   ├── nieminen-2021.toml
-│   ├── who-protein-intake-2019.toml
+│   ├── who-guidelines-2019.toml
 │   └── files/                    # the library's own copies of source PDFs
 │       └── nieminen-2021.pdf
 ├── works/
@@ -47,7 +48,7 @@ MyLibrary/
 │       ├── translation.fi.txt
 │       └── translation.en.txt
 ├── maps/
-│   └── protein-overview.toml
+│   └── subject-overview.toml
 ├── .plc/                         # derived — safe to delete, see search-index.md
 │   ├── index.sqlite
 │   ├── format-version
@@ -58,7 +59,7 @@ MyLibrary/
 ```
 
 Folders mirror the structure the user sees. Every page is a `.md` file, and the pages under it
-are in a folder named like its file, beside it (`protein.md` and `protein/`), which exists only
+are in a folder named like its file, beside it (`subject.md` and `subject/`), which exists only
 while it has some ([ADR 0009](adr/0009-pages-not-topics.md)). Opening the folder in a file
 manager shows the same shape as the sidebar — that is worth a lot on the day something goes
 wrong. See [Pages](#pages) for the rules.
@@ -183,12 +184,12 @@ Markdown with a TOML front matter block delimited by `+++`:
 ```markdown
 +++
 id       = "01J8ZQ7B2N4Q6S8W0W2Y4A6C8E"
-title    = "Types of protein"
+title    = "Type 1"
 created  = 2026-09-06T10:22:00Z
 modified = 2026-09-06T11:03:00Z
 +++
 
-Complete proteins contain all nine essential amino acids.[^cite:01J8ZQ8...]
+Type 1 is the more common of the two.[^cite:01J8ZQ8...]
 
 See also [[01J8ZQ9C3P5R7T9V1X3Z5B7D9F]].
 ```
@@ -213,9 +214,9 @@ A picture lives **beside the document that shows it**, in the same folder, and t
 it by a bare filename:
 
 ```
-topics/protein/
-  what-protein-is.md      ![Amino acid diagram](amino-acid-diagram.png)
-  amino-acid-diagram.png
+topics/subject/
+  type-1.md               ![Diagram](diagram.png)
+  diagram.png
 ```
 
 Beside rather than in a folder of its own, because that is what makes the `.md` show its
@@ -337,8 +338,8 @@ accepted today, checked by extension *and* by content, because a renamed `.docx`
 ```toml
 id = "01J8ZQ8D4Q6S8W0W2Y4A6C8E0G"
 type = "journal-article"
-title = "Protein requirements in adults"
-container = "Journal of Nutrition"
+title = "A survey of the field"
+container = "Journal of Learning Studies"
 volume = "151"
 issue = "4"
 pages = "612-620"

@@ -105,7 +105,7 @@ The rules the engine must implement:
 | Group author, first use | `(World Health Organization [WHO], 2019)` | `World Health Organization (WHO, 2019)` |
 | Group author, later uses | `(WHO, 2019)` | `WHO (2019)` |
 | No author, title in italics in the list | `(*Kalevala*, 1849)` | `*Kalevala* (1849)` |
-| No author, any other title | `(“Protein requirements,” 2021)` | `“Protein requirements” (2021)` |
+| No author, any other title | `(“A survey of the field,” 2021)` | `“A survey of the field” (2021)` |
 | No date | `(Nieminen, n.d.)` | `Nieminen (n.d.)` |
 
 Note the ampersand: `&` inside parentheses, the word `and` in narrative form. This is APA 7,
