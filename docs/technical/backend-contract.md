@@ -1,8 +1,8 @@
 # Engine contract
 
 > **Audience:** People building Learning Corner
-> **Status:** In progress — M1, M2, M3, pages and the library graph implemented
-> **Last reviewed:** 2026-11-14
+> **Status:** In progress — M1, M2, M3, pages, the library graph and diagrams implemented
+> **Last reviewed:** 2026-11-18
 
 Every operation the interface may ask of the engine. This document is normative for both
 repositories and is the specification the engine is built against — see
@@ -227,8 +227,34 @@ Everything is computed from the index on each call and nothing is written
 
 ## Diagrams
 
-Not built yet (M4b). The operations — `diagram.list`, `create`, `read`, `write`, `shownIn`,
-`deletePlan` and `delete` — are specified in [ADR 0011](adr/0011-diagrams.md).
+| Operation | Takes | Returns |
+| --------- | ----- | ------- |
+| `diagram.list` | — | id, title and layout of every diagram, by title |
+| `diagram.create` | title, layout (`layered`, `timeline` or `free`) | the diagram, empty |
+| `diagram.read` | id | the diagram, each box with what its page is called now (none when the page is gone), and its revision |
+| `diagram.write` | id, the whole diagram, revision | the diagram, or `Conflict` |
+| `diagram.shownIn` | id | the pages that show it |
+| `diagram.deletePlan` / `diagram.delete` | id | the pages whose line for it would go; then nothing |
+| `document.diagrams` | page id | the diagrams the page shows, and the diagrams with a box pointing at it |
+| `export.picture` | path, bytes | — |
+
+A diagram is kept whole ([ADR 0011](adr/0011-diagrams.md), [Storage format](storage-format.md#diagrams)):
+its boxes and lines, with the revision from the last read, so that one changed in a text editor
+meanwhile is a `Conflict` and not overwritten. A new title renames its file. The engine checks
+structure — a box says something or points at something, boxes have their own identifiers, a
+line joins two different boxes that are there, a position is both `x` and `y` or neither — and
+does not check pages: a box may point at a page that has gone, which is how deleting a page
+leaves a diagram, and must still be saveable.
+
+**Layout is the interface's.** The engine returns no positions it did not store: a *layered* or
+*timeline* diagram is laid out from its structure each time it is drawn, and only a *free*
+one keeps the places its boxes were dragged to. Boxes carry their own identifiers, made by the
+interface, so a line can be drawn to a box before the engine has seen it.
+
+A page shows a diagram with `![alt](diagram:<id>)`; deleting a diagram takes those lines out of
+the pages that show it, pages first and the file last. `export.picture` is not the engine's:
+the interface draws a graph or a diagram, and the shell writes the bytes it is handed through
+the same temp-fsync-rename as every export, so a picture that fails part way leaves nothing.
 
 ## Search
 

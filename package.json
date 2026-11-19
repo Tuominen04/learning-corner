@@ -1,6 +1,6 @@
 {
   "name": "learning-corner",
-  "version": "0.25.0",
+  "version": "0.26.0",
   "private": true,
   "type": "module",
   "license": "MIT OR Apache-2.0",
@@ -20,6 +20,7 @@
     "engine:check": "node scripts/engine.mjs check"
   },
   "dependencies": {
+    "@dagrejs/dagre": "^1.1.8",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-dialog": "^2",
     "@tiptap/core": "^3",
@@ -30,6 +31,7 @@
     "@tiptap/extension-text": "^3",
     "@tiptap/pm": "^3",
     "@tiptap/react": "^3",
+    "@xyflow/react": "^12.12.1",
     "d3-force": "^3.0.1",
     "react": "^19",
     "react-dom": "^19"
