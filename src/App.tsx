@@ -663,6 +663,10 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
                   }}
                   onRename={renameDocument}
                   onOpenDocument={openBeside}
+                  onOpenDiagram={(id) => {
+                    // A different diagram than the one beside this page: leave the page open.
+                    setOpenDiagram(id);
+                  }}
                   showClaims={showClaims}
                   onShowClaims={setShowClaims}
                 />
