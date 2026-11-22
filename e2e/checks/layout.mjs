@@ -131,8 +131,8 @@ async function cursorInto(page, text) {
   const { browser, page } = await open(1100, 757);
   console.log("-- 1100 × 757");
 
-  check("the tools read H1 H2 H3 Picture Link Cite Split, Cite between Link and Split",
-    JSON.stringify(await toolNames(page)) === JSON.stringify(["H1", "H2", "H3", "Picture", "Link", "Cite", "Split"]),
+  check("the tools read H1 H2 H3 Picture Link Diagram Cite Split, Cite between Diagram and Split",
+    JSON.stringify(await toolNames(page)) === JSON.stringify(["H1", "H2", "H3", "Picture", "Link", "Diagram", "Cite", "Split"]),
     JSON.stringify(await toolNames(page)));
   const headerButtons = await page.locator(".editor > header button:not(.pencil)").allInnerTexts();
   check("the header keeps Export, and only Export", JSON.stringify(headerButtons) === JSON.stringify(["Export"]), JSON.stringify(headerButtons));
@@ -250,7 +250,7 @@ async function cursorInto(page, text) {
   check("in a column: the heading levels side by side, then one tool under another",
     levels.every((t) => t.top === levels[0].top) && rest.every((t, i) => t.left === rest[0].left && (i === 0 || t.top > rest[i - 1].top)) && rest[0].top > levels[0].top,
     JSON.stringify(tools));
-  check("still in that order", JSON.stringify(tools.map((t) => t.name)) === JSON.stringify(["H1", "H2", "H3", "Picture", "Link", "Cite", "Split"]));
+  check("still in that order", JSON.stringify(tools.map((t) => t.name)) === JSON.stringify(["H1", "H2", "H3", "Picture", "Link", "Diagram", "Cite", "Split"]));
 
   await scrollMain(page, 1600);
   await page.waitForTimeout(100);

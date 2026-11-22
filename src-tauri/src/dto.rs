@@ -1277,7 +1277,7 @@ pub struct CitationRequest {
     pub locator: Option<Locator>,
 }
 
-/// A page, paragraph, chapter or timestamp, as the user typed it.
+/// A page, paragraph, chapter, section or timestamp, as the user typed it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "../../src/lib/bindings/")]
 #[serde(tag = "kind", content = "value", rename_all = "kebab-case")]
@@ -1285,6 +1285,8 @@ pub enum Locator {
     Page(String),
     Paragraph(String),
     Chapter(String),
+    /// A heading in the source, by name: `Methods` is cited as `Methods section`.
+    Section(String),
     Timestamp(String),
 }
 
@@ -1596,6 +1598,7 @@ impl From<Locator> for engine_fmt::Locator {
             Locator::Page(v) => engine_fmt::Locator::Page(v),
             Locator::Paragraph(v) => engine_fmt::Locator::Paragraph(v),
             Locator::Chapter(v) => engine_fmt::Locator::Chapter(v),
+            Locator::Section(v) => engine_fmt::Locator::Section(v),
             Locator::Timestamp(v) => engine_fmt::Locator::Timestamp(v),
         }
     }
@@ -2029,14 +2032,19 @@ mod wire {
 
     #[test]
     fn every_locator_kind_reaches_the_engine_as_itself() {
-        // One kind tested is one kind proven. The engine renders all four differently — "p. 44",
-        // "para. 7", "Chapter 3", "1:04:22" — so a conversion that quietly collapses two of them
-        // produces a citation that is wrong rather than missing, which is worse.
+        // One kind tested is one kind proven. The engine renders all five differently — "p. 44",
+        // "para. 7", "Chapter 3", "Methods section", "1:04:22" — so a conversion that quietly
+        // collapses two of them produces a citation that is wrong rather than missing, which is
+        // worse.
         use engine_fmt::Locator as E;
         let cases = [
             (Locator::Page("44".into()), E::Page("44".into())),
             (Locator::Paragraph("7".into()), E::Paragraph("7".into())),
             (Locator::Chapter("3".into()), E::Chapter("3".into())),
+            (
+                Locator::Section("Results: year two".into()),
+                E::Section("Results: year two".into()),
+            ),
             (
                 Locator::Timestamp("1:04:22".into()),
                 E::Timestamp("1:04:22".into()),

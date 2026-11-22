@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-import type { Chosen } from "../lib/citation";
+import { locatorProblem, type Chosen } from "../lib/citation";
 import { engine, EngineFailure, type Form, type Source } from "../lib/engine";
 import { contributorName } from "../lib/sources";
 
@@ -16,6 +16,7 @@ const KINDS: { value: string; label: string; placeholder: string }[] = [
   { value: "", label: "Page", placeholder: "44, or 44-46" },
   { value: "para", label: "Paragraph", placeholder: "7" },
   { value: "chapter", label: "Chapter", placeholder: "3" },
+  { value: "section", label: "Section", placeholder: "Methods" },
   { value: "time", label: "Timestamp", placeholder: "1:04:22" },
 ];
 
@@ -65,8 +66,12 @@ export function CitePicker({
     });
   }, [sources, query]);
 
+  // What is typed in the box, if it cannot be kept as typed. Said at once and under the box,
+  // not after pressing Insert: nothing is stripped or changed on the way in.
+  const problem = locatorProblem(kind, value.trim());
+
   function confirm() {
-    if (!chosen) return;
+    if (!chosen || problem !== null) return;
     const typed = value.trim();
     onChoose({
       source: chosen,
@@ -135,8 +140,21 @@ export function CitePicker({
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
                 placeholder={KINDS.find((k) => k.value === kind)?.placeholder}
+                aria-invalid={problem !== null}
+                aria-describedby={problem !== null ? "locator-problem" : undefined}
               />
             </div>
+            {problem !== null && (
+              <p className="error" id="locator-problem" role="alert">
+                {problem}
+              </p>
+            )}
+            {kind === "section" && (
+              <small className="hint">
+                The heading it is under — for a web page, or anything else with no page numbers.
+                It is cited as “{value.trim() || "Methods"} section”.
+              </small>
+            )}
             <small className="hint">
               Worth the ten seconds. A citation with a page number takes you back to the
               paragraph; one without takes you back to a four-hundred-page book.
@@ -172,7 +190,7 @@ export function CitePicker({
           </div>
 
           <div className="row">
-            <button onClick={confirm} disabled={!chosen}>
+            <button onClick={confirm} disabled={!chosen || problem !== null}>
               Insert citation
             </button>
             <button className="secondary" onClick={onCancel}>

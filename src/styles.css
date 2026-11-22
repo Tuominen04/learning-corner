@@ -1271,6 +1271,28 @@ button.graph-node .graph-dot { margin-right: 0; }
 .diagram-canvas .react-flow__edge-text { fill: var(--action); font-size: 11px; }
 .diagram-canvas .react-flow__edge-textbg { fill: var(--ground); }
 
+/* A diagram in a page: a figure of its own between paragraphs, drawn to the page's width. */
+/* The wrapper stays inline, so a line that names a diagram which is not there reads in its
+   sentence; a diagram that is there is a block of its own, whatever it sits in. */
+.diagram-in-page {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 1rem 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.4rem 0.8rem 0.8rem;
+  background: var(--ground);
+  /* The page is paper and its text is dark; a diagram is drawn on the dark ground. */
+  color: var(--action);
+}
+.diagram-in-page figcaption { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 0.4rem; font-size: 0.9em; }
+.diagram-in-page figcaption button { padding: 0.2rem 0.6rem; font-size: 0.9em; color: var(--action); background: var(--panel); border-color: #4a4e5e; }
+.diagram-in-page svg { display: block; margin: 0 auto; height: auto; }
+.diagram-box-link { cursor: pointer; }
+.diagram-box-link:hover rect, .diagram-box-link:focus rect { stroke: var(--accent); }
+.diagram-box-link:focus { outline: none; }
+
 /* A page beside a diagram: the diagram on the left, the page on the right, each its own scroll. */
 .unsplit { display: contents; }
 .split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.2rem; height: calc(100vh - 3rem); }

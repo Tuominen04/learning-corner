@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { offsetOf, parseBody, serializeBody, wholeConstructs } from "./body";
+import { collectImages, offsetOf, parseBody, serializeBody, wholeConstructs } from "./body";
 
 // Every case here is a document that must survive being opened and saved untouched. A failure
 // in this file is silent data loss in the user's own files, which is the worst thing this
@@ -14,6 +14,11 @@ const roundTrips = [
   ["a single page", "Nine acids.[^cite:01J8ZQ8D4Q6S8W0W2Y4A6C8E0G@44]"],
   ["a paragraph", "Nine acids.[^cite:01J8ZQ8D4Q6S8W0W2Y4A6C8E0G@para:7]"],
   ["a chapter", "Nine acids.[^cite:01J8ZQ8D4Q6S8W0W2Y4A6C8E0G@chapter:3]"],
+  ["a section", "Nine acids.[^cite:01J8ZQ8D4Q6S8W0W2Y4A6C8E0G@section:Methods]"],
+  [
+    "a section with spaces and a colon, cited in the sentence",
+    "[^cite:01J8ZQ8D4Q6S8W0W2Y4A6C8E0G@section:Results: year two!narrative] found nine.",
+  ],
   // The one that decides the parser: a timestamp carries colons of its own, so only the
   // first may separate the kind from the value.
   ["a timestamp", "An hour in.[^cite:01J8ZQ8D4Q6S8W0W2Y4A6C8E0G@time:1:04:22]"],
@@ -26,7 +31,7 @@ const roundTrips = [
   // Refused rather than treated as a synonym for `@44`: two spellings for one value is how a
   // document stops round-tripping byte-identically. It stays literal text, and still survives.
   ["an explicit page kind, left as prose", "[^cite:01J8ZQ8D4Q6S8W0W2Y4A6C8E0G@page:44]"],
-  ["an unknown locator kind, left as prose", "[^cite:01J8ZQ8D4Q6S8W0W2Y4A6C8E0G@section:2]"],
+  ["an unknown locator kind, left as prose", "[^cite:01J8ZQ8D4Q6S8W0W2Y4A6C8E0G@line:2]"],
   ["a document link", "See [[01J8ZQ9C3P5R7T9V1X3Z5B7D9F]] for the kinds."],
   [
     "both, in one paragraph",
@@ -101,6 +106,22 @@ describe("parsing", () => {
 // Round-tripping proves nothing at all about a heading: `####### Not a heading` survives
 // perfectly either way. These say which blocks were *understood* as headings, which is what
 // decides whether the file on disk still means what the editor is showing.
+describe("the pictures a body names", () => {
+  it("are the files beside the page, each once, and not the diagrams it shows", () => {
+    const body = [
+      "![Photo](photo.png) and ![again](photo.png) and ![Other](other.jpg)",
+      "",
+      "![Family tree](diagram:01J8ZQ7B2N4Q6S8W0W2Y4A6C8E)",
+    ].join("\n");
+    expect(collectImages(parseBody(body))).toEqual(["photo.png", "other.jpg"]);
+  });
+
+  it("round-trip with a diagram line, character for character", () => {
+    const body = "Before.\n\n![Family tree](diagram:01J8ZQ7B2N4Q6S8W0W2Y4A6C8E)\n\nAnd ![inline](diagram:01J8ZQ7B2N4Q6S8W0W2Y4A6C8F) here.";
+    expect(serializeBody(parseBody(body))).toBe(body);
+  });
+});
+
 describe("what a heading says", () => {
   function block(text: string) {
     return parseBody(text).content?.[0];
@@ -259,9 +280,16 @@ describe("what a citation says", () => {
   });
 
   it("leaves an unrecognised locator kind as text rather than guessing", () => {
-    // Reading `@section:2` as a page would cite a section as though it were a page number.
-    // Wrong output is worse than text that plainly did not parse.
-    expect(citation(`[^cite:${ID}@section:2]`)).toBeUndefined();
+    // Reading `@line:2` as a page would cite a line as though it were a page number. Wrong
+    // output is worse than text that plainly did not parse.
+    expect(citation(`[^cite:${ID}@line:2]`)).toBeUndefined();
+  });
+
+  it("reads a section as a citation, its name kept whole", () => {
+    expect(citation(`[^cite:${ID}@section:Results: year two]`)?.attrs?.["locator"]).toBe(
+      "section:Results: year two",
+    );
+    expect(citation(`[^cite:${ID}@section:]`)).toBeUndefined();
   });
 
   it("tells two citations of one source apart by their form", () => {
