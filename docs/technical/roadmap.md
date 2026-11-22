@@ -200,8 +200,8 @@ Designed in [ADR 0011](adr/0011-diagrams.md), accepted.
       layout without losing anything, undo, and be asked rather than overwritten when the file
       changed meanwhile. Found by search. *0.26.0*
 - [x] Export as SVG or PNG.
-- [ ] A diagram shown inside a page, with its boxes opening their pages, and one put into a page
-      from the writing tools.
+- [x] A diagram shown inside a page, with its boxes opening their pages, and one put into a page
+      from the writing tools; a page lists the diagrams that have a box for it. *0.26.0*
 - [ ] **Seen running by a person**, on Fedora: a family tree, a timeline and a network map made,
       shown in a page, and followed from a box to its page.
 

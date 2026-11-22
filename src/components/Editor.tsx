@@ -23,12 +23,14 @@ import {
   EngineFailure,
   type CitationRequest,
   type Document as Doc,
+  type DiagramSummary,
   type DocumentRef,
   type Form,
   type Source,
   type Page,
 } from "../lib/engine";
 import { insertLink, titlesOf } from "../lib/links";
+import { ADDRESS } from "../lib/diagram";
 import { insertImage } from "../lib/pictures";
 import { holdUntilSaved } from "../lib/saving";
 import { Backlinks } from "./Backlinks";
@@ -38,6 +40,8 @@ import { ExportPanel } from "./ExportPanel";
 import { ClaimSummary } from "./ClaimSummary";
 import { ClaimMarks, showClaims as markClaims } from "./claimMarks";
 import { DocumentLinks, type LinkTargets } from "./DocumentLinkView";
+import { DiagramPicker } from "./DiagramPicker";
+import { DiagramsInPages, type DiagramsAround } from "./DiagramInPage";
 import { DocumentImages } from "./ImageView";
 import { ImagePicker } from "./ImagePicker";
 import { LinkPicker } from "./LinkPicker";
@@ -59,6 +63,7 @@ type Panel =
   | { tool: "cite" }
   | { tool: "picture" }
   | { tool: "link" }
+  | { tool: "diagram" }
   | { tool: "split"; from: number; to: number };
 
 /**
@@ -87,6 +92,7 @@ export function Editor({
   onSaved,
   onRename,
   onOpenDocument,
+  onOpenDiagram,
   showClaims,
   onShowClaims,
 }: {
@@ -96,6 +102,8 @@ export function Editor({
   onSaved: (d: Doc) => void;
   onRename: (id: string, title: string) => void;
   onOpenDocument: (id: string) => void;
+  /** Go to a diagram, to change it: from one this page shows, or one that points here. */
+  onOpenDiagram: (id: string) => void;
   /** Whether claims are marked. Kept above the editor, so it holds from document to document. */
   showClaims: boolean;
   onShowClaims: (show: boolean) => void;
@@ -109,6 +117,9 @@ export function Editor({
 
   // The documents linking here. Asked for once, when a document opens.
   const [backlinks, setBacklinks] = useState<DocumentRef[]>([]);
+
+  // The diagrams with a box that points at this page, asked for the same way.
+  const [onDiagrams, setOnDiagrams] = useState<DiagramSummary[]>([]);
 
   // What each citation in this document reads as. Empty until the engine answers.
   const [rendered, setRendered] = useState<Map<string, string | null>>(new Map());
@@ -326,6 +337,27 @@ export function Editor({
     };
   }, [document.id]);
 
+  useEffect(() => {
+    let live = true;
+    engine.document
+      .diagrams(document.id)
+      .then((found) => {
+        if (live) setOnDiagrams(found?.pointing_here ?? []);
+      })
+      .catch(() => {
+        // As for backlinks: a failed lookup is no reason to say there are none.
+      });
+    return () => {
+      live = false;
+    };
+  }, [document.id]);
+
+  /** What a diagram shown in the text needs: the tree, for titles, and ways to go elsewhere. */
+  const diagramsAround = useMemo<DiagramsAround>(
+    () => ({ pages, onOpenDocument, onOpenDiagram }),
+    [pages, onOpenDocument, onOpenDiagram],
+  );
+
   /**
    * What a link in the text reads as, and what following one does.
    *
@@ -503,6 +535,12 @@ export function Editor({
     if (editor) insertLink(editor, id);
   }
 
+  /** A diagram, shown here: one picture line naming it, with its title for the words. */
+  function diagramChosen(id: string, title: string) {
+    setPanel(null);
+    if (editor) insertImage(editor, `${ADDRESS}${id}`, title);
+  }
+
   /**
    * Take the selection out into a new document.
    *
@@ -650,6 +688,14 @@ export function Editor({
           </button>
           <button
             className="tool"
+            title="Show one of your diagrams here"
+            onClick={() => setPanel({ tool: "diagram" })}
+            disabled={panel?.tool === "diagram"}
+          >
+            Diagram
+          </button>
+          <button
+            className="tool"
             title="Cite a source for what you wrote"
             onClick={() => setPanel({ tool: "cite" })}
             disabled={panel?.tool === "cite"}
@@ -689,6 +735,10 @@ export function Editor({
               />
             )}
 
+            {panel.tool === "diagram" && (
+              <DiagramPicker onChoose={diagramChosen} onCancel={() => setPanel(null)} />
+            )}
+
             {panel.tool === "split" && (
               <SplitPicker
                 suggested={suggestedTitle(editor, panel)}
@@ -719,7 +769,9 @@ export function Editor({
         <RenderedCitations.Provider value={rendered}>
           <DocumentImages.Provider value={shown}>
             <DocumentLinks.Provider value={links}>
-              <EditorContent editor={editor} className="prose" />
+              <DiagramsInPages.Provider value={diagramsAround}>
+                <EditorContent editor={editor} className="prose" />
+              </DiagramsInPages.Provider>
             </DocumentLinks.Provider>
           </DocumentImages.Provider>
         </RenderedCitations.Provider>
@@ -727,6 +779,21 @@ export function Editor({
         <ReferenceList entries={cited === "" ? [] : references} />
 
         <Backlinks entries={backlinks} onOpen={onOpenDocument} />
+
+        {onDiagrams.length > 0 && (
+          <section className="backlinks on-diagrams">
+            <h3>On diagrams</h3>
+            <ul>
+              {onDiagrams.map((d) => (
+                <li key={d.id}>
+                  <button className="ghost" onClick={() => onOpenDiagram(d.id)}>
+                    {d.title}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         <footer className="note">
           Markdown with citations, links and pictures. Type <code># </code> for a heading, up to
