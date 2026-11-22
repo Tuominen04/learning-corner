@@ -25,6 +25,7 @@ import {
   ROLES,
   SOURCE_TYPES,
   tidy,
+  today,
   type Editable,
 } from "../lib/sources";
 
@@ -37,17 +38,6 @@ import {
  */
 const CHANGEABLE = new Set<SourceType>(["web-page", "video", "audio"]);
 
-/** Today, as a full date — the answer somebody wants when they record reading something. */
-function today(): SourceDate {
-  const now = new Date();
-  return {
-    kind: "full",
-    year: now.getFullYear(),
-    month: now.getMonth() + 1,
-    day: now.getDate(),
-  };
-}
-
 // The form for one source.
 //
 // Two rules run through it. **The type decides the questions** — a book is asked for its
@@ -58,16 +48,20 @@ function today(): SourceDate {
 
 export function SourceForm({
   existing,
+  start,
   onSaved,
   onCancel,
 }: {
   existing: Source | null;
+  /** What a new source begins as, instead of a blank book: another page from the same site. */
+  start?: Source | null;
   /** The type travels with the result because naming a missing field depends on it: the same
-   * `container` is a journal for an article and a book for a chapter. */
-  onSaved: (id: string, missing: Field[], type: SourceType) => void;
+   * `container` is a journal for an article and a book for a chapter. The source is what was
+   * saved, for whatever wants to offer the next step from it. */
+  onSaved: (id: string, missing: Field[], type: SourceType, saved: Source) => void;
   onCancel: () => void;
 }) {
-  const [source, setSource] = useState<Source>(existing ?? blankSource("book"));
+  const [source, setSource] = useState<Source>(existing ?? start ?? blankSource("book"));
   const [required, setRequired] = useState<Field[]>([]);
   const [extras, setExtras] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -166,11 +160,11 @@ export function SourceForm({
       if (ready.id) {
         const missing = await engine.source.update(ready);
         await savePaper(ready.id);
-        onSaved(ready.id, missing, ready.type);
+        onSaved(ready.id, missing, ready.type, ready);
       } else {
         const saved = await engine.source.create(ready);
         await savePaper(saved.id);
-        onSaved(saved.id, saved.missing, ready.type);
+        onSaved(saved.id, saved.missing, ready.type, { ...ready, id: saved.id });
       }
     } catch (thrown) {
       setError(thrown instanceof EngineFailure ? thrown.message : String(thrown));

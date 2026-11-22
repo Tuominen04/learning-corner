@@ -4,7 +4,7 @@
 // *requires* — that is a fact about APA 7 and belongs with the formatters — but what to call a
 // field to somebody filling in a form is presentation, and presentation is this side's job.
 
-import type { Contributor, Field, Role, Source, SourceType } from "./engine";
+import type { Contributor, Field, Role, Source, SourceDate, SourceType } from "./engine";
 
 export const SOURCE_TYPES: { value: SourceType; label: string; hint: string }[] = [
   { value: "book", label: "Book", hint: "A whole book by one or more authors" },
@@ -237,6 +237,42 @@ export function blankSource(type: SourceType): Source {
     url: null,
     retrieved: null,
     appraisal: null,
+  };
+}
+
+/** Today, as a full date — the answer somebody wants when they record reading something. */
+export function today(): SourceDate {
+  const now = new Date();
+  return {
+    kind: "full",
+    year: now.getFullYear(),
+    month: now.getMonth() + 1,
+    day: now.getDate(),
+  };
+}
+
+/**
+ * A new web page to fill in, for somebody who is adding several from one site.
+ *
+ * What is carried over is what the pages of one site share: the site and a *group* author — an
+ * organisation that publishes everything on its own site. Not the publisher: a web page's form
+ * does not ask for one, and a value copied into a box nobody can see is kept and never shown.
+ * What is left
+ * empty is what differs from page to page: the title, the address, the date it was published,
+ * and any *person* named as an author. A person copied from one page onto the next is the kind
+ * of mistake nobody notices until the reference list is read, so the choice is the safer one:
+ * a blank that has to be filled in, never a wrong name that does not.
+ *
+ * Not carried at all: how much the source is trusted, which is a judgement made of one page.
+ * The retrieval date is today's, because the new page is being read now.
+ */
+export function anotherPageFrom(source: Source): Source {
+  const groups = source.contributors.filter((c) => isGroup(c) && contributorName(c) !== "");
+  return {
+    ...blankSource("web-page"),
+    site: source.site,
+    contributors: groups.length > 0 ? groups.map((c) => ({ ...c })) : [emptyContributor("person")],
+    retrieved: today(),
   };
 }
 
