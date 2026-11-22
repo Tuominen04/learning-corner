@@ -18,7 +18,10 @@ diagram a name, and pick what kind it is.
   from a parent to a child puts the parent above; **Running down** turns the whole thing to run
   to the right instead. **Earlier** and **Later** move a box among its neighbours in the same
   layer.
-- **Timeline** — a historical path: boxes in order of when. Each box says *when* in your own
+- **Timeline** — a historical path: boxes in order of when, left to right. Boxes with the same
+  year stand in one column. A line of events that does not split stays on one level; where one
+  event leads to two, the two grow out of it, one above and one below.
+  Each box says *when* in your own
   words — *1850*, *c. 1200*, *3 May 1850*, *500 BC*, *the late Bronze Age*. The app puts boxes in
   order of the year it can read from the words; those with no year in them come after, in the
   order you made them.
@@ -39,7 +42,10 @@ lets go of where you dragged things, and **Undo** brings them back.
 
 A box for a page is not a copy of it. It says the page's title as it is now, so renaming the page
 renames the box — unless you give the box words of its own, which win. Double-click the box, or
-choose **Open the page**, and you are at the page with the details. A box can be pointed at
+choose **Open the page**, and the page opens on the right half of the screen, beside the diagram.
+The side panel steps out of the way to give you room — **Show panel** brings it back — and you can
+edit the diagram and the page at the same time. **Close page** gives the whole screen back to the
+diagram; **Open on its own** takes the page to the Documents view. A box can be pointed at
 another page, or **Unlink**ed and left as a label.
 
 If the page is later deleted, the box stays where it was, marked as pointing at a page that is

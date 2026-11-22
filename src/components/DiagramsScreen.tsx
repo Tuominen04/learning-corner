@@ -38,13 +38,17 @@ export function DiagramsScreen({
   pages,
   open,
   onOpen,
-  onOpenDocument,
+  onOpenPage,
+  besideOpen,
 }: {
   pages: Page[];
   /** The diagram being edited, if one is. Held above, so a search result can open one. */
   open: string | null;
   onOpen: (id: string | null) => void;
-  onOpenDocument: (id: string) => void;
+  /** Open a page beside the diagram. */
+  onOpenPage: (id: string) => void;
+  /** A page is open beside it, so the diagram gives up room. */
+  besideOpen: boolean;
 }) {
   const [list, setList] = useState<DiagramSummary[] | null>(null);
   const [title, setTitle] = useState("");
@@ -76,7 +80,8 @@ export function DiagramsScreen({
         id={open}
         pages={pages}
         onBack={() => onOpen(null)}
-        onOpenDocument={onOpenDocument}
+        onOpenPage={onOpenPage}
+        besideOpen={besideOpen}
         onDeleted={() => onOpen(null)}
       />
     );

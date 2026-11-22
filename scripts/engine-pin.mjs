@@ -22,6 +22,16 @@ export function lockedSource(lock) {
 }
 
 /**
+ * Whether the lock records the engine as a folder on this machine — an entry with no `source` —
+ * which is what a `[patch]` in use looks like. A patch whose version is not the one the lock
+ * holds is *not* in use: Cargo warns that it is unused, keeps the pinned entry and files the
+ * patch away under `[[patch.unused]]`, so the lock still names the tag.
+ */
+export function recordsLocalEngine(lock) {
+  return lockedSource(lock) === null;
+}
+
+/**
  * Whether a manifest and a lock, as they stand, pin a tagged release — and the same one. The
  * lock is the one that matters: it is what a build from main actually resolves, and the only
  * file a local engine changes.

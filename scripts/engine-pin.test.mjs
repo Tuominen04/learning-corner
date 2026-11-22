@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-import { ENGINE_URL, lockedSource, pinnedTag, verify } from "./engine-pin.mjs";
+import { ENGINE_URL, lockedSource, pinnedTag, recordsLocalEngine, verify } from "./engine-pin.mjs";
 
 describe("the pin as committed", () => {
   it("is a tagged release, and the lock agrees with it", () => {
@@ -74,5 +74,22 @@ describe("what it refuses", () => {
   it("a tag that only begins like the pinned one", () => {
     const longer = `git+${ENGINE_URL}?tag=v1.2.0-rc.1#d2a4f5440979e3dc20fbb2acf8960f271bf3c27c`;
     expect(verify(manifest, lockWith(longer))).toMatch(/not the tag/);
+  });
+});
+
+describe("whether a local engine is really in use", () => {
+  it("is when the lock's engine is a folder, with no source", () => {
+    expect(recordsLocalEngine(lockWith(null))).toBe(true);
+  });
+
+  it("is not while the lock still holds the tagged release", () => {
+    expect(recordsLocalEngine(lockWith(tagged))).toBe(false);
+  });
+
+  it("is not when the patch is only filed away as unused, at another version than the lock holds", () => {
+    // What Cargo writes for a checkout that has moved on: the pinned entry stays, and the
+    // patch is listed under [[patch.unused]] — which also has an engine entry with no source.
+    const unused = `${lockWith(tagged)}\n[[patch.unused]]\nname = "lc-engine"\nversion = "1.3.0"\n`;
+    expect(recordsLocalEngine(unused)).toBe(false);
   });
 });
