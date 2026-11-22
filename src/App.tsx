@@ -204,6 +204,11 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
   // The diagram being edited in the Diagrams view, if one is. Here for the same reason.
   const [openDiagram, setOpenDiagram] = useState<string | null>(null);
 
+  // A page open beside the diagram, while there is one. It is its own document, apart from the
+  // one in the Documents view, so closing it leaves that one as it was; both halves stay
+  // editable, each saving itself.
+  const [beside, setBeside] = useState<Document | null>(null);
+
   // Searching is navigating, so it lives in the sidebar with the tree rather than being a
   // place you go. While there is a query the results stand in for the tree; clear it and the
   // tree is back, unchanged.
@@ -262,6 +267,16 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
         setOpen(doc);
         setView("documents");
       })
+      .catch((thrown: unknown) => {
+        setError(thrown instanceof EngineFailure ? thrown.message : String(thrown));
+      });
+  }, []);
+
+  const openBeside = useCallback((id: string) => {
+    setError(null);
+    engine.document
+      .read(id)
+      .then(setBeside)
       .catch((thrown: unknown) => {
         setError(thrown instanceof EngineFailure ? thrown.message : String(thrown));
       });
@@ -616,12 +631,44 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
             onCancel={() => setMoving(null)}
           />
         ) : view === "diagrams" ? (
-          <DiagramsScreen
-            pages={pages}
-            open={openDiagram}
-            onOpen={setOpenDiagram}
-            onOpenDocument={openDocument}
-          />
+          <div className={beside && openDiagram ? "split" : "unsplit"}>
+            <DiagramsScreen
+              pages={pages}
+              open={openDiagram}
+              onOpen={(id) => {
+                setOpenDiagram(id);
+                if (id === null) setBeside(null);
+              }}
+              onOpenPage={openBeside}
+              besideOpen={beside !== null && openDiagram !== null}
+            />
+            {beside && openDiagram && (
+              <section className="split-page" aria-label="Page beside the diagram">
+                <div className="split-bar">
+                  <button className="secondary" onClick={() => openDocument(beside.id)}>
+                    Open on its own
+                  </button>
+                  <button className="ghost" onClick={() => setBeside(null)}>
+                    Close page
+                  </button>
+                </div>
+                <Editor
+                  key={`${beside.id}:${reloaded}`}
+                  document={beside}
+                  pages={pages}
+                  onSaved={(saved) => {
+                    setBeside((current) => (current?.id === saved.id ? saved : current));
+                    setOpen((current) => (current?.id === saved.id ? saved : current));
+                    void refresh();
+                  }}
+                  onRename={renameDocument}
+                  onOpenDocument={openBeside}
+                  showClaims={showClaims}
+                  onShowClaims={setShowClaims}
+                />
+              </section>
+            )}
+          </div>
         ) : view === "graph" ? (
           // Made afresh each time the screen is shown, which is what reads the graph again:
           // whatever was written since is on it.

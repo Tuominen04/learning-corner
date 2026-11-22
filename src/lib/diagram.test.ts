@@ -28,6 +28,7 @@ import {
   setLayout,
   setLineLabel,
   setPage,
+  sides,
   setWhen,
   timelineOrder,
   toEdit,
@@ -250,7 +251,113 @@ describe("layouts", () => {
     const at = arrange(d, titles).boxes;
     const xs = timelineOrder(d.nodes).map((n) => at.get(n.id)!.x);
     expect([...xs].sort((a, b) => a - b)).toEqual(xs);
-    expect(new Set(xs).size).toBe(xs.length);
+    // One column for a year, so the two of 1850 share one; every other box has its own.
+    expect(at.get("late")!.x).toBe(at.get("same")!.x);
+    expect(new Set(xs).size).toBe(xs.length - 1);
+  });
+
+  describe("a timeline", () => {
+    const events = (nodes: ReturnType<typeof box>[], lines: ReturnType<typeof line>[] = []) =>
+      diagram({ layout: "timeline", nodes, lines });
+    const levels = (d: DiagramEdit) => {
+      const at = arrange(d, titles).boxes;
+      return Object.fromEntries(d.nodes.map((n) => [n.id, at.get(n.id)!.y]));
+    };
+
+    it("keeps what does not split on one level, whatever is joined to what", () => {
+      const d = events(
+        [box("a", { when: "33" }), box("b", { when: "1054" }), box("c", { when: "1517" }), box("alone", { when: "1800" })],
+        [line("a", "b"), line("b", "c")],
+      );
+      const y = levels(d);
+      expect(new Set(Object.values(y)).size).toBe(1);
+    });
+
+    it("lets a split grow out of its root: one branch above the level it stood on, one below", () => {
+      const d = events(
+        [
+          box("root", { when: "1000" }),
+          box("east", { when: "1054" }),
+          box("west", { when: "1054" }),
+        ],
+        [line("root", "east"), line("root", "west")],
+      );
+      const y = levels(d);
+      expect(y["east"]).not.toBe(y["west"]);
+      // Round the level the root stood on, not all on one side of it.
+      expect((y["east"]! + y["west"]!) / 2).toBeCloseTo(y["root"]!, 5);
+      const at = arrange(d, titles).boxes;
+      expect(at.get("east")!.x).toBe(at.get("west")!.x);
+      // And apart: no overlap in the column.
+      const gap = Math.abs(y["east"]! - y["west"]!);
+      expect(gap).toBeGreaterThanOrEqual((at.get("east")!.h + at.get("west")!.h) / 2);
+    });
+
+    it("grows each branch from the level it came from, and a merge stands between its parents", () => {
+      const d = events(
+        [
+          box("root", { when: "1000" }),
+          box("east", { when: "1054" }),
+          box("west", { when: "1054" }),
+          box("east-later", { when: "1500" }),
+          box("west-later", { when: "1500" }),
+          box("merged", { when: "2000" }),
+        ],
+        [
+          line("root", "east"),
+          line("root", "west"),
+          line("east", "east-later"),
+          line("west", "west-later"),
+          line("east-later", "merged"),
+          line("west-later", "merged"),
+        ],
+      );
+      const y = levels(d);
+      expect(y["east-later"]).toBeCloseTo(y["east"]!, 5);
+      expect(y["west-later"]).toBeCloseTo(y["west"]!, 5);
+      expect(y["merged"]).toBeCloseTo(y["root"]!, 5);
+    });
+
+    it("stacks boxes of one year that are not joined, round the main level", () => {
+      const d = events([box("a", { when: "1900" }), box("b", { when: "1900" }), box("c", { when: "1900" })]);
+      const y = levels(d);
+      const ys = Object.values(y).sort((p, q) => p - q);
+      expect(ys[1]).toBeCloseTo(0, 5);
+      expect(ys[0]).toBeLessThan(0);
+      expect(ys[2]).toBeGreaterThan(0);
+    });
+
+    it("puts boxes with no year after the dated ones, each in a column of its own", () => {
+      const d = events([box("quiet"), box("dated", { when: "1850" }), box("also")]);
+      const at = arrange(d, titles).boxes;
+      expect(at.get("dated")!.x).toBeLessThan(at.get("quiet")!.x);
+      expect(at.get("quiet")!.x).toBeLessThan(at.get("also")!.x);
+    });
+
+    it("is the same every time, and leaves no two boxes on each other", () => {
+      const d = events(
+        [box("r", { when: "1" }), box("a", { when: "2" }), box("b", { when: "2" }), box("c", { when: "2" })],
+        [line("r", "a"), line("r", "b"), line("r", "c")],
+      );
+      expect(arrange(d, titles)).toEqual(arrange(d, titles));
+      const boxes = [...arrange(d, titles).boxes.values()];
+      for (let i = 0; i < boxes.length; i += 1) {
+        for (let j = i + 1; j < boxes.length; j += 1) {
+          const a = boxes[i]!;
+          const b = boxes[j]!;
+          expect(Math.abs(a.x - b.x) >= (a.w + b.w) / 2 || Math.abs(a.y - b.y) >= (a.h + b.h) / 2).toBe(true);
+        }
+      }
+    });
+
+    it("joins boxes of one year top to bottom, and the rest left to right", () => {
+      const d = events([box("a", { when: "1" }), box("b", { when: "1" }), box("c", { when: "2" })]);
+      const at = arrange(d, titles).boxes;
+      expect(sides(d, at.get("a")!, at.get("b")!)).toEqual({ source: "bottom", target: "top" });
+      expect(sides(d, at.get("b")!, at.get("a")!)).toEqual({ source: "top", target: "bottom" });
+      expect(sides(d, at.get("a")!, at.get("c")!)).toEqual({ source: "right", target: "left" });
+      expect(sides(d, at.get("c")!, at.get("a")!)).toEqual({ source: "left", target: "right" });
+    });
   });
 
   it("read a year out of words", () => {
