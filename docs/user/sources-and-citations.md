@@ -90,8 +90,15 @@ you have to remember.
 
 ## Citing while you write
 
-Select what you wrote, choose **Cite**, and pick the source. Add a page number if you have
-one.
+Select what you wrote, choose **Cite**, and pick the source. Say where in it if you can: a
+**page** number, a **paragraph**, a **chapter**, a **timestamp** for a video or a lecture — or,
+for a web page and anything else with no page numbers, a **section**.
+
+A section is the heading the passage is under. Choose **Section** and type the heading, such as
+*Methods*; the citation reads *(WHO, 2019, Methods section)*. If you type the word *section*
+yourself, it is not said twice. A heading cannot contain `]` or `!`, or run onto a second line,
+because the app writes it into your file between those marks; it tells you at once if you type
+one, and changes nothing you typed.
 
 The citation appears in your text in proper APA 7 form, and you choose which shape fits the
 sentence:

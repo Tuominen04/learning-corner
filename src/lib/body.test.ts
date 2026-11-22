@@ -14,6 +14,11 @@ const roundTrips = [
   ["a single page", "Nine acids.[^cite:01J8ZQ8D4Q6S8W0W2Y4A6C8E0G@44]"],
   ["a paragraph", "Nine acids.[^cite:01J8ZQ8D4Q6S8W0W2Y4A6C8E0G@para:7]"],
   ["a chapter", "Nine acids.[^cite:01J8ZQ8D4Q6S8W0W2Y4A6C8E0G@chapter:3]"],
+  ["a section", "Nine acids.[^cite:01J8ZQ8D4Q6S8W0W2Y4A6C8E0G@section:Methods]"],
+  [
+    "a section with spaces and a colon, cited in the sentence",
+    "[^cite:01J8ZQ8D4Q6S8W0W2Y4A6C8E0G@section:Results: year two!narrative] found nine.",
+  ],
   // The one that decides the parser: a timestamp carries colons of its own, so only the
   // first may separate the kind from the value.
   ["a timestamp", "An hour in.[^cite:01J8ZQ8D4Q6S8W0W2Y4A6C8E0G@time:1:04:22]"],
@@ -26,7 +31,7 @@ const roundTrips = [
   // Refused rather than treated as a synonym for `@44`: two spellings for one value is how a
   // document stops round-tripping byte-identically. It stays literal text, and still survives.
   ["an explicit page kind, left as prose", "[^cite:01J8ZQ8D4Q6S8W0W2Y4A6C8E0G@page:44]"],
-  ["an unknown locator kind, left as prose", "[^cite:01J8ZQ8D4Q6S8W0W2Y4A6C8E0G@section:2]"],
+  ["an unknown locator kind, left as prose", "[^cite:01J8ZQ8D4Q6S8W0W2Y4A6C8E0G@line:2]"],
   ["a document link", "See [[01J8ZQ9C3P5R7T9V1X3Z5B7D9F]] for the kinds."],
   [
     "both, in one paragraph",
@@ -259,9 +264,16 @@ describe("what a citation says", () => {
   });
 
   it("leaves an unrecognised locator kind as text rather than guessing", () => {
-    // Reading `@section:2` as a page would cite a section as though it were a page number.
-    // Wrong output is worse than text that plainly did not parse.
-    expect(citation(`[^cite:${ID}@section:2]`)).toBeUndefined();
+    // Reading `@line:2` as a page would cite a line as though it were a page number. Wrong
+    // output is worse than text that plainly did not parse.
+    expect(citation(`[^cite:${ID}@line:2]`)).toBeUndefined();
+  });
+
+  it("reads a section as a citation, its name kept whole", () => {
+    expect(citation(`[^cite:${ID}@section:Results: year two]`)?.attrs?.["locator"]).toBe(
+      "section:Results: year two",
+    );
+    expect(citation(`[^cite:${ID}@section:]`)).toBeUndefined();
   });
 
   it("tells two citations of one source apart by their form", () => {

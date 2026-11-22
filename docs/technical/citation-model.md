@@ -143,7 +143,14 @@ format each citation against it.
 ### Locators
 
 The locator is stored raw and formatted by kind: `p. 44`, `pp. 44-46`, `para. 3`,
-`Chapter 2`, `1:14:22` for a timestamp. Ranges use an en dash on output.
+`Chapter 2`, `Methods section` for a section, `1:14:22` for a timestamp. Ranges use an en dash
+on output.
+
+A **section** is for a source with no page numbers, a web page above all: APA 7 §8.13 gives the
+heading the passage is under, followed by the word *section* — `(Smith, 2020, Conclusion
+section)`. The word is said once, so a heading already typed as `Methods section` or `Section
+3` is printed as it is. Quoted shortened headings, which APA also allows for long ones, are not
+special-cased: they print as typed, plus the word *section*.
 
 ## Claims
 

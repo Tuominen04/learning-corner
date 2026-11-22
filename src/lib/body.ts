@@ -30,11 +30,12 @@ export const IMAGE = "image";
  * the engine recognises and this side does not is one the editor turns into literal text the
  * next time somebody saves.
  *
- * A page is bare (`@44`, `@44-46`); every other kind names itself (`@time:1:04:22`). The
- * timestamp is why the value may contain colons and why only the first one separates.
+ * A page is bare (`@44`, `@44-46`); every other kind names itself (`@time:1:04:22`,
+ * `@section:Methods`). A timestamp and a section name are why the value may contain colons, and
+ * why only the first one separates. A value ends at `]` or `!`, so neither can be in one.
  */
 const CITATION_PATTERN =
-  /\[\^cite:([0-9A-HJKMNP-TV-Z]{26})(?:@((?:para|chapter|time):[^\]!]+|[^\]!:]+))?(!narrative)?\]/g;
+  /\[\^cite:([0-9A-HJKMNP-TV-Z]{26})(?:@((?:para|chapter|section|time):[^\]!]+|[^\]!:]+))?(!narrative)?\]/g;
 
 /** `[[<id>]]` */
 const LINK_PATTERN = /\[\[([0-9A-HJKMNP-TV-Z]{26})\]\]/g;

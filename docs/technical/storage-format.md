@@ -253,6 +253,7 @@ A citation names a source, and may also say **where** in it and **how** the sent
 | `[^cite:<id>@44-46]` | `(Nieminen, 2021, pp. 44–46)` |
 | `[^cite:<id>@para:7]` | `(Nieminen, 2021, para. 7)` |
 | `[^cite:<id>@chapter:3]` | `(Nieminen, 2021, Chapter 3)` |
+| `[^cite:<id>@section:Methods]` | `(Nieminen, 2021, Methods section)` |
 | `[^cite:<id>@time:1:04:22]` | `(Nieminen, 2021, 1:04:22)` |
 | `[^cite:<id>!narrative]` | `Nieminen (2021)` |
 | `[^cite:<id>@44!narrative]` | `Nieminen (2021, p. 44)` |
@@ -262,6 +263,12 @@ Three rules decide the shape, and each one is paying for something:
 **A page is written bare.** It is what almost every citation carries, and it is what this
 format already meant by `@44-46` before locator kinds existed. Every file written before the
 syntax grew reads identically afterwards — no migration and no `format_version` change.
+
+**A section is a heading, by name.** APA 7 §8.13 locates a quotation or paraphrase in a source with
+no page numbers — a web page, mostly — by the heading it is under. The name may hold spaces and
+colons, and ends, like every value, at `]` or `!`: neither can be in one, and the interface says
+so rather than stripping them. The word *section* is added when printed, once: a heading typed
+as `Methods section`, or `Section 3`, is printed as typed.
 
 **Parenthetical is never written.** It is the default. Writing it out would add five redundant
 characters to the great majority of citations in every document.

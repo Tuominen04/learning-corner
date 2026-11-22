@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { citationKey, toLocator, writeLocator } from "./citation";
+import { citationKey, locatorProblem, toLocator, writeLocator } from "./citation";
 import type { Locator } from "./engine";
 
 // The written form and the wire form have to agree, and the asymmetry between them is the
@@ -16,7 +16,15 @@ describe("reading a written locator", () => {
   it("maps each short prefix to its full kind", () => {
     expect(toLocator("para:7")).toEqual({ kind: "paragraph", value: "7" });
     expect(toLocator("chapter:3")).toEqual({ kind: "chapter", value: "3" });
+    expect(toLocator("section:Methods")).toEqual({ kind: "section", value: "Methods" });
     expect(toLocator("time:1:04:22")).toEqual({ kind: "timestamp", value: "1:04:22" });
+  });
+
+  it("keeps every colon and space of a section name", () => {
+    expect(toLocator("section:Results: the second year")).toEqual({
+      kind: "section",
+      value: "Results: the second year",
+    });
   });
 
   it("keeps every colon of a timestamp", () => {
@@ -31,12 +39,12 @@ describe("reading a written locator", () => {
   });
 
   it("refuses an unrecognised kind rather than guessing at a page", () => {
-    // `section:2` read as a page would cite a section as though it were a page number. A
-    // citation that renders without a locator is honest; one that renders the wrong locator
-    // is not.
-    expect(toLocator("section:2")).toBeNull();
+    // `line:2` read as a page would cite a line as though it were a page number. A citation
+    // that renders without a locator is honest; one that renders the wrong locator is not.
+    expect(toLocator("line:2")).toBeNull();
     expect(toLocator("page:44")).toBeNull();
     expect(toLocator("time:")).toBeNull();
+    expect(toLocator("section:")).toBeNull();
   });
 });
 
@@ -46,6 +54,7 @@ describe("writing a locator back", () => {
     { kind: "page", value: "44-46" },
     { kind: "paragraph", value: "7" },
     { kind: "chapter", value: "3" },
+    { kind: "section", value: "Results: the second year" },
     { kind: "timestamp", value: "1:04:22" },
   ];
 
@@ -61,6 +70,33 @@ describe("writing a locator back", () => {
 
   it("is absent for nothing at all", () => {
     expect(writeLocator(null)).toBeNull();
+  });
+});
+
+describe("what cannot be written as typed", () => {
+  it("is anything the file's syntax would end at: ] or !, or a second line", () => {
+    for (const kind of ["", "para", "chapter", "section", "time"]) {
+      expect(locatorProblem(kind, "a]b")).not.toBeNull();
+      expect(locatorProblem(kind, "wow!")).not.toBeNull();
+      expect(locatorProblem(kind, "one\ntwo")).not.toBeNull();
+    }
+  });
+
+  it("says so in the section's own words for a section", () => {
+    expect(locatorProblem("section", "Methods!")).toMatch(/section name/);
+  });
+
+  it("is a colon in a page, which is written bare, and only there", () => {
+    expect(locatorProblem("", "4:4")).toMatch(/colon/);
+    expect(locatorProblem("time", "1:04:22")).toBeNull();
+    expect(locatorProblem("section", "Results: year two")).toBeNull();
+  });
+
+  it("is nothing for what is ordinary, in any alphabet", () => {
+    expect(locatorProblem("", "44-46")).toBeNull();
+    expect(locatorProblem("section", "Tulokset ja pohdinta")).toBeNull();
+    expect(locatorProblem("section", "Результаты")).toBeNull();
+    expect(locatorProblem("section", "")).toBeNull();
   });
 });
 

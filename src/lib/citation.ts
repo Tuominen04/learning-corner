@@ -19,6 +19,7 @@ import type { Form, Locator } from "./engine";
 const PREFIXES: { written: string; kind: Locator["kind"] }[] = [
   { written: "para", kind: "paragraph" },
   { written: "chapter", kind: "chapter" },
+  { written: "section", kind: "section" },
   { written: "time", kind: "timestamp" },
 ];
 
@@ -26,7 +27,7 @@ const PREFIXES: { written: string; kind: Locator["kind"] }[] = [
  * A locator as written in a document, typed for the engine.
  *
  * `null` for a locator that is absent or unrecognised. Unrecognised is not guessed at as a
- * page: citing a section as though it were a page number is wrong output, and wrong output is
+ * page: citing a chapter as though it were a page number is wrong output, and wrong output is
  * worse than a citation that renders without a locator at all.
  */
 export function toLocator(written: string | null): Locator | null {
@@ -55,6 +56,26 @@ export function writeLocator(locator: Locator | null): string | null {
   if (locator.kind === "page") return locator.value;
   const match = PREFIXES.find((p) => p.kind === locator.kind);
   return match ? `${match.written}:${locator.value}` : null;
+}
+
+/**
+ * Why a locator cannot be written as typed, or `null` when it can.
+ *
+ * A value ends at `]` or `!` — that is where the file's own syntax ends it — and cannot run over
+ * a line. A page, being written bare, cannot hold a colon either: the first colon would make
+ * the rest a kind. Nothing is stripped on the way in, because quietly changing what somebody
+ * typed is a worse answer than saying why it cannot be kept.
+ */
+export function locatorProblem(kind: string, value: string): string | null {
+  if (/[\]!\r\n]/.test(value)) {
+    return kind === "section"
+      ? "A section name cannot contain ] or !, or run onto a second line."
+      : "That cannot contain ] or !, or run onto a second line.";
+  }
+  if (kind === "" && value.includes(":")) {
+    return "A page number cannot contain a colon.";
+  }
+  return null;
 }
 
 /**
