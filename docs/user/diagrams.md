@@ -1,7 +1,7 @@
 # Diagrams
 
 > **Audience:** People using Learning Corner
-> **Status:** In progress — making and changing diagrams works; showing one inside a page comes next
+> **Status:** Implemented
 > **Last reviewed:** 2026-11-18
 
 [The library graph](library-graph.md) draws itself from what you wrote. A **diagram** is the
@@ -18,7 +18,10 @@ diagram a name, and pick what kind it is.
   from a parent to a child puts the parent above; **Running down** turns the whole thing to run
   to the right instead. **Earlier** and **Later** move a box among its neighbours in the same
   layer.
-- **Timeline** — a historical path: boxes in order of when. Each box says *when* in your own
+- **Timeline** — a historical path: boxes in order of when, left to right. Boxes with the same
+  year stand in one column. A line of events that does not split stays on one level; where one
+  event leads to two, the two grow out of it, one above and one below.
+  Each box says *when* in your own
   words — *1850*, *c. 1200*, *3 May 1850*, *500 BC*, *the late Bronze Age*. The app puts boxes in
   order of the year it can read from the words; those with no year in them come after, in the
   order you made them.
@@ -39,7 +42,10 @@ lets go of where you dragged things, and **Undo** brings them back.
 
 A box for a page is not a copy of it. It says the page's title as it is now, so renaming the page
 renames the box — unless you give the box words of its own, which win. Double-click the box, or
-choose **Open the page**, and you are at the page with the details. A box can be pointed at
+choose **Open the page**, and the page opens on the right half of the screen, beside the diagram.
+The side panel steps out of the way to give you room — **Show panel** brings it back — and you can
+edit the diagram and the page at the same time. **Close page** gives the whole screen back to the
+diagram; **Open on its own** takes the page to the Documents view. A box can be pointed at
 another page, or **Unlink**ed and left as a label.
 
 If the page is later deleted, the box stays where it was, marked as pointing at a page that is
@@ -60,6 +66,23 @@ Everything the picture can do is also beside it, as ordinary controls: every box
 list, and choosing one there lets you change its words, its page and its place in order from the
 keyboard alone.
 
+## In a page
+
+A diagram can be shown inside a page, where the writing is about it. In the writing tools, choose
+**Diagram** and pick one: the page then shows it, drawn at the page's width, under its name. Click
+a box for a page and you are at that page; **Edit** goes to the diagram itself.
+
+The page does not hold a copy. All it holds is one line naming the diagram, so a diagram you
+correct once is right on every page that shows it, and one diagram can be shown on as many pages as
+you like. Its words in the page — the name shown beside it — are the page's own: renaming the
+diagram does not change them.
+
+If a page names a diagram that is not there any more — you deleted it, or the line was typed by
+hand — the page says so in its place, and the rest of what you wrote is untouched.
+
+A page also lists, at the foot, **On diagrams**: every diagram with a box for this page, so from a
+page you can find the pictures it appears in.
+
 ## Saving it as a picture
 
 **Save as a picture** saves the diagram as **SVG**, which stays sharp at any size, or **PNG**,
@@ -74,11 +97,6 @@ line that shows it — and you are told which pages those are first.
 ## Finding one
 
 Search finds a diagram by its name and by what its boxes say.
-
-## Coming next
-
-Showing a diagram **inside a page**, where the writing is about it, with each box opening its
-page — and putting one there from the writing tools.
 
 ---
 

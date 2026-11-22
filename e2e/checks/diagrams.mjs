@@ -182,6 +182,19 @@ const pointed = (await lastEdit()).nodes[2];
 check("what is saved is the page's id and no words of its own", pointed.page === (await page.evaluate(() => window.__ids.HISTORY)) && pointed.label === null, JSON.stringify(pointed));
 check("the inspector says what it points at, and can open it", (await page.locator(".diagram-page").innerText()).includes("History") && (await page.getByRole("button", { name: "Open the page" }).count()) === 1);
 
+// ---- a page beside the diagram -------------------------------------------------------------
+
+await page.getByRole("button", { name: "Open the page" }).click();
+await page.locator(".split-page .editor, .split-page .ProseMirror").first().waitFor();
+check("opening a box's page puts it beside the diagram, not in place of it", (await page.locator(".split .diagram-editor").count()) === 1 && (await page.locator(".split-page").count()) === 1);
+check("and the diagram's panel gives its room up", (await page.locator(".diagram-panel").count()) === 0);
+check("both stay editable", (await page.locator(".split-page .ProseMirror[contenteditable=true]").count()) >= 1 && (await page.locator(".diagram-box").count()) >= 3);
+await page.getByRole("button", { name: "Show panel" }).click();
+check("the panel can be brought back", (await page.locator(".diagram-panel").count()) === 1);
+await page.getByRole("button", { name: "Close page" }).click();
+check("closing the page gives the whole screen back to the diagram", (await page.locator(".split-page").count()) === 0 && (await page.locator(".diagram-panel").count()) === 1);
+await page.locator(`.react-flow__node`, { hasText: "History" }).first().click();
+
 // ---- a line, by dragging from one box to another -------------------------------------------
 
 const handle = page.locator(`.react-flow__node[data-id="${first}"] .react-flow__handle-bottom`);

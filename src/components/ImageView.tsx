@@ -1,6 +1,9 @@
 import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
 import { createContext, useContext } from "react";
 
+import { ADDRESS } from "../lib/diagram";
+import { DiagramInPage } from "./DiagramInPage";
+
 // A picture as the document shows it.
 //
 // The file lives beside the document and the body names it plainly — `![Diagram](diagram.png)`
@@ -26,6 +29,19 @@ export function ImageView({ node }: NodeViewProps) {
 
   const name = String(node.attrs["name"] ?? "");
   const alt = String(node.attrs["alt"] ?? "");
+
+  // `diagram:<id>` is a picture line that names a diagram. The line is the page's own, and is
+  // written back exactly as it was read; what is drawn here is the diagram, from its own file.
+  // Any such address is a diagram's, even one that is not an identifier: that one reads as a
+  // diagram that is not there, which is what a line that cannot be followed is.
+  if (name.startsWith(ADDRESS)) {
+    return (
+      <NodeViewWrapper as="span" className="picture diagram-line" data-image={name} contentEditable={false}>
+        <DiagramInPage id={name.slice(ADDRESS.length)} alt={alt} />
+      </NodeViewWrapper>
+    );
+  }
+
   const known = images.has(name);
   const src = images.get(name) ?? null;
 

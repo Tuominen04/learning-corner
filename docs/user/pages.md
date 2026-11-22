@@ -193,7 +193,8 @@ turns out to be wrong, *"What do I now need to go back and fix?"*
 
 Once you have more than a handful of pages, the sidebar stops showing you how things actually
 relate. That is what [the library graph](library-graph.md) is for — the same pages, drawn as a
-picture.
+picture. And for a picture of a subject you build yourself — a family tree, a timeline — see
+[Diagrams](diagrams.md), which a page can show.
 
 ## Libraries from an earlier version
 

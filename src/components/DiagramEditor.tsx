@@ -181,7 +181,8 @@ export function DiagramEditor(props: {
   id: string;
   pages: Page[];
   onBack: () => void;
-  onOpenDocument: (id: string) => void;
+  onOpenPage: (id: string) => void;
+  besideOpen: boolean;
   onDeleted: () => void;
 }) {
   return (
@@ -195,15 +196,22 @@ function Workspace({
   id,
   pages,
   onBack,
-  onOpenDocument,
+  onOpenPage,
+  besideOpen,
   onDeleted,
 }: {
   id: string;
   pages: Page[];
   onBack: () => void;
-  onOpenDocument: (id: string) => void;
+  onOpenPage: (id: string) => void;
+  besideOpen: boolean;
   onDeleted: () => void;
 }) {
+  // The side panel gives its room to a page opened beside the diagram, and can be brought back.
+  // The person's choice only counts for the state it was made in, so opening or closing a page
+  // starts over from the sensible default: hidden while a page is beside, shown otherwise.
+  const [panelChoice, setPanelChoice] = useState<{ beside: boolean; hidden: boolean } | null>(null);
+  const panelHidden = panelChoice && panelChoice.beside === besideOpen ? panelChoice.hidden : besideOpen;
   const titles = useMemo(() => pageTitles(pages), [pages]);
   const [history, setHistory] = useState<History | null>(null);
   const [status, setStatus] = useState<Status>("saved");
@@ -371,7 +379,9 @@ function Workspace({
         sourceHandle: at.source,
         targetHandle: at.target,
         label: l.label ?? undefined,
-        type: draft.layout === "layered" ? "smoothstep" : "straight",
+        // Layers and branches are drawn as a tree grows: out, across and down. Only a free
+        // diagram's lines are straight, because there they run where the person put the boxes.
+        type: draft.layout === "free" ? "straight" : "smoothstep",
         markerEnd: { type: MarkerType.ArrowClosed },
         selected: current?.kind === "line" && current.index === index,
         interactionWidth: 24,
@@ -512,6 +522,12 @@ function Workspace({
             onRename={(title) => edit((d) => setTitle(d, title))}
           />
         </h2>
+        <button
+          className="secondary"
+          onClick={() => setPanelChoice({ beside: besideOpen, hidden: !panelHidden })}
+        >
+          {panelHidden ? "Show panel" : "Hide panel"}
+        </button>
         <span className={`diagram-status ${status}`} role="status">
           {status === "saved" && "Saved"}
           {status === "saving" && "Saving…"}
@@ -592,7 +608,7 @@ function Workspace({
         )}
       </div>
 
-      <div className="diagram-body">
+      <div className={panelHidden ? "diagram-body no-panel" : "diagram-body"}>
         <div className="diagram-canvas" ref={area}>
           <ReactFlow
             nodes={nodes}
@@ -607,7 +623,7 @@ function Workspace({
             onPaneClick={() => setSelected(null)}
             onNodeDoubleClick={(_, n) => {
               const found = draft.nodes.find((b) => b.id === n.id);
-              if (found?.page && !isGone(found, titles)) onOpenDocument(found.page);
+              if (found?.page && !isGone(found, titles)) onOpenPage(found.page);
             }}
             onNodeDragStop={(_, __, dragged) => {
               edit((d) =>
@@ -650,6 +666,7 @@ function Workspace({
           )}
         </div>
 
+        {!panelHidden && (
         <div className="diagram-panel">
           {picking !== null && (
             <PagePicker
@@ -685,7 +702,7 @@ function Workspace({
                   <strong>{isGone(box, titles) ? "a page that is gone" : titles.get(box.page)}</strong>
                   <span className="actions">
                     {!isGone(box, titles) && (
-                      <button className="secondary" onClick={() => onOpenDocument(box.page!)}>
+                      <button className="secondary" onClick={() => onOpenPage(box.page!)}>
                         Open the page
                       </button>
                     )}
@@ -816,6 +833,7 @@ function Workspace({
             </button>
           </p>
         </div>
+        )}
       </div>
     </div>
   );

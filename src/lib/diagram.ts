@@ -21,9 +21,19 @@ import type {
   Page,
 } from "./engine";
 import { fileBase } from "./export";
-import { newId } from "./ids";
+import { isId, newId } from "./ids";
 
 export type Box = DiagramNodeEdit;
+
+/** What a page's picture line has for an address when it shows a diagram: `diagram:<id>`. */
+export const ADDRESS = "diagram:";
+
+/** The diagram a picture's address names, or none when it is a file beside the page. */
+export function diagramOf(address: string): string | null {
+  if (!address.startsWith(ADDRESS)) return null;
+  const id = address.slice(ADDRESS.length);
+  return isId(id) ? id : null;
+}
 
 /** What every page is called now, by id. A page that is not here is gone. */
 export type Titles = Map<string, string>;
@@ -283,14 +293,7 @@ export function arrange(d: DiagramEdit, titles: Titles): Arranged {
       put(n.id, at.x, at.y);
     }
   } else if (d.layout === "timeline") {
-    let x = 0;
-    timelineOrder(d.nodes).forEach((n, i) => {
-      const size = sized.get(n.id)!;
-      // Along one axis, in order, each box a step above or below the one before so that the
-      // lines between neighbours do not run through the boxes.
-      put(n.id, x + size.w / 2, i % 2 === 0 ? -34 : 34);
-      x += size.w + 56;
-    });
+    for (const [id, at] of placeTimeline(d, sized)) put(id, at.x, at.y);
   } else {
     const stored = d.nodes.filter((n) => n.x !== null && n.y !== null);
     for (const n of stored) put(n.id, n.x!, n.y!);
@@ -307,6 +310,70 @@ export function arrange(d: DiagramEdit, titles: Titles): Arranged {
   return { boxes };
 }
 
+const COLUMN_GAP = 56;
+const ROW_GAP = 24;
+
+/**
+ * A timeline: time runs left to right, and what happened together stands together.
+ *
+ * **One column for one year.** Boxes with the same year are stacked in one column, so the page
+ * reads as a calendar and not as a queue; a box with no year in it has a column of its own,
+ * after the dated ones.
+ *
+ * **One level for what does not split.** The main line runs along one level. A box whose lines
+ * come from a single box stands at that box's level, so a chain of events is a straight line.
+ * Where a line splits — one event leading to two — the branches grow out of it, above and below
+ * the level it stood on, and a box that several lines lead to stands at their middle. A box
+ * with no lines at all stands on the main level.
+ */
+function placeTimeline(
+  d: DiagramEdit,
+  sized: Map<string, { w: number; h: number }>,
+): Map<string, { x: number; y: number }> {
+  const at = new Map<string, { x: number; y: number }>();
+  const order = timelineOrder(d.nodes);
+  const held = new Map(d.nodes.map((n, i) => [n.id, i]));
+
+  // Columns: the same year together; no year, alone.
+  const columns: Box[][] = [];
+  let last: number | null | undefined;
+  for (const box of order) {
+    const year = yearOf(box.when);
+    if (year !== null && year === last) columns[columns.length - 1]!.push(box);
+    else columns.push([box]);
+    last = year;
+  }
+
+  const leadTo = new Map<string, string[]>();
+  for (const l of d.lines) leadTo.set(l.to, [...(leadTo.get(l.to) ?? []), l.from]);
+
+  let x = 0;
+  for (const column of columns) {
+    const width = Math.max(...column.map((b) => sized.get(b.id)!.w));
+    const centre = x + width / 2;
+    x += width + COLUMN_GAP;
+
+    // Where each box would stand: level with what leads to it, or on the main level.
+    const wanted = column.map((box) => {
+      const from = (leadTo.get(box.id) ?? []).map((id) => at.get(id)?.y).filter((y): y is number => y !== undefined);
+      return { box, want: from.length === 0 ? 0 : from.reduce((a, b) => a + b, 0) / from.length };
+    });
+    wanted.sort((a, b) => a.want - b.want || held.get(a.box.id)! - held.get(b.box.id)!);
+
+    // Then pushed apart where they would overlap, and the group put back round its middle, so
+    // two branches of one split stand one above and one below the level they grew from.
+    const ys = wanted.map((w) => w.want);
+    for (let i = 1; i < ys.length; i += 1) {
+      const room = (sized.get(wanted[i - 1]!.box.id)!.h + sized.get(wanted[i]!.box.id)!.h) / 2 + ROW_GAP;
+      ys[i] = Math.max(ys[i]!, ys[i - 1]! + room);
+    }
+    const mean = (values: number[]) => values.reduce((a, b) => a + b, 0) / values.length;
+    const shift = mean(wanted.map((w) => w.want)) - mean(ys);
+    wanted.forEach((w, i) => at.set(w.box.id, { x: centre, y: ys[i]! + shift }));
+  }
+  return at;
+}
+
 // ---- what it looks like -------------------------------------------------------------------
 
 export type Side = "top" | "right" | "bottom" | "left";
@@ -319,7 +386,11 @@ export function sides(d: DiagramEdit, from: Placed, to: Placed): { source: Side;
       : { source: "bottom", target: "top" };
   }
   if (d.layout === "timeline") {
-    return from.x <= to.x ? { source: "right", target: "left" } : { source: "left", target: "right" };
+    // Two boxes in one column — the same year — are joined top to bottom.
+    if (from.x === to.x) {
+      return from.y <= to.y ? { source: "bottom", target: "top" } : { source: "top", target: "bottom" };
+    }
+    return from.x < to.x ? { source: "right", target: "left" } : { source: "left", target: "right" };
   }
   const dx = to.x - from.x;
   const dy = to.y - from.y;
@@ -421,12 +492,21 @@ export function draw(d: DiagramEdit, titles: Titles): Drawing {
   return { width: round(right - left + MARGIN * 2), height: round(bottom - top + MARGIN * 2), boxes, lines };
 }
 
-const INK = "#e6e4de";
-const GROUND = "#14151a";
-const BOX = "#23262f";
-const BOX_LINE = "#4a4e5e";
-const LINE = "#9aa0b4";
-const GONE_LINE = "#c97a5a";
+/** The colours of a drawn diagram, the same in a saved picture and in a page. */
+export const PALETTE = {
+  ink: "#e6e4de",
+  ground: "#14151a",
+  box: "#23262f",
+  boxLine: "#4a4e5e",
+  line: "#9aa0b4",
+  gone: "#c97a5a",
+} as const;
+const INK = PALETTE.ink;
+const GROUND = PALETTE.ground;
+const BOX = PALETTE.box;
+const BOX_LINE = PALETTE.boxLine;
+const LINE = PALETTE.line;
+const GONE_LINE = PALETTE.gone;
 
 function escape(text: string): string {
   return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");

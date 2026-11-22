@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { offsetOf, parseBody, serializeBody, wholeConstructs } from "./body";
+import { collectImages, offsetOf, parseBody, serializeBody, wholeConstructs } from "./body";
 
 // Every case here is a document that must survive being opened and saved untouched. A failure
 // in this file is silent data loss in the user's own files, which is the worst thing this
@@ -106,6 +106,22 @@ describe("parsing", () => {
 // Round-tripping proves nothing at all about a heading: `####### Not a heading` survives
 // perfectly either way. These say which blocks were *understood* as headings, which is what
 // decides whether the file on disk still means what the editor is showing.
+describe("the pictures a body names", () => {
+  it("are the files beside the page, each once, and not the diagrams it shows", () => {
+    const body = [
+      "![Photo](photo.png) and ![again](photo.png) and ![Other](other.jpg)",
+      "",
+      "![Family tree](diagram:01J8ZQ7B2N4Q6S8W0W2Y4A6C8E)",
+    ].join("\n");
+    expect(collectImages(parseBody(body))).toEqual(["photo.png", "other.jpg"]);
+  });
+
+  it("round-trip with a diagram line, character for character", () => {
+    const body = "Before.\n\n![Family tree](diagram:01J8ZQ7B2N4Q6S8W0W2Y4A6C8E)\n\nAnd ![inline](diagram:01J8ZQ7B2N4Q6S8W0W2Y4A6C8F) here.";
+    expect(serializeBody(parseBody(body))).toBe(body);
+  });
+});
+
 describe("what a heading says", () => {
   function block(text: string) {
     return parseBody(text).content?.[0];
