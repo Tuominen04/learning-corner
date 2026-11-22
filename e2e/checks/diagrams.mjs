@@ -193,7 +193,23 @@ await page.getByRole("button", { name: "Show panel" }).click();
 check("the panel can be brought back", (await page.locator(".diagram-panel").count()) === 1);
 await page.getByRole("button", { name: "Close page" }).click();
 check("closing the page gives the whole screen back to the diagram", (await page.locator(".split-page").count()) === 0 && (await page.locator(".diagram-panel").count()) === 1);
+
+// With a page beside, the box in focus decides what is shown; one with no page asks.
+await page.locator(`.react-flow__node`, { hasText: "History" }).first().dblclick();
+await page.locator(".split-page .ProseMirror").first().waitFor();
+await page.locator(`.react-flow__node[data-id="${first}"]`).click();
+await page.locator(".split-empty").waitFor();
+check("a box with no page, focused while a page is beside, offers to link one or close", (await page.locator(".split-empty").innerText()).includes("no page") && (await page.getByRole("button", { name: "Link a page…" }).count()) === 1 && (await page.getByRole("button", { name: "Close panel" }).count()) >= 1);
+await page.getByRole("button", { name: "Link a page…" }).click();
+check("linking offers the pages", (await page.locator(".split-page .page-picker").count()) === 1);
+await page.locator(".split-page .page-picker header .ghost").click();
 await page.locator(`.react-flow__node`, { hasText: "History" }).first().click();
+await page.locator(".split-page .ProseMirror").first().waitFor();
+check("focusing a box that has a page shows that page", (await page.locator(".split-page .ProseMirror").count()) >= 1);
+await page.getByRole("button", { name: "Close page" }).click();
+check("closing leaves the diagram with its panel, as it was", (await page.locator(".split-page").count()) === 0 && (await page.locator(".diagram-panel").count()) === 1);
+await page.locator(`.react-flow__node`, { hasText: "History" }).first().click();
+check("with no page beside, focusing a box only selects it", (await page.locator(".split-page").count()) === 0);
 
 // ---- a line, by dragging from one box to another -------------------------------------------
 

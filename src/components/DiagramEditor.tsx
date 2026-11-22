@@ -181,8 +181,9 @@ export function DiagramEditor(props: {
   id: string;
   pages: Page[];
   onBack: () => void;
-  onOpenPage: (id: string) => void;
+  onBeside: (box: string, page: string | null) => void;
   besideOpen: boolean;
+  link: { n: number; box: string; page: string } | null;
   onDeleted: () => void;
 }) {
   return (
@@ -196,15 +197,17 @@ function Workspace({
   id,
   pages,
   onBack,
-  onOpenPage,
+  onBeside,
   besideOpen,
+  link,
   onDeleted,
 }: {
   id: string;
   pages: Page[];
   onBack: () => void;
-  onOpenPage: (id: string) => void;
+  onBeside: (box: string, page: string | null) => void;
   besideOpen: boolean;
+  link: { n: number; box: string; page: string } | null;
   onDeleted: () => void;
 }) {
   // The side panel gives its room to a page opened beside the diagram, and can be brought back.
@@ -321,6 +324,22 @@ function Workspace({
     setHistory((h) => (h ? record(h, change(h.present)) : h));
     setNote(null);
   }, []);
+
+  // Show a box's page beside the diagram — or, for a box with no page (or one that is gone),
+  // let the right half ask what to do.
+  const openBeside = (boxId: string) => {
+    const found = draft?.nodes.find((b) => b.id === boxId);
+    onBeside(boxId, found?.page && !isGone(found, titles) ? found.page : null);
+  };
+
+  // A page chosen beside the diagram for a box with none: write it into the diagram, once per
+  // choice, as the same edit the panel's own "point this box at a page" makes.
+  const linked = useRef(0);
+  useEffect(() => {
+    if (!link || link.n === linked.current) return;
+    linked.current = link.n;
+    edit((d) => setPage(d, link.box, link.page, titles.get(link.page) ?? GONE));
+  }, [link, edit, titles]);
 
   const doUndo = useCallback(() => setHistory((h) => (h ? undo(h) : h)), []);
   const doRedo = useCallback(() => setHistory((h) => (h ? redo(h) : h)), []);
@@ -618,12 +637,16 @@ function Workspace({
             onNodesChange={onNodesChange}
             onConnect={onConnect}
             connectionMode={ConnectionMode.Loose}
-            onNodeClick={(_, n) => setSelected({ kind: "box", id: n.id })}
+            onNodeClick={(_, n) => {
+              setSelected({ kind: "box", id: n.id });
+              // While a page is beside the diagram, the box in focus is the one it shows.
+              if (besideOpen) openBeside(n.id);
+            }}
             onEdgeClick={(_, e) => setSelected({ kind: "line", index: Number(e.id.replace("line-", "")) })}
             onPaneClick={() => setSelected(null)}
+            zoomOnDoubleClick={false}
             onNodeDoubleClick={(_, n) => {
-              const found = draft.nodes.find((b) => b.id === n.id);
-              if (found?.page && !isGone(found, titles)) onOpenPage(found.page);
+              openBeside(n.id);
             }}
             onNodeDragStop={(_, __, dragged) => {
               edit((d) =>
@@ -702,7 +725,7 @@ function Workspace({
                   <strong>{isGone(box, titles) ? "a page that is gone" : titles.get(box.page)}</strong>
                   <span className="actions">
                     {!isGone(box, titles) && (
-                      <button className="secondary" onClick={() => onOpenPage(box.page!)}>
+                      <button className="secondary" onClick={() => openBeside(box.id)}>
                         Open the page
                       </button>
                     )}

@@ -1278,3 +1278,5 @@ button.graph-node .graph-dot { margin-right: 0; }
 .split .diagram-editor { height: 100%; }
 .split-page { container-type: inline-size; overflow-y: auto; border-left: 1px solid var(--border, #444); padding-left: 1.2rem; }
 .split-bar { display: flex; gap: 0.5rem; justify-content: flex-end; margin-bottom: 0.6rem; }
+.split-empty { padding: 2rem 1rem; text-align: center; color: var(--muted, #999); }
+.split-empty .actions { display: flex; gap: 0.5rem; justify-content: center; }

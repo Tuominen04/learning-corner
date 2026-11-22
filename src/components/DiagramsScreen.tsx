@@ -38,15 +38,18 @@ export function DiagramsScreen({
   pages,
   open,
   onOpen,
-  onOpenPage,
+  onBeside,
   besideOpen,
+  link,
 }: {
   pages: Page[];
   /** The diagram being edited, if one is. Held above, so a search result can open one. */
   open: string | null;
   onOpen: (id: string | null) => void;
-  /** Open a page beside the diagram. */
-  onOpenPage: (id: string) => void;
+  /** Show a box's page beside the diagram, or none (`null`) when the box has no page. */
+  onBeside: (box: string, page: string | null) => void;
+  /** A page chosen for a box from beside the diagram, to be written into the diagram. */
+  link: { n: number; box: string; page: string } | null;
   /** A page is open beside it, so the diagram gives up room. */
   besideOpen: boolean;
 }) {
@@ -80,7 +83,8 @@ export function DiagramsScreen({
         id={open}
         pages={pages}
         onBack={() => onOpen(null)}
-        onOpenPage={onOpenPage}
+        onBeside={onBeside}
+        link={link}
         besideOpen={besideOpen}
         onDeleted={() => onOpen(null)}
       />
