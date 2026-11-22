@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { Field, Source, SourceType } from "./engine";
 import {
+  anotherPageFrom,
   blankSource,
   contributorName,
   emptyContributor,
@@ -12,6 +13,7 @@ import {
   missingLabel,
   SOURCE_TYPES,
   tidy,
+  today,
 } from "./sources";
 
 // `tidy` is the last thing a source passes through before it is written to the user's own
@@ -236,5 +238,71 @@ describe("the fields a type offers", () => {
     for (const type of Object.keys(REQUIRED) as SourceType[]) {
       expect(fieldsFor(type)).toEqual(expect.arrayContaining(["doi", "url"]));
     }
+  });
+});
+
+describe("another page from the same site", () => {
+  const who = (): Source => ({
+    ...blankSource("web-page"),
+    id: "01J8ZQ8D4Q6S8W0W2Y4A6C8E0G",
+    title: "Vitamin D",
+    site: "who.int",
+    publisher: "World Health Organization",
+    contributors: [
+      { role: "author", family: null, given: null, literal: "World Health Organization", abbreviation: "WHO" },
+      { role: "author", family: "Nieminen", given: "Anna", literal: null, abbreviation: null },
+    ],
+    url: "https://who.int/vitamin-d",
+    date: { kind: "full", year: 2019, month: 3, day: 4 },
+    retrieved: { kind: "full", year: 2020, month: 1, day: 2 },
+    appraisal: { trust: "Reliable", note: "first-hand" },
+    doi: "10.1000/x",
+    file: "paper.pdf",
+  });
+
+  it("keeps what the pages of one site share: the site and an organisation as author", () => {
+    const next = anotherPageFrom(who());
+    expect(next.type).toBe("web-page");
+    expect(next.site).toBe("who.int");
+    expect(next.contributors).toEqual([
+      { role: "author", family: null, given: null, literal: "World Health Organization", abbreviation: "WHO" },
+    ]);
+  });
+
+  it("leaves blank what differs from page to page, so nothing old can be saved by accident", () => {
+    const next = anotherPageFrom(who());
+    expect(next.id).toBeNull();
+    expect(next.title).toBe("");
+    expect(next.url).toBeNull();
+    expect(next.doi).toBeNull();
+    expect(next.file).toBeNull();
+    // A web page's form has no box for a publisher, so one carried over would be invisible.
+    expect(next.publisher).toBeNull();
+    // A judgement made of one page.
+    expect(next.appraisal).toBeNull();
+    // Not the first page's publication date: the year of a blank source, to be corrected.
+    expect(next.date).toEqual(blankSource("web-page").date);
+  });
+
+  it("never carries a person over as an author, only a blank one to fill in", () => {
+    const people = { ...who(), contributors: [who().contributors[1]!] };
+    const next = anotherPageFrom(people);
+    expect(next.contributors).toEqual([emptyContributor("person")]);
+  });
+
+  it("is read today, because the new page is being read now", () => {
+    expect(anotherPageFrom(who()).retrieved).toEqual(today());
+  });
+
+  it("takes an organisation with no name as no organisation", () => {
+    const empty = { ...who(), contributors: [emptyContributor("group")] };
+    expect(anotherPageFrom(empty).contributors).toEqual([emptyContributor("person")]);
+  });
+
+  it("works from a page that names no site at all, and does not change the page it came from", () => {
+    const original = { ...who(), site: null };
+    const before = JSON.stringify(original);
+    expect(anotherPageFrom(original).site).toBeNull();
+    expect(JSON.stringify(original)).toBe(before);
   });
 });

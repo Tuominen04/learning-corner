@@ -22,6 +22,22 @@ correct citation genuinely needs, which is usually fewer fields than you expect.
 Every source needs its title. A web page or a PDF document can name nobody at all — plenty
 don't — and is then cited by its title instead.
 
+### Several pages from one website
+
+Each web page is a source of its own, with its own title, date and address, because that is how
+a reference list prints them: one entry for every page you used, never one entry for the
+whole site. Two pages from the same organisation in the same year then get `a` and `b` after
+the year, so a reader can tell them apart in your writing.
+
+That is a lot to type for a site you are reading ten pages of, so the app does the part the
+pages share. On a web page in the list, choose **Another page**; and straight after saving a
+web page, the note at the top offers **Add another page from** that site. Either opens a new
+web page that already has the **site name**, an **organisation** named as the author, and
+today's date as the day you read it. It leaves blank what is different from page to page: the
+**title**, the **web address**, the **date it was published**, any **person** named as
+the author, and how much you trust it. A name copied from one page onto the next is the kind of
+mistake nobody sees until the reference list is read, so it is left for you to fill in.
+
 ### Keeping the paper itself
 
 If you have the PDF — downloaded, or handed to you — choose **Add a PDF…** on the source and

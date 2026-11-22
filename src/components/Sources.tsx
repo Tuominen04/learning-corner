@@ -9,7 +9,7 @@ import {
   type SourceType,
   type WorkSummary,
 } from "../lib/engine";
-import { contributorName, missingLabel, SOURCE_TYPES } from "../lib/sources";
+import { anotherPageFrom, contributorName, missingLabel, SOURCE_TYPES } from "../lib/sources";
 import { SourceForm } from "./SourceForm";
 
 // Everything the library has been built on, in one place.
@@ -27,6 +27,15 @@ const SEARCH_AFTER_IDLE_MS = 180;
 export function Sources({ onOpenDocument }: { onOpenDocument: (id: string) => void }) {
   const [sources, setSources] = useState<Source[]>([]);
   const [editing, setEditing] = useState<Source | null | "new">(null);
+
+  // What a new source begins as, when it is another page from a site already in the library.
+  // Never kept past the form it was for.
+  const [start, setStart] = useState<Source | null>(null);
+
+  // The web page just saved, so that the next one from its site is one click away. Added in a
+  // row is how pages from one site arrive, and the page just added is not easy to find in a
+  // list that is in reference order.
+  const [justSaved, setJustSaved] = useState<Source | null>(null);
   const [pending, setPending] = useState<Pending | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -165,8 +174,10 @@ export function Sources({ onOpenDocument }: { onOpenDocument: (id: string) => vo
       });
   }
 
-  function saved(missing: Field[], type: SourceType) {
+  function saved(missing: Field[], type: SourceType, source: Source) {
     setEditing(null);
+    setStart(null);
+    setJustSaved(type === "web-page" ? source : null);
     setNote(
       missing.length === 0
         ? "Saved."
@@ -183,8 +194,12 @@ export function Sources({ onOpenDocument }: { onOpenDocument: (id: string) => vo
       <SourceForm
         key={existing?.id ?? "new"}
         existing={existing}
-        onSaved={(_id, missing, type) => saved(missing, type)}
-        onCancel={() => setEditing(null)}
+        start={existing === null ? start : null}
+        onSaved={(_id, missing, type, source) => saved(missing, type, source)}
+        onCancel={() => {
+          setEditing(null);
+          setStart(null);
+        }}
       />
     );
   }
@@ -193,10 +208,37 @@ export function Sources({ onOpenDocument }: { onOpenDocument: (id: string) => vo
     <section className="sources">
       <header>
         <h2>Sources</h2>
-        <button onClick={() => setEditing("new")}>New source</button>
+        <button
+          onClick={() => {
+            setStart(null);
+            setJustSaved(null);
+            setEditing("new");
+          }}
+        >
+          New source
+        </button>
       </header>
 
-      {note && <p className="saved-note">{note}</p>}
+      {note && (
+        <p className="saved-note">
+          {note}
+          {justSaved && (
+            <>
+              {" "}
+              <button
+                className="ghost"
+                onClick={() => {
+                  setStart(anotherPageFrom(justSaved));
+                  setJustSaved(null);
+                  setEditing("new");
+                }}
+              >
+                Add another page from {justSaved.site || "this site"}
+              </button>
+            </>
+          )}
+        </p>
+      )}
       {error && <p className="error">{error}</p>}
 
       {pending && (
@@ -287,6 +329,19 @@ export function Sources({ onOpenDocument }: { onOpenDocument: (id: string) => vo
                   >
                     Used in
                   </button>
+                  {source.type === "web-page" && (
+                    <button
+                      className="ghost"
+                      title="A new web page with this one's site and organisation filled in"
+                      onClick={() => {
+                        setStart(anotherPageFrom(source));
+                        setJustSaved(null);
+                        setEditing("new");
+                      }}
+                    >
+                      Another page
+                    </button>
+                  )}
                   <button className="ghost" onClick={() => setEditing(source)}>
                     Edit
                   </button>
