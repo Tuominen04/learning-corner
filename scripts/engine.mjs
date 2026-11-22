@@ -16,7 +16,7 @@ import { chmodSync, existsSync, mkdirSync, readdirSync, readFileSync, rmdirSync,
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { ENGINE_URL, LOCK, MANIFEST, pinnedTag, verify } from "./engine-pin.mjs";
+import { ENGINE_URL, LOCK, MANIFEST, pinnedTag, recordsLocalEngine, verify } from "./engine-pin.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const OVERRIDE = join(ROOT, ".cargo", "config.toml");
@@ -52,6 +52,31 @@ function resolveLock() {
     if (error.code === "ENOENT") console.error("cargo is not on PATH, so the lock could not be brought up to date.");
     return false;
   }
+}
+
+/**
+ * Move the lock's engine entry to what is patched in: `cargo update -p lc-engine`.
+ *
+ * Resolving alone is not enough when the checkout is not the version the lock holds. A checkout
+ * that has moved on — 0.26.0 against a lock at 0.25.0, which is exactly what trying an engine
+ * change before it is tagged means — is warned about as "not used in the crate graph" and the
+ * build quietly goes on with the tagged release. This is what makes the patch take.
+ */
+function updateEngine() {
+  try {
+    execFileSync("cargo", ["update", "-p", "lc-engine"], {
+      cwd: join(ROOT, "src-tauri"),
+      stdio: ["ignore", "ignore", "inherit"],
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Whether Cargo.lock, as it is now, records the engine as a local folder. */
+function lockIsLocal() {
+  return recordsLocalEngine(readFileSync(join(ROOT, LOCK), "utf8"));
 }
 
 function describeCheckout(path) {
@@ -111,6 +136,7 @@ function local(argument) {
     fail(`No engine checkout at ${checkout} (looked for crates/lc-engine/Cargo.toml). Pass its path: npm run engine:local -- /path/to/learning-corner-engine`);
   }
   const previous = current ? readFileSync(OVERRIDE, "utf8") : null;
+  const lockBefore = readFileSync(join(ROOT, LOCK), "utf8");
   mkdirSync(dirname(OVERRIDE), { recursive: true });
   writeFileSync(
     OVERRIDE,
@@ -119,15 +145,33 @@ function local(argument) {
       `[patch."${ENGINE_URL}"]\n` +
       `lc-engine = { path = ${JSON.stringify(crate)} }\n`,
   );
-  if (!resolveLock()) {
+  // Both files exactly as they were, so "nothing was changed" is true.
+  const undo = () => {
     if (previous === null) removeOverride();
     else writeFileSync(OVERRIDE, previous);
+    writeFileSync(join(ROOT, LOCK), lockBefore);
+  };
+  if (!resolveLock()) {
+    undo();
     fail("Cargo could not resolve the build against that checkout (see above), so nothing was changed.");
+  }
+  // A checkout at another version than the lock holds is not used until the lock is moved.
+  let moved = false;
+  if (!lockIsLocal()) {
+    if (!updateEngine() || !lockIsLocal()) {
+      undo();
+      fail(
+        `Cargo would not build against ${checkout}: it still resolves the pinned engine. ` +
+          `Is that the engine's repository, with crates/lc-engine in it? (see above). Nothing was changed.`,
+      );
+    }
+    moved = true;
   }
   const guarded = installHook();
   console.log(`Building against the engine in ${checkout} (${describeCheckout(checkout)}).`);
   console.log(
-    `${LOCK} now records it. Leave it out of commits${guarded ? " — a pre-commit check refuses it —" : ""} ` +
+    `${LOCK} now records it${moved ? " (the lock was moved off the pinned tag with `cargo update -p lc-engine`)" : ""}. ` +
+      `Leave it out of commits${guarded ? " — a pre-commit check refuses it —" : ""} ` +
       "and run `npm run engine:pinned` when you are done.",
   );
 }

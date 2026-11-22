@@ -152,6 +152,13 @@ An edit in the engine checkout reaches the next `tauri dev` or `cargo test` with
 tag. With no path given, `engine:local` looks in `$LC_ENGINE_DIR`, then in
 `../learning-corner-engine`.
 
+The checkout may be a newer version than the tag this repository pins — that is the point, when
+the engine change is not released yet. Cargo ignores a patch at a version the lock does not
+hold, and says only that it "was not used in the crate graph", so `engine:local` moves the lock
+itself (`cargo update -p lc-engine`) and checks that it took. If Cargo still resolves the pinned
+engine, it undoes what it did and says so, rather than leaving a build that quietly is not the
+one you asked for.
+
 It is a Cargo `[patch]` in `.cargo/config.toml` at the top of this repository, a file git
 ignores, so `Cargo.toml` keeps its tag throughout. The one committed file that changes is
 `src-tauri/Cargo.lock`: while the patch is on, the engine's entry loses its `source` line,
