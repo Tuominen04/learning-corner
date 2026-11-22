@@ -386,10 +386,3 @@ export function pictureName(library: string, narrowedTo: string | null, kind: "s
   const of = fileBase(narrowedTo ?? "") || fileBase(library) || "Library";
   return `${of}_graph.${kind}`;
 }
-
-/** A string's bytes in base64, as the shell takes a picture to save. */
-export function base64(text: string): string {
-  let binary = "";
-  for (const byte of new TextEncoder().encode(text)) binary += String.fromCharCode(byte);
-  return btoa(binary);
-}

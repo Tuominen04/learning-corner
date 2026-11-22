@@ -1,9 +1,9 @@
 import { save } from "@tauri-apps/plugin-dialog";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { base64 } from "../lib/picture";
 import { engine, EngineFailure, shell, type Graph, type GraphNode } from "../lib/engine";
 import {
-  base64,
   beside,
   colours,
   degrees,
@@ -232,7 +232,7 @@ export function GraphScreen({
         kind === "svg"
           ? base64(toSvg(shown, places, colour, at, size.width, size.height))
           : png(shown, places, colour, count, at, size);
-      await shell.saveGraphPicture(path, data);
+      await shell.savePicture(path, data);
       setSaved(path);
     } catch (thrown) {
       setError(thrown instanceof EngineFailure ? thrown.message : String(thrown));

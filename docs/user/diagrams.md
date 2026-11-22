@@ -1,47 +1,91 @@
 # Diagrams
 
 > **Audience:** People using Learning Corner
-> **Status:** Planned
-> **Last reviewed:** 2026-11-14
+> **Status:** In progress — making and changing diagrams works; showing one inside a page comes next
+> **Last reviewed:** 2026-11-18
 
 [The library graph](library-graph.md) draws itself from what you wrote. A **diagram** is the
-opposite: a picture you build on purpose, whose shape means something.
+opposite: a picture you build on purpose, whose shape means something — a family tree, a
+historical path, a map of a network.
+
+Choose **Diagrams**, beside **Documents**, **Sources**, **Works** and **Graph**, give a new
+diagram a name, and pick what kind it is.
 
 ## Three kinds
 
 - **Layered** — a family tree, or any hierarchy: who descends from whom, which school of
-  thought came out of which. The app arranges it in layers, following the lines you draw.
-- **Timeline** — a historical path: events in order, with lines for what led to what. Each
-  event says when, in your own words — *1850*, *c. 1200*, *the late Bronze Age*.
-- **Free** — a map of a network, or anything else you want to arrange yourself. Things stay
-  where you drag them.
+  thought came out of which. The app arranges it in layers, following the lines you draw. A line
+  from a parent to a child puts the parent above; **Running down** turns the whole thing to run
+  to the right instead. **Earlier** and **Later** move a box among its neighbours in the same
+  layer.
+- **Timeline** — a historical path: boxes in order of when, left to right. Boxes with the same
+  year stand in one column. A line of events that does not split stays on one level; where one
+  event leads to two, the two grow out of it, one above and one below.
+  Each box says *when* in your own
+  words — *1850*, *c. 1200*, *3 May 1850*, *500 BC*, *the late Bronze Age*. The app puts boxes in
+  order of the year it can read from the words; those with no year in them come after, in the
+  order you made them.
+- **Free** — a map of a network, or anything else you want to arrange yourself. Boxes stay
+  where you drag them. **Arrange again** forgets where they were put and lays them out afresh.
+
+You can change a diagram's kind whenever you like, and nothing is lost: every box and line stays,
+and so does every *when*. Changing to **Free** starts each box where it was; changing away from it
+lets go of where you dragged things, and **Undo** brings them back.
 
 ## What is on one
 
-- **Boxes.** A box can point at one of your pages: it shows the page's title, and clicking it
-  opens the page with the details. A box can also be only a label — a person you have not
-  written about yet, an event you only know the name of. It can get a page later.
-- **Lines**, from one box to another, with a label if you want one: *parent of*, *led to*,
-  *connects to*.
+- **Boxes.** **+ Box** adds one that is only a label — a person you have not written about yet, an
+  event you only know the name of. **+ Page…** adds one for a page you have written.
+- **Lines**, from one box to another. Drag from the edge of a box to another box, and a line is
+  drawn. A line can say something: *parent of*, *led to*, *connects to*. It has a direction, and
+  **Reverse** turns it round.
 
-A box that points at a page is not a copy of it. Rename the page and the box follows. Delete
-the page and the box stays where it was, saying its page is gone, so the diagram keeps its
-shape.
+A box for a page is not a copy of it. It says the page's title as it is now, so renaming the page
+renames the box — unless you give the box words of its own, which win. Double-click the box, or
+choose **Open the page**, and the page opens on the right half of the screen, beside the diagram.
+The side panel steps out of the way to give you room — **Show panel** brings it back — and you can
+edit the diagram and the page at the same time. While a page is beside, clicking another box shows that box's page. A box with no page asks
+instead: **Link a page…** points it at one, **Close panel** closes the right half. **Close page** gives the whole screen back to the
+diagram; **Open on its own** takes the page to the Documents view. A box can be pointed at
+another page, or **Unlink**ed and left as a label.
 
-## In a page
+If the page is later deleted, the box stays where it was, marked as pointing at a page that is
+gone, so a family tree does not fall apart because one page did. You can open nothing from it,
+but you can unlink it and keep the box.
 
-A diagram can be shown inside a page, where the writing is about it. Click a box there to go
-to its page, or **Edit** to change the diagram. One diagram can be shown in as many pages as
-you like.
+## Working on one
+
+Everything you do is saved a moment after you do it. **Undo** and **Redo** (Ctrl+Z, Ctrl+Shift+Z)
+step through what you have done to this diagram. Leaving a diagram, or closing the library, saves
+what is waiting first.
+
+If the diagram was changed somewhere else since you opened it — in a text editor, or on another
+computer — the app does not write over it. It tells you, and asks which you want: the changed
+one, or yours.
+
+Everything the picture can do is also beside it, as ordinary controls: every box and line is in a
+list, and choosing one there lets you change its words, its page and its place in order from the
+keyboard alone.
+
+## Saving it as a picture
+
+**Save as a picture** saves the diagram as **SVG**, which stays sharp at any size, or **PNG**,
+which opens anywhere. The file is named after the diagram.
 
 ## Deleting one
 
-Deleting a diagram removes it from the pages that show it, after telling you which those are.
-The pages' own writing is not touched.
+**Delete this diagram…** says what goes before anything does. A diagram's boxes and lines are
+deleted. Nothing you wrote is touched, except that a page which shows the diagram loses the picture
+line that shows it — and you are told which pages those are first.
 
-## Sharing it
+## Finding one
 
-Save a diagram as a picture, for a document you are writing or for a wall.
+Search finds a diagram by its name and by what its boxes say.
+
+## Coming next
+
+Showing a diagram **inside a page**, where the writing is about it, with each box opening its
+page — and putting one there from the writing tools.
 
 ---
 

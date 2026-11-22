@@ -3,6 +3,8 @@ import { useCallback, useEffect, useState } from "react";
 import { BackupPanel, type BackupMode } from "./components/BackupPanel";
 import { DeleteConfirm, type Deleting } from "./components/DeleteConfirm";
 import { Editor } from "./components/Editor";
+import { DiagramsScreen } from "./components/DiagramsScreen";
+import { PagePicker } from "./components/PagePicker";
 import { GraphScreen } from "./components/GraphScreen";
 import {
   LibraryPicker,
@@ -194,11 +196,26 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
 
   // Sources are library-wide rather than living under a page, so they are a place you go
   // rather than something you select in the tree.
-  const [view, setView] = useState<"documents" | "sources" | "works" | "graph">("documents");
+  const [view, setView] = useState<"documents" | "sources" | "works" | "graph" | "diagrams">("documents");
 
   // The work showing in the Works view, if one is. Here rather than in that view, so a search
   // result can open one.
   const [openWork, setOpenWork] = useState<string | null>(null);
+
+  // The diagram being edited in the Diagrams view, if one is. Here for the same reason.
+  const [openDiagram, setOpenDiagram] = useState<string | null>(null);
+
+  // A page open beside the diagram, while there is one. It is its own document, apart from the
+  // one in the Documents view, so closing it leaves that one as it was; both halves stay
+  // editable, each saving itself.
+  const [beside, setBeside] = useState<Document | null>(null);
+  // Beside mode: the diagram on the left, and on the right the page of the box in focus. A box
+  // with no page leaves the right half asking what to do (`besideBox`), and `linking` is that
+  // question being answered with "link a page". `link` carries the answer back to the diagram.
+  const [split, setSplit] = useState(false);
+  const [besideBox, setBesideBox] = useState<string | null>(null);
+  const [linking, setLinking] = useState(false);
+  const [link, setLink] = useState<{ n: number; box: string; page: string } | null>(null);
 
   // Searching is navigating, so it lives in the sidebar with the tree rather than being a
   // place you go. While there is a query the results stand in for the tree; clear it and the
@@ -261,6 +278,35 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
       .catch((thrown: unknown) => {
         setError(thrown instanceof EngineFailure ? thrown.message : String(thrown));
       });
+  }, []);
+
+  const openBeside = useCallback((id: string) => {
+    setError(null);
+    engine.document
+      .read(id)
+      .then(setBeside)
+      .catch((thrown: unknown) => {
+        setError(thrown instanceof EngineFailure ? thrown.message : String(thrown));
+      });
+  }, []);
+
+  // A box was opened, or came into focus while a page is beside: show its page, or ask.
+  const showBeside = useCallback(
+    (box: string, page: string | null) => {
+      setSplit(true);
+      setBesideBox(box);
+      setLinking(false);
+      if (page) openBeside(page);
+      else setBeside(null);
+    },
+    [openBeside],
+  );
+
+  const closeBeside = useCallback(() => {
+    setSplit(false);
+    setBeside(null);
+    setBesideBox(null);
+    setLinking(false);
   }, []);
 
   const refresh = useCallback(async () => {
@@ -498,6 +544,13 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
           >
             Graph
           </button>
+          <button
+            className={view === "diagrams" ? "view selected" : "view"}
+            onClick={() => setView("diagrams")}
+            title="Family trees, timelines and maps you build yourself"
+          >
+            Diagrams
+          </button>
         </nav>
 
         <div className="find">
@@ -522,6 +575,10 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
             onOpenWork={(id) => {
               setOpenWork(id);
               setView("works");
+            }}
+            onOpenDiagram={(id) => {
+              setOpenDiagram(id);
+              setView("diagrams");
             }}
           />
         ) : (
@@ -600,6 +657,79 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
             onMove={(to) => void move(moving, { parent: to, position: null })}
             onCancel={() => setMoving(null)}
           />
+        ) : view === "diagrams" ? (
+          <div className={split && openDiagram ? "split" : "unsplit"}>
+            <DiagramsScreen
+              pages={pages}
+              open={openDiagram}
+              onOpen={(id) => {
+                setOpenDiagram(id);
+                if (id === null) closeBeside();
+              }}
+              onBeside={showBeside}
+              besideOpen={split && openDiagram !== null}
+              link={link}
+            />
+            {split && openDiagram && !beside && (
+              <section className="split-page" aria-label="Nothing beside the diagram yet">
+                <div className="split-bar">
+                  <button className="ghost" onClick={closeBeside}>
+                    Close panel
+                  </button>
+                </div>
+                {linking && besideBox ? (
+                  <PagePicker
+                    pages={pages}
+                    title="Point this box at a page"
+                    onCancel={() => setLinking(false)}
+                    onChoose={(page) => {
+                      setLink((last) => ({ n: (last?.n ?? 0) + 1, box: besideBox, page }));
+                      setLinking(false);
+                      openBeside(page);
+                    }}
+                  />
+                ) : (
+                  <div className="split-empty">
+                    <p>This box has no page to show.</p>
+                    <p className="actions">
+                      <button className="secondary" onClick={() => setLinking(true)} disabled={!besideBox}>
+                        Link a page…
+                      </button>
+                      <button className="ghost" onClick={closeBeside}>
+                        Close panel
+                      </button>
+                    </p>
+                  </div>
+                )}
+              </section>
+            )}
+            {split && openDiagram && beside && (
+              <section className="split-page" aria-label="Page beside the diagram">
+                <div className="split-bar">
+                  <button className="secondary" onClick={() => openDocument(beside.id)}>
+                    Open on its own
+                  </button>
+                  <button className="ghost" onClick={closeBeside}>
+                    Close page
+                  </button>
+                </div>
+                <Editor
+                  key={`${beside.id}:${reloaded}`}
+                  document={beside}
+                  pages={pages}
+                  onSaved={(saved) => {
+                    setBeside((current) => (current?.id === saved.id ? saved : current));
+                    setOpen((current) => (current?.id === saved.id ? saved : current));
+                    void refresh();
+                  }}
+                  onRename={renameDocument}
+                  onOpenDocument={openBeside}
+                  showClaims={showClaims}
+                  onShowClaims={setShowClaims}
+                />
+              </section>
+            )}
+          </div>
         ) : view === "graph" ? (
           // Made afresh each time the screen is shown, which is what reads the graph again:
           // whatever was written since is on it.

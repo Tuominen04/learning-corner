@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import type { Graph, GraphLine, GraphNode } from "./engine";
 import {
-  base64,
   beside,
   colours,
   degrees,
@@ -277,11 +276,5 @@ describe("the picture", () => {
     expect(pictureName("Learning", "Why? A/B: notes", "svg")).toBe("Why A-B - notes_graph.svg");
     expect(pictureName("Мой архив", null, "png")).toBe("Мой архив_graph.png");
     expect(pictureName("???", null, "svg")).toBe("Library_graph.svg");
-  });
-
-  it("is handed to the shell as base64, whatever alphabet its titles are in", () => {
-    const text = "Я вас любил — Ääkköset";
-    const bytes = Uint8Array.from(atob(base64(text)), (c) => c.charCodeAt(0));
-    expect(new TextDecoder().decode(bytes)).toBe(text);
   });
 });

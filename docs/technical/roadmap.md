@@ -193,11 +193,17 @@ has changed.
 
 Designed in [ADR 0011](adr/0011-diagrams.md), accepted.
 
-- Diagrams you make: layered (a family tree, a hierarchy), a timeline (a historical path), or
-  free (a network map), each a file of its own.
-- Nodes that can point at a page, and open it; nodes that are only a label.
-- A diagram shown inside a page, and edited on a screen of its own.
-- Export as an image.
+- [x] Engine: a diagram is a file of its own in `maps/`; boxes may point at a page; deleting a
+      page never breaks a diagram, and deleting a diagram takes its lines out of pages.
+- [x] A **Diagrams** screen: make one — layered (a family tree, a hierarchy), a timeline (a
+      historical path) or free (a network map) — add boxes and pages, draw lines, change the
+      layout without losing anything, undo, and be asked rather than overwritten when the file
+      changed meanwhile. Found by search. *0.26.0*
+- [x] Export as SVG or PNG.
+- [ ] A diagram shown inside a page, with its boxes opening their pages, and one put into a page
+      from the writing tools.
+- [ ] **Seen running by a person**, on Fedora: a family tree, a timeline and a network map made,
+      shown in a page, and followed from a box to its page.
 
 **Done when:** a family tree, a timeline and a network map can each be made, shown in a page,
 followed from a node to its page, and deleted — leaving every page's own writing untouched.

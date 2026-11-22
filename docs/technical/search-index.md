@@ -20,8 +20,8 @@ Concretely, this means the index is allowed to hold:
 - computed titles, counts, incompleteness flags, modification times
 
 and is **not** allowed to hold anything the user typed that is not also in a file. No
-"just this one setting", no draft state, no map positions. Map positions are user data and
-live in the map file ([Storage format](storage-format.md#maps)).
+"just this one setting", no draft state, no diagram positions. A free diagram's positions are user data and
+live in the map file ([Storage format](storage-format.md#diagrams)).
 
 The test that keeps this honest is in [Testing](testing.md): delete the index, rebuild it, and
 assert that every engine read returns exactly what it returned before.

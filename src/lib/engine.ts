@@ -57,6 +57,16 @@ import type { Graph } from "./bindings/Graph";
 import type { GraphLine } from "./bindings/GraphLine";
 import type { GraphNode } from "./bindings/GraphNode";
 import type { GraphView } from "./bindings/GraphView";
+import type { DiagramDirection } from "./bindings/DiagramDirection";
+import type { DiagramEdit } from "./bindings/DiagramEdit";
+import type { DiagramLayout } from "./bindings/DiagramLayout";
+import type { DiagramLine } from "./bindings/DiagramLine";
+import type { DiagramNodeEdit } from "./bindings/DiagramNodeEdit";
+import type { DiagramNodeView } from "./bindings/DiagramNodeView";
+import type { DiagramPage } from "./bindings/DiagramPage";
+import type { DiagramSummary } from "./bindings/DiagramSummary";
+import type { DiagramView } from "./bindings/DiagramView";
+import type { PageDiagrams } from "./bindings/PageDiagrams";
 
 export type {
   Appraisal,
@@ -109,6 +119,16 @@ export type {
   GraphLine,
   GraphNode,
   GraphView,
+  DiagramDirection,
+  DiagramEdit,
+  DiagramLayout,
+  DiagramLine,
+  DiagramNodeEdit,
+  DiagramNodeView,
+  DiagramPage,
+  DiagramSummary,
+  DiagramView,
+  PageDiagrams,
 };
 
 /** The opaque token carried between reading a work and changing it. Never inspected. */
@@ -167,6 +187,23 @@ async function call<T>(command: string, args?: Record<string, unknown>): Promise
 }
 
 export const engine = {
+  /**
+   * Diagrams (ADR 0011): files of their own, with boxes that may point at pages. Written whole,
+   * with the revision from the last read, and refused with `Conflict` if the file changed since.
+   */
+  diagram: {
+    list: () => call<DiagramSummary[]>("diagram_list"),
+    create: (title: string, layout: DiagramLayout) =>
+      call<DiagramView>("diagram_create", { title, layout }),
+    read: (diagram: string) => call<DiagramView>("diagram_read", { diagram }),
+    write: (diagram: string, edit: DiagramEdit, revision: DiagramView["revision"]) =>
+      call<DiagramView>("diagram_write", { diagram, edit, revision }),
+    /** The pages that show it. */
+    shownIn: (diagram: string) => call<DocumentRef[]>("diagram_shown_in", { diagram }),
+    /** The pages whose line for it would go with it. Ask before deleting, never after. */
+    deletePlan: (diagram: string) => call<DocumentRef[]>("diagram_delete_plan", { diagram }),
+    delete: (diagram: string) => call<void>("diagram_delete", { diagram }),
+  },
   library: {
     /** A new library, in a folder of its own named after it, inside `location`. */
     create: (location: string, name: string) =>
@@ -201,6 +238,8 @@ export const engine = {
     create: (parent: string | null, title: string) =>
       call<string>("document_create", { parent, title }),
     read: (document: string) => call<Document>("document_read", { document }),
+    /** The diagrams a page shows, and the diagrams with a box that points at it. */
+    diagrams: (document: string) => call<PageDiagrams>("document_diagrams", { document }),
     write: (document: string, body: string, revision: Revision) =>
       call<Document>("document_write", { document, body, revision }),
     rename: (document: string, title: string) =>
@@ -435,7 +474,7 @@ export const shell = {
   /** In the open library, the graph screen was left showing `view`. */
   rememberGraphView: (view: GraphView) => call<void>("remember_graph_view", { view }),
   /** Save a picture the interface drew — its bytes, in base64 — where the save dialog put it. */
-  saveGraphPicture: (path: string, data: string) => call<void>("graph_export", { path, data }),
+  savePicture: (path: string, data: string) => call<void>("export_picture", { path, data }),
   /**
    * Run `save` when the window is about to close, then let it close.
    *
