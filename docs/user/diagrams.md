@@ -44,7 +44,8 @@ A box for a page is not a copy of it. It says the page's title as it is now, so 
 renames the box — unless you give the box words of its own, which win. Double-click the box, or
 choose **Open the page**, and the page opens on the right half of the screen, beside the diagram.
 The side panel steps out of the way to give you room — **Show panel** brings it back — and you can
-edit the diagram and the page at the same time. **Close page** gives the whole screen back to the
+edit the diagram and the page at the same time. While a page is beside, clicking another box shows that box's page. A box with no page asks
+instead: **Link a page…** points it at one, **Close panel** closes the right half. **Close page** gives the whole screen back to the
 diagram; **Open on its own** takes the page to the Documents view. A box can be pointed at
 another page, or **Unlink**ed and left as a label.
 

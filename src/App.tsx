@@ -4,6 +4,7 @@ import { BackupPanel, type BackupMode } from "./components/BackupPanel";
 import { DeleteConfirm, type Deleting } from "./components/DeleteConfirm";
 import { Editor } from "./components/Editor";
 import { DiagramsScreen } from "./components/DiagramsScreen";
+import { PagePicker } from "./components/PagePicker";
 import { GraphScreen } from "./components/GraphScreen";
 import {
   LibraryPicker,
@@ -208,6 +209,13 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
   // one in the Documents view, so closing it leaves that one as it was; both halves stay
   // editable, each saving itself.
   const [beside, setBeside] = useState<Document | null>(null);
+  // Beside mode: the diagram on the left, and on the right the page of the box in focus. A box
+  // with no page leaves the right half asking what to do (`besideBox`), and `linking` is that
+  // question being answered with "link a page". `link` carries the answer back to the diagram.
+  const [split, setSplit] = useState(false);
+  const [besideBox, setBesideBox] = useState<string | null>(null);
+  const [linking, setLinking] = useState(false);
+  const [link, setLink] = useState<{ n: number; box: string; page: string } | null>(null);
 
   // Searching is navigating, so it lives in the sidebar with the tree rather than being a
   // place you go. While there is a query the results stand in for the tree; clear it and the
@@ -280,6 +288,25 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
       .catch((thrown: unknown) => {
         setError(thrown instanceof EngineFailure ? thrown.message : String(thrown));
       });
+  }, []);
+
+  // A box was opened, or came into focus while a page is beside: show its page, or ask.
+  const showBeside = useCallback(
+    (box: string, page: string | null) => {
+      setSplit(true);
+      setBesideBox(box);
+      setLinking(false);
+      if (page) openBeside(page);
+      else setBeside(null);
+    },
+    [openBeside],
+  );
+
+  const closeBeside = useCallback(() => {
+    setSplit(false);
+    setBeside(null);
+    setBesideBox(null);
+    setLinking(false);
   }, []);
 
   const refresh = useCallback(async () => {
@@ -631,24 +658,58 @@ function Workspace({ opened, onClosed }: { opened: Opened; onClosed: () => void 
             onCancel={() => setMoving(null)}
           />
         ) : view === "diagrams" ? (
-          <div className={beside && openDiagram ? "split" : "unsplit"}>
+          <div className={split && openDiagram ? "split" : "unsplit"}>
             <DiagramsScreen
               pages={pages}
               open={openDiagram}
               onOpen={(id) => {
                 setOpenDiagram(id);
-                if (id === null) setBeside(null);
+                if (id === null) closeBeside();
               }}
-              onOpenPage={openBeside}
-              besideOpen={beside !== null && openDiagram !== null}
+              onBeside={showBeside}
+              besideOpen={split && openDiagram !== null}
+              link={link}
             />
-            {beside && openDiagram && (
+            {split && openDiagram && !beside && (
+              <section className="split-page" aria-label="Nothing beside the diagram yet">
+                <div className="split-bar">
+                  <button className="ghost" onClick={closeBeside}>
+                    Close panel
+                  </button>
+                </div>
+                {linking && besideBox ? (
+                  <PagePicker
+                    pages={pages}
+                    title="Point this box at a page"
+                    onCancel={() => setLinking(false)}
+                    onChoose={(page) => {
+                      setLink((last) => ({ n: (last?.n ?? 0) + 1, box: besideBox, page }));
+                      setLinking(false);
+                      openBeside(page);
+                    }}
+                  />
+                ) : (
+                  <div className="split-empty">
+                    <p>This box has no page to show.</p>
+                    <p className="actions">
+                      <button className="secondary" onClick={() => setLinking(true)} disabled={!besideBox}>
+                        Link a page…
+                      </button>
+                      <button className="ghost" onClick={closeBeside}>
+                        Close panel
+                      </button>
+                    </p>
+                  </div>
+                )}
+              </section>
+            )}
+            {split && openDiagram && beside && (
               <section className="split-page" aria-label="Page beside the diagram">
                 <div className="split-bar">
                   <button className="secondary" onClick={() => openDocument(beside.id)}>
                     Open on its own
                   </button>
-                  <button className="ghost" onClick={() => setBeside(null)}>
+                  <button className="ghost" onClick={closeBeside}>
                     Close page
                   </button>
                 </div>
